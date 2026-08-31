@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from './pages/Login';
+import { DashboardLayout } from './components/Layout';
+import { DashboardHome } from './pages/Dashboard';
 
 function App() {
   return (
@@ -7,14 +9,26 @@ function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={
-          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <div className="bg-white p-8 rounded-lg shadow-sm border border-gray-100 text-center">
-              <h1 className="text-2xl font-bold text-blue-900 mb-2">Painel da Portaria</h1>
-              <p className="text-gray-500">Logado com sucesso! O módulo de Gestão de Encomendas será construído aqui.</p>
+        
+        {/* Rotas protegidas (embutidas no Layout da Portaria) */}
+        <Route path="/dashboard" element={<DashboardLayout />}>
+          <Route index element={<DashboardHome />} />
+          <Route path="encomendas" element={
+            <div className="text-center py-12 text-gray-500">
+              Módulo de Encomendas (Em construção...)
             </div>
-          </div>
-        } />
+          } />
+          <Route path="visitantes" element={
+            <div className="text-center py-12 text-gray-500">
+              Módulo de Visitantes (Em construção...)
+            </div>
+          } />
+          <Route path="reservas" element={
+            <div className="text-center py-12 text-gray-500">
+              Módulo de Reservas (Em construção...)
+            </div>
+          } />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
