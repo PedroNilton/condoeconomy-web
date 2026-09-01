@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Package, User, MapPin, Truck } from 'lucide-react';
-import { api } from '../../../services/api';
+import api from '../../../services/api';
 
 interface NovaEncomendaFormProps {
   onSuccess: () => void;
