@@ -3,6 +3,7 @@ import { Login } from './pages/Login';
 import { DashboardLayout } from './components/Layout';
 import { DashboardHome } from './pages/Dashboard';
 import { EncomendasList } from './pages/Encomendas';
+import { ReservasList } from './pages/Reservas';
 
 function App() {
   return (
@@ -20,11 +21,7 @@ function App() {
               Módulo de Visitantes (Em construção...)
             </div>
           } />
-          <Route path="reservas" element={
-            <div className="text-center py-12 text-gray-500">
-              Módulo de Reservas (Em construção...)
-            </div>
-          } />
+          <Route path="reservas" element={<ReservasList />} />
         </Route>
       </Routes>
     </BrowserRouter>
