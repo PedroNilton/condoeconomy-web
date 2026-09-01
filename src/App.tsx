@@ -4,6 +4,7 @@ import { DashboardLayout } from './components/Layout';
 import { DashboardHome } from './pages/Dashboard';
 import { EncomendasList } from './pages/Encomendas';
 import { ReservasList } from './pages/Reservas';
+import { BoletosList } from './pages/Boletos';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             </div>
           } />
           <Route path="reservas" element={<ReservasList />} />
+          <Route path="boletos" element={<BoletosList />} />
         </Route>
       </Routes>
     </BrowserRouter>
