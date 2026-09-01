@@ -12,6 +12,7 @@ interface Encomenda {
   transportadora: string;
   status: string;
   dataChegada: string;
+  dataRetirada?: string;
 }
 
 export function EncomendasList() {
@@ -38,14 +39,26 @@ export function EncomendasList() {
     }
   };
 
+  const handleRetirar = async (id: string) => {
+    try {
+      await api.put(`/api/v1/encomendas/${id}/retirar`);
+      fetchEncomendas();
+    } catch (err) {
+      alert('Erro ao confirmar entrega.');
+      console.error(err);
+    }
+  };
+
   const getStatusStyle = (status: string) => {
     if (status === 'AGUARDANDO_RETIRADA') return 'bg-blue-100 text-blue-800';
+    if (status === 'RETIRADA') return 'bg-green-100 text-green-800';
     if (status === 'ENTREGUE') return 'bg-green-100 text-green-800';
     return 'bg-gray-100 text-gray-800';
   };
 
   const formatStatus = (status: string) => {
     if (status === 'AGUARDANDO_RETIRADA') return 'Aguardando Retirada';
+    if (status === 'RETIRADA') return 'Retirada';
     if (status === 'ENTREGUE') return 'Entregue';
     return status;
   };
@@ -83,7 +96,7 @@ export function EncomendasList() {
         <select className="px-4 py-2 border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-600">
           <option value="">Todos os Status</option>
           <option value="AGUARDANDO_RETIRADA">Aguardando Retirada</option>
-          <option value="ENTREGUE">Entregue</option>
+          <option value="RETIRADA">Retirada</option>
         </select>
       </div>
 
@@ -118,7 +131,8 @@ export function EncomendasList() {
                   <th className="px-6 py-4 font-medium">Destinatário</th>
                   <th className="px-6 py-4 font-medium">Unidade</th>
                   <th className="px-6 py-4 font-medium">Transportadora</th>
-                  <th className="px-6 py-4 font-medium">Data/Hora Chegada</th>
+                  <th className="px-6 py-4 font-medium">Data Chegada</th>
+                  <th className="px-6 py-4 font-medium">Data Retirada</th>
                   <th className="px-6 py-4 font-medium">Status</th>
                   <th className="px-6 py-4 font-medium text-right">Ação</th>
                 </tr>
@@ -131,7 +145,10 @@ export function EncomendasList() {
                     <td className="px-6 py-4 text-gray-700 font-medium">{enc.unidade}</td>
                     <td className="px-6 py-4 text-gray-500">{enc.transportadora}</td>
                     <td className="px-6 py-4 text-gray-500">
-                      {new Date(enc.dataChegada).toLocaleString('pt-BR')}
+                      {enc.dataChegada ? new Date(enc.dataChegada).toLocaleString('pt-BR') : '-'}
+                    </td>
+                    <td className="px-6 py-4 text-gray-500">
+                      {enc.dataRetirada ? new Date(enc.dataRetirada).toLocaleString('pt-BR') : '-'}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold tracking-wide ${getStatusStyle(enc.status)}`}>
@@ -140,7 +157,10 @@ export function EncomendasList() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       {enc.status === 'AGUARDANDO_RETIRADA' && (
-                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors">
+                        <button 
+                          onClick={() => handleRetirar(enc.id)}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                        >
                           Confirmar Entrega
                         </button>
                       )}
