@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Package, Search, Plus, Loader2 } from 'lucide-react';
 import api from '../../services/api';
+import { Modal } from '../../components/UI/Modal';
+import { NovaEncomendaForm } from './components/NovaEncomendaForm';
 
 interface Encomenda {
   id: string;
@@ -16,6 +18,7 @@ export function EncomendasList() {
   const [encomendas, setEncomendas] = useState<Encomenda[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchEncomendas();
@@ -58,7 +61,10 @@ export function EncomendasList() {
           </h3>
           <p className="text-gray-500 mt-1">Registre e acompanhe as entregas dos moradores.</p>
         </div>
-        <button className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium shadow-sm">
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium shadow-sm"
+        >
           <Plus className="w-5 h-5" />
           Registrar Nova Encomenda
         </button>
@@ -146,6 +152,21 @@ export function EncomendasList() {
           </div>
         )}
       </div>
+
+      {/* Modal de Nova Encomenda */}
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        title="Registrar Nova Encomenda"
+      >
+        <NovaEncomendaForm 
+          onCancel={() => setIsModalOpen(false)}
+          onSuccess={() => {
+            setIsModalOpen(false);
+            fetchEncomendas();
+          }}
+        />
+      </Modal>
     </div>
   );
 }
