@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MessageSquare, Plus, Loader2, Send } from 'lucide-react';
-import { api } from '../../../../lib/axios';
+import { api } from '../../../lib/axios';
 
 interface Chamado {
   id: string;
