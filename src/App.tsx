@@ -10,6 +10,7 @@ import { MoradorLayout } from './pages/Morador/components/MoradorLayout';
 import { MoradorLogin } from './pages/Morador/Login/MoradorLogin';
 import { MoradorHome } from './pages/Morador/Home/MoradorHome';
 import { MoradorOuvidoria } from './pages/Morador/Ouvidoria/MoradorOuvidoria';
+import { MoradorReservas } from './pages/Morador/Reservas/MoradorReservas';
 
 function App() {
   return (
@@ -36,7 +37,7 @@ function App() {
         <Route path="/app/login" element={<MoradorLogin />} />
         <Route path="/app" element={<MoradorLayout />}>
           <Route index element={<MoradorHome />} />
-          <Route path="reservas" element={<div className="p-6 text-center text-gray-500">Tela de Reservas (Em construção)</div>} />
+          <Route path="reservas" element={<MoradorReservas />} />
           <Route path="boletos" element={<div className="p-6 text-center text-gray-500">Tela de Boletos (Em construção)</div>} />
           <Route path="ouvidoria" element={<MoradorOuvidoria />} />
           <Route path="perfil" element={<div className="p-6 text-center text-gray-500">Tela de Perfil (Em construção)</div>} />
