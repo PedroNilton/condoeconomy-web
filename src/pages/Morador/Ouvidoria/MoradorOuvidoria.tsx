@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MessageSquare, Plus, Loader2, Send } from 'lucide-react';
-import { api } from '../../../services/api';
+import api from '../../../services/api';
 
 interface Chamado {
   id: string;
