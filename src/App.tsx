@@ -6,6 +6,9 @@ import { EncomendasList } from './pages/Encomendas';
 import { ReservasList } from './pages/Reservas';
 import { BoletosList } from './pages/Boletos';
 import { ChamadosList } from './pages/Chamados';
+import { MoradorLayout } from './pages/Morador/components/MoradorLayout';
+import { MoradorLogin } from './pages/Morador/Login/MoradorLogin';
+import { MoradorHome } from './pages/Morador/Home/MoradorHome';
 
 function App() {
   return (
@@ -26,6 +29,16 @@ function App() {
           <Route path="reservas" element={<ReservasList />} />
           <Route path="boletos" element={<BoletosList />} />
           <Route path="chamados" element={<ChamadosList />} />
+        </Route>
+
+        {/* Rotas do App do Morador (Mobile PWA) */}
+        <Route path="/app/login" element={<MoradorLogin />} />
+        <Route path="/app" element={<MoradorLayout />}>
+          <Route index element={<MoradorHome />} />
+          <Route path="reservas" element={<div className="p-6 text-center text-gray-500">Tela de Reservas (Em construção)</div>} />
+          <Route path="boletos" element={<div className="p-6 text-center text-gray-500">Tela de Boletos (Em construção)</div>} />
+          <Route path="ouvidoria" element={<div className="p-6 text-center text-gray-500">Tela de Ouvidoria (Em construção)</div>} />
+          <Route path="perfil" element={<div className="p-6 text-center text-gray-500">Tela de Perfil (Em construção)</div>} />
         </Route>
       </Routes>
     </BrowserRouter>
