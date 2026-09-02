@@ -20,6 +20,8 @@ export function EncomendasList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   useEffect(() => {
     fetchEncomendas();
@@ -63,6 +65,17 @@ export function EncomendasList() {
     return status;
   };
 
+  const filteredEncomendas = encomendas.filter(enc => {
+    const matchesSearch = 
+      enc.codigoRastreio.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      enc.destinatario.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      enc.unidade.toLowerCase().includes(searchTerm.toLowerCase());
+      
+    const matchesStatus = statusFilter ? enc.status === statusFilter : true;
+    
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="space-y-6">
       {/* Cabeçalho da Página */}
@@ -89,11 +102,17 @@ export function EncomendasList() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input 
             type="text" 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar por código, destinatário ou unidade..." 
             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
           />
         </div>
-        <select className="px-4 py-2 border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-600">
+        <select 
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="px-4 py-2 border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-600"
+        >
           <option value="">Todos os Status</option>
           <option value="AGUARDANDO_RETIRADA">Aguardando Retirada</option>
           <option value="RETIRADA">Retirada</option>
@@ -114,7 +133,7 @@ export function EncomendasList() {
               Tentar Novamente
             </button>
           </div>
-        ) : encomendas.length === 0 ? (
+        ) : filteredEncomendas.length === 0 ? (
           <div className="text-center py-16 px-4">
             <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
               <Package className="w-8 h-8 text-gray-400" />
@@ -138,7 +157,7 @@ export function EncomendasList() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {encomendas.map((enc) => (
+                {filteredEncomendas.map((enc) => (
                   <tr key={enc.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 font-medium text-gray-900">{enc.codigoRastreio}</td>
                     <td className="px-6 py-4 text-gray-700">{enc.destinatario}</td>
