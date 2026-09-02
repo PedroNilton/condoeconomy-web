@@ -9,6 +9,7 @@ import { ChamadosList } from './pages/Chamados';
 import { MoradorLayout } from './pages/Morador/components/MoradorLayout';
 import { MoradorLogin } from './pages/Morador/Login/MoradorLogin';
 import { MoradorHome } from './pages/Morador/Home/MoradorHome';
+import { MoradorOuvidoria } from './pages/Morador/Ouvidoria/MoradorOuvidoria';
 
 function App() {
   return (
@@ -37,7 +38,7 @@ function App() {
           <Route index element={<MoradorHome />} />
           <Route path="reservas" element={<div className="p-6 text-center text-gray-500">Tela de Reservas (Em construção)</div>} />
           <Route path="boletos" element={<div className="p-6 text-center text-gray-500">Tela de Boletos (Em construção)</div>} />
-          <Route path="ouvidoria" element={<div className="p-6 text-center text-gray-500">Tela de Ouvidoria (Em construção)</div>} />
+          <Route path="ouvidoria" element={<MoradorOuvidoria />} />
           <Route path="perfil" element={<div className="p-6 text-center text-gray-500">Tela de Perfil (Em construção)</div>} />
         </Route>
       </Routes>
