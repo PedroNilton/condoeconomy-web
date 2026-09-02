@@ -1,11 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { CalendarDays, MapPin, Users, CheckCircle, Clock } from 'lucide-react';
 import api from '../../services/api';
-
-interface AreaComum {
-  id: string;
-  nome: string;
-}
 
 interface Convidado {
   id: string;

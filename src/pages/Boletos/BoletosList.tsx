@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, FileText, CheckCircle, AlertCircle, Copy, FileDown } from 'lucide-react';
+import { Search, FileText, CheckCircle, AlertCircle, Copy } from 'lucide-react';
 import api from '../../services/api';
 
 interface Boleto {
