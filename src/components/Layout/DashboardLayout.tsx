@@ -1,4 +1,4 @@
-import { Building2, Package, Users, CalendarDays, BarChart3, HelpCircle, LogOut, FileText } from 'lucide-react';
+import { Building2, Package, Users, CalendarDays, BarChart3, HelpCircle, LogOut, FileText, MessageSquare } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 export function DashboardLayout() {
@@ -91,6 +91,18 @@ export function DashboardLayout() {
           >
             <FileText className="w-5 h-5" />
             Boletos
+          </NavLink>
+
+          <NavLink 
+            to="/dashboard/chamados"
+            className={({ isActive }) => 
+              `flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                isActive ? 'bg-blue-800/80 text-white font-medium' : 'text-blue-100 hover:bg-blue-900/50'
+              }`
+            }
+          >
+            <MessageSquare className="w-5 h-5" />
+            Ouvidoria
           </NavLink>
 
         </nav>

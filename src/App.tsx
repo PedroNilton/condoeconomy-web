@@ -5,6 +5,7 @@ import { DashboardHome } from './pages/Dashboard';
 import { EncomendasList } from './pages/Encomendas';
 import { ReservasList } from './pages/Reservas';
 import { BoletosList } from './pages/Boletos';
+import { ChamadosList } from './pages/Chamados';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           } />
           <Route path="reservas" element={<ReservasList />} />
           <Route path="boletos" element={<BoletosList />} />
+          <Route path="chamados" element={<ChamadosList />} />
         </Route>
       </Routes>
     </BrowserRouter>
