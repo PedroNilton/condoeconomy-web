@@ -13,6 +13,8 @@ import { MoradorReservas } from './pages/Morador/Reservas/MoradorReservas';
 import { MoradorBoletos } from './pages/Morador/Boletos/MoradorBoletos';
 import { MoradorPerfil } from './pages/Morador/Perfil/MoradorPerfil';
 import { MoradorVisitantes } from './pages/Morador/Visitantes/MoradorVisitantes';
+import { AdminLayout } from './pages/Admin/components/AdminLayout';
+import { AvisosPanel } from './pages/Admin/Avisos/AvisosPanel';
 
 function App() {
   return (
@@ -30,15 +32,10 @@ function App() {
           <Route path="visitantes" element={<VisitantesList />} />
         </Route>
 
-        {/* Rota Futura: Admin */}
-        <Route path="/admin" element={
-          <div className="min-h-screen flex items-center justify-center bg-gray-50 text-center p-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">Painel do Síndico</h1>
-              <p className="text-gray-500">Este módulo será construído na próxima fase.</p>
-            </div>
-          </div>
-        } />
+        {/* Rotas do Admin */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AvisosPanel />} />
+        </Route>
 
         {/* Rotas do App do Morador */}
         <Route path="/app" element={<MoradorLayout />}>
