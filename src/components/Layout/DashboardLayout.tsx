@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  Package, CalendarDays, FileText, 
+  Package, CalendarDays, 
   MessageSquare, LogOut, UserCheck, ChevronLeft, ChevronRight, Building2, HelpCircle
 } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
@@ -106,19 +106,6 @@ export function DashboardLayout() {
           >
             <CalendarDays className="w-5 h-5 shrink-0" />
             {isSidebarOpen && <span className="whitespace-nowrap">Reservas</span>}
-          </NavLink>
-
-          <NavLink 
-            to="/dashboard/boletos"
-            className={({ isActive }) => 
-              `flex items-center py-3 rounded-lg transition-colors ${isSidebarOpen ? 'px-4 gap-3' : 'px-0 justify-center'} ${
-                isActive ? 'bg-blue-800/80 text-white font-medium' : 'text-blue-100 hover:bg-blue-900/50'
-              }`
-            }
-            title={!isSidebarOpen ? "Boletos" : undefined}
-          >
-            <FileText className="w-5 h-5 shrink-0" />
-            {isSidebarOpen && <span className="whitespace-nowrap">Boletos</span>}
           </NavLink>
 
           <NavLink 

@@ -4,7 +4,6 @@ import { DashboardLayout } from './components/Layout';
 import { DashboardHome } from './pages/Dashboard';
 import { EncomendasList } from './pages/Encomendas/EncomendasList';
 import { ReservasList } from './pages/Reservas';
-import { BoletosList } from './pages/Boletos';
 import { ChamadosList } from './pages/Chamados';
 import { VisitantesList } from './pages/Visitantes/VisitantesList';
 import { MoradorLayout } from './pages/Morador/components/MoradorLayout';
@@ -28,7 +27,6 @@ function App() {
           <Route index element={<DashboardHome />} />
           <Route path="encomendas" element={<EncomendasList />} />
           <Route path="reservas" element={<ReservasList />} />
-          <Route path="boletos" element={<BoletosList />} />
           <Route path="chamados" element={<ChamadosList />} />
           <Route path="visitantes" element={<VisitantesList />} />
         </Route>
