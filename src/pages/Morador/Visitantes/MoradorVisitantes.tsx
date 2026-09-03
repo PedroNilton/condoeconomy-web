@@ -5,7 +5,6 @@ import api from '../../../services/api';
 interface Visitante {
   id: string;
   nome: string;
-  documento: string;
   dataVisita: string;
   tipo: string;
   status: string;
@@ -18,7 +17,6 @@ export function MoradorVisitantes() {
 
   // Form states
   const [nome, setNome] = useState('');
-  const [documento, setDocumento] = useState('');
   const [dataVisita, setDataVisita] = useState(new Date().toISOString().split('T')[0]);
   const [tipo, setTipo] = useState('VISITANTE');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,13 +40,13 @@ export function MoradorVisitantes() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nome || !documento || !dataVisita) return;
+    if (!nome || !dataVisita) return;
 
     try {
       setIsSubmitting(true);
       await api.post('/api/v1/visitantes', {
         nome,
-        documento,
+        documento: 'N/A', // Oculto da UI, preenchimento padrão
         dataVisita,
         unidadeDestino: 'Apto 101 - Bloco B',
         moradorResponsavel: 'Carlos Silva',
@@ -57,7 +55,6 @@ export function MoradorVisitantes() {
       
       setIsFormOpen(false);
       setNome('');
-      setDocumento('');
       setTipo('VISITANTE');
       
       fetchData();
@@ -90,18 +87,6 @@ export function MoradorVisitantes() {
                 value={nome}
                 onChange={e => setNome(e.target.value)}
                 placeholder="Ex: Roberto Silva"
-                className="w-full p-3.5 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 shadow-sm"
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700">Documento (RG ou CPF)</label>
-              <input 
-                type="text" 
-                value={documento}
-                onChange={e => setDocumento(e.target.value)}
-                placeholder="Ex: 123.456.789-00"
                 className="w-full p-3.5 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 shadow-sm"
                 required
               />
@@ -201,7 +186,7 @@ export function MoradorVisitantes() {
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mb-3 font-medium">
-                    Doc: {vis.documento} • {vis.tipo === 'VISITANTE' ? 'Visitante' : 'Prest. Serviço'}
+                    {vis.tipo === 'VISITANTE' ? 'Visitante' : 'Prest. Serviço'}
                   </p>
                   
                   <div className="flex items-center gap-4 text-xs text-gray-500">

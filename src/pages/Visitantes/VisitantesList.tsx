@@ -111,7 +111,7 @@ export function VisitantesList() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="p-4 font-semibold text-sm text-gray-600">Visitante / Documento</th>
+                <th className="p-4 font-semibold text-sm text-gray-600">Visitante</th>
                 <th className="p-4 font-semibold text-sm text-gray-600">Tipo</th>
                 <th className="p-4 font-semibold text-sm text-gray-600">Destino / Responsável</th>
                 <th className="p-4 font-semibold text-sm text-gray-600">Status / Horários</th>
@@ -137,7 +137,6 @@ export function VisitantesList() {
                         </div>
                         <div>
                           <p className="font-semibold text-gray-800">{visitante.nome}</p>
-                          <p className="text-sm text-gray-500">{visitante.documento}</p>
                         </div>
                       </div>
                     </td>
@@ -166,7 +165,7 @@ export function VisitantesList() {
                         )}
                         {visitante.status === 'FINALIZADO' && (
                           <span className="inline-flex items-center gap-1 text-sm font-medium text-gray-500">
-                            <CheckCircle2 className="w-4 h-4" /> Saiu às {formatHora(visitante.horaSaida)}
+                            <CheckCircle2 className="w-4 h-4" /> Entrou {formatHora(visitante.horaEntrada)} • Saiu às {formatHora(visitante.horaSaida)}
                           </span>
                         )}
                       </div>
