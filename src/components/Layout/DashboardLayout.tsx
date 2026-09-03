@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { Building2, Package, Users, CalendarDays, BarChart3, HelpCircle, LogOut, FileText, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
+import { 
+  Package, CalendarDays, FileText, 
+  MessageSquare, LogOut, UserCheck, Users, ChevronLeft, ChevronRight, Building2, HelpCircle
+} from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 export function DashboardLayout() {
@@ -42,16 +45,28 @@ export function DashboardLayout() {
           
           <NavLink 
             to="/dashboard"
-            end
             className={({ isActive }) => 
               `flex items-center py-3 rounded-lg transition-colors ${isSidebarOpen ? 'px-4 gap-3' : 'px-0 justify-center'} ${
                 isActive ? 'bg-blue-800/80 text-white font-medium' : 'text-blue-100 hover:bg-blue-900/50'
               }`
             }
-            title={!isSidebarOpen ? "Dashboard" : undefined}
+            title={!isSidebarOpen ? "Visão Geral" : undefined}
           >
-            <BarChart3 className="w-5 h-5 shrink-0" />
-            {isSidebarOpen && <span className="whitespace-nowrap">Dashboard</span>}
+            <Building2 className="w-5 h-5 shrink-0" />
+            {isSidebarOpen && <span className="whitespace-nowrap">Visão Geral</span>}
+          </NavLink>
+
+          <NavLink 
+            to="/dashboard/visitantes"
+            className={({ isActive }) => 
+              `flex items-center py-3 rounded-lg transition-colors ${isSidebarOpen ? 'px-4 gap-3' : 'px-0 justify-center'} ${
+                isActive ? 'bg-blue-800/80 text-white font-medium' : 'text-blue-100 hover:bg-blue-900/50'
+              }`
+            }
+            title={!isSidebarOpen ? "Visitantes" : undefined}
+          >
+            <UserCheck className="w-5 h-5 shrink-0" />
+            {isSidebarOpen && <span className="whitespace-nowrap">Visitantes</span>}
           </NavLink>
 
           <NavLink 

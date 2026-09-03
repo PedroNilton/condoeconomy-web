@@ -2,10 +2,11 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from './pages/Login';
 import { DashboardLayout } from './components/Layout';
 import { DashboardHome } from './pages/Dashboard';
-import { EncomendasList } from './pages/Encomendas';
+import { EncomendasList } from './pages/Encomendas/EncomendasList';
 import { ReservasList } from './pages/Reservas';
 import { BoletosList } from './pages/Boletos';
 import { ChamadosList } from './pages/Chamados';
+import { VisitantesList } from './pages/Visitantes/VisitantesList';
 import { MoradorLayout } from './pages/Morador/components/MoradorLayout';
 import { MoradorLogin } from './pages/Morador/Login/MoradorLogin';
 import { MoradorHome } from './pages/Morador/Home/MoradorHome';
@@ -13,6 +14,7 @@ import { MoradorOuvidoria } from './pages/Morador/Ouvidoria/MoradorOuvidoria';
 import { MoradorReservas } from './pages/Morador/Reservas/MoradorReservas';
 import { MoradorBoletos } from './pages/Morador/Boletos/MoradorBoletos';
 import { MoradorPerfil } from './pages/Morador/Perfil/MoradorPerfil';
+import { MoradorVisitantes } from './pages/Morador/Visitantes/MoradorVisitantes';
 
 function App() {
   return (
@@ -33,6 +35,7 @@ function App() {
           <Route path="reservas" element={<ReservasList />} />
           <Route path="boletos" element={<BoletosList />} />
           <Route path="chamados" element={<ChamadosList />} />
+          <Route path="visitantes" element={<VisitantesList />} />
         </Route>
 
         {/* Rotas do App do Morador (Mobile PWA) */}
@@ -42,6 +45,7 @@ function App() {
           <Route path="reservas" element={<MoradorReservas />} />
           <Route path="boletos" element={<MoradorBoletos />} />
           <Route path="ouvidoria" element={<MoradorOuvidoria />} />
+          <Route path="visitantes" element={<MoradorVisitantes />} />
           <Route path="perfil" element={<MoradorPerfil />} />
         </Route>
       </Routes>
