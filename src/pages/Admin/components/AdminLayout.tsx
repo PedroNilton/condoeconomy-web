@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Home, Megaphone, LogOut } from 'lucide-react';
+import { Home, Megaphone, LogOut, Calendar, MessageSquareWarning } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 export function AdminLayout() {
@@ -37,27 +37,43 @@ export function AdminLayout() {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto pb-20 p-4 no-scrollbar">
+        <main className="flex-1 overflow-y-auto p-0 no-scrollbar relative">
           <Outlet />
         </main>
 
         {/* Tab Bar (Menu Inferior) */}
-        <nav className="absolute bottom-0 w-full bg-white border-t border-gray-200 flex justify-around items-center h-16 px-2 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] z-50">
+        <nav className="absolute bottom-0 w-full bg-white border-t border-gray-200 flex justify-around items-center h-16 px-1 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] z-50">
           <NavLink 
             to="/admin" 
             end
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <Megaphone className="w-6 h-6" />
+            <Megaphone className="w-5 h-5" />
             <span className="text-[10px] font-medium">Mural</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/reservas" 
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            <Calendar className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Reservas</span>
+          </NavLink>
+
+          <NavLink 
+            to="/admin/ouvidoria" 
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            <MessageSquareWarning className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Ouvidoria</span>
           </NavLink>
 
           <NavLink 
             to="/admin/painel" 
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <Home className="w-6 h-6" />
-            <span className="text-[10px] font-medium">Painel</span>
+            <Home className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Finanças</span>
           </NavLink>
         </nav>
       </div>

@@ -15,6 +15,8 @@ import { MoradorPerfil } from './pages/Morador/Perfil/MoradorPerfil';
 import { MoradorVisitantes } from './pages/Morador/Visitantes/MoradorVisitantes';
 import { AdminLayout } from './pages/Admin/components/AdminLayout';
 import { AvisosPanel } from './pages/Admin/Avisos/AvisosPanel';
+import { ReservasApprovalPanel } from './pages/Admin/Reservas/ReservasApprovalPanel';
+import { OuvidoriaAdminPanel } from './pages/Admin/Ouvidoria/OuvidoriaAdminPanel';
 
 function App() {
   return (
@@ -35,6 +37,8 @@ function App() {
         {/* Rotas do Admin */}
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AvisosPanel />} />
+          <Route path="reservas" element={<ReservasApprovalPanel />} />
+          <Route path="ouvidoria" element={<OuvidoriaAdminPanel />} />
         </Route>
 
         {/* Rotas do App do Morador */}

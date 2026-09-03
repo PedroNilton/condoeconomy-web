@@ -42,6 +42,16 @@ export function ChamadosList() {
     }
   };
 
+  const handleEscalar = async (id: string) => {
+    try {
+      await api.put(`/api/v1/chamados/${id}/escalar`);
+      alert('Chamado escalado para o síndico com sucesso!');
+      fetchChamados();
+    } catch (err) {
+      alert('Erro ao escalar chamado.');
+    }
+  };
+
   const getCategoriaIcon = (categoria: string) => {
     switch(categoria) {
       case 'MANUTENCAO': return <Wrench className="w-4 h-4 text-orange-500" />;
@@ -62,8 +72,11 @@ export function ChamadosList() {
       
       <div className="flex flex-col gap-3">
         {items.map(chamado => (
-          <div key={chamado.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition">
-            <div className="flex justify-between items-start mb-2">
+          <div key={chamado.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition relative overflow-hidden">
+            {(chamado as any).escaladoSindico && (
+              <div className="absolute top-0 left-0 w-1 h-full bg-red-500" title="Escalado para o Síndico" />
+            )}
+            <div className="flex justify-between items-start mb-2 pl-2">
               <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">
                 {chamado.unidadeTexto}
               </span>
@@ -73,33 +86,44 @@ export function ChamadosList() {
               </div>
             </div>
             
-            <h5 className="font-semibold text-gray-800 text-sm mb-1">{chamado.assunto}</h5>
-            <p className="text-xs text-gray-600 line-clamp-2 mb-3">{chamado.descricao}</p>
+            <h5 className="font-semibold text-gray-800 text-sm mb-1 pl-2">{chamado.assunto}</h5>
+            <p className="text-xs text-gray-600 line-clamp-2 mb-3 pl-2">{chamado.descricao}</p>
             
-            <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
-              <div className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
-                {getCategoriaIcon(chamado.categoria)}
-                {chamado.categoria}
+            <div className="flex flex-col gap-3 mt-4 pt-3 border-t border-gray-100 pl-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+                  {getCategoriaIcon(chamado.categoria)}
+                  {chamado.categoria}
+                </div>
+                
+                <div className="flex gap-2">
+                  {statusId === 'ABERTO' && (
+                    <button 
+                      onClick={() => handleUpdateStatus(chamado.id, 'EM_ANDAMENTO')}
+                      className="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-medium transition"
+                    >
+                      Atender
+                    </button>
+                  )}
+                  {statusId === 'EM_ANDAMENTO' && (
+                    <button 
+                      onClick={() => handleUpdateStatus(chamado.id, 'RESOLVIDO')}
+                      className="text-xs bg-green-50 text-green-600 hover:bg-green-100 px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Resolver
+                    </button>
+                  )}
+                </div>
               </div>
               
-              <div className="flex gap-2">
-                {statusId === 'ABERTO' && (
-                  <button 
-                    onClick={() => handleUpdateStatus(chamado.id, 'EM_ANDAMENTO')}
-                    className="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-medium transition"
-                  >
-                    Atender
-                  </button>
-                )}
-                {statusId === 'EM_ANDAMENTO' && (
-                  <button 
-                    onClick={() => handleUpdateStatus(chamado.id, 'RESOLVIDO')}
-                    className="text-xs bg-green-50 text-green-600 hover:bg-green-100 px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Resolver
-                  </button>
-                )}
-              </div>
+              {statusId !== 'RESOLVIDO' && !(chamado as any).escaladoSindico && (
+                <button 
+                  onClick={() => handleEscalar(chamado.id)}
+                  className="text-xs text-red-600 font-medium hover:underline self-end"
+                >
+                  Escalar para o Síndico
+                </button>
+              )}
             </div>
           </div>
         ))}
