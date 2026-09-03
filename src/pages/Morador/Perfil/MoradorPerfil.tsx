@@ -15,8 +15,9 @@ export function MoradorPerfil() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    // Limpar auth tokens (simulação MVP)
-    navigate('/app/login');
+    // Limpar auth tokens
+    localStorage.removeItem('@CondoEconomy:token');
+    navigate('/login');
   };
 
   const menuGroups = [

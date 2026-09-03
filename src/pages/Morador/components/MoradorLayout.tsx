@@ -8,7 +8,7 @@ export function MoradorLayout() {
   useEffect(() => {
     const token = localStorage.getItem('@CondoEconomy:token');
     if (!token) {
-      navigate('/app/login', { replace: true });
+      navigate('/login', { replace: true });
     }
   }, [navigate]);
 

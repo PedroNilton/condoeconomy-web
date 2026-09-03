@@ -1,11 +1,11 @@
+import { Building2, ArrowRight, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Lock, Mail, ArrowRight } from 'lucide-react';
 import api from '../../services/api';
 
 export function Login() {
-  const [email, setEmail] = useState('porteiro@condominio.com');
-  const [senha, setSenha] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -16,87 +16,97 @@ export function Login() {
     setError('');
 
     try {
-      // Integração real com o endpoint do back-end Java
       const response = await api.post('/api/v1/auth/login', { email, senha });
+      const { token, papel } = response.data;
       
-      const { token } = response.data;
       localStorage.setItem('@CondoEconomy:token', token);
       
-      // Redireciona para o painel principal após o login
-      navigate('/dashboard');
+      // Roteamento inteligente baseado no papel
+      if (papel === 'ROLE_PORTEIRO') {
+        navigate('/portaria');
+      } else if (papel === 'ROLE_ADMIN' || papel === 'ROLE_SINDICO') {
+        navigate('/admin');
+      } else {
+        navigate('/app'); // Default: Morador
+      }
+      
     } catch (err) {
-      setError('Credenciais inválidas. Verifique seu e-mail e senha.');
+      setError('Credenciais inválidas.');
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 border border-gray-100">
+    <div className="min-h-screen bg-gray-100 flex justify-center">
+      <div className="w-full max-w-md bg-white h-screen flex flex-col shadow-2xl overflow-hidden relative">
         
-        {/* Header/Logo */}
-        <div className="flex flex-col items-center justify-center mb-8">
-          <div className="bg-blue-900 p-3 rounded-lg mb-4 shadow-md shadow-blue-200">
-            <Building2 className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">CondoEconomy</h1>
-          <p className="text-sm text-gray-500 mt-1">Acesso à Portaria e Gestão</p>
-        </div>
+        {/* Background Decorativo */}
+        <div className="absolute top-0 w-full h-64 bg-gradient-to-br from-blue-700 to-blue-950 rounded-b-[40px] shadow-lg"></div>
 
-        {/* Formulário de Login */}
-        <form onSubmit={handleLogin} className="space-y-5">
-          {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm text-center border border-red-100">
-              {error}
+        <div className="relative z-10 flex flex-col h-full px-8 pt-20">
+          
+          <div className="flex flex-col items-center mb-12">
+            <div className="w-20 h-20 bg-white rounded-2xl shadow-xl flex items-center justify-center mb-4">
+              <Building2 className="w-10 h-10 text-blue-600" />
             </div>
-          )}
+            <h1 className="text-2xl font-bold text-white tracking-wide">CondoEconomy</h1>
+            <p className="text-blue-100 text-sm mt-1">O app do seu condomínio</p>
+          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">E-mail corporativo</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-gray-400" />
+          <div className="flex-1">
+            <form onSubmit={handleLogin} className="space-y-5 mt-10">
+              
+              {error && (
+                <div className="bg-red-500/20 border border-red-500/50 text-red-100 p-3 rounded-lg text-sm text-center">
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-1">
+                <label className="text-sm font-semibold text-gray-700">E-mail ou CPF</label>
+                <input 
+                  type="text" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                />
               </div>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-600 focus:border-blue-600 sm:text-sm transition-colors outline-none"
-                placeholder="porteiro@condominio.com"
-              />
-            </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-400" />
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <label className="text-sm font-semibold text-gray-700">Senha</label>
+                  <a href="#" className="text-xs text-blue-600 font-medium">Esqueceu?</a>
+                </div>
+                <input 
+                  type="password" 
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                />
               </div>
-              <input
-                type="password"
-                required
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-600 focus:border-blue-600 sm:text-sm transition-colors outline-none"
-                placeholder="••••••••"
-              />
-            </div>
+
+              <button 
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 mt-4 disabled:opacity-70"
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                  <>
+                    Entrar
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </button>
+
+            </form>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex items-center justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-900 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-900 transition-colors disabled:opacity-70 disabled:cursor-not-allowed mt-2"
-          >
-            {loading ? 'Autenticando...' : 'Entrar no Sistema'}
-            {!loading && <ArrowRight className="ml-2 w-4 h-4" />}
-          </button>
-        </form>
-
-        <div className="mt-8 text-center text-xs text-gray-400">
-          <p>© 2026 CondoEconomy. Todos os direitos reservados.</p>
+          <div className="pb-8 text-center">
+            <p className="text-sm text-gray-500">
+              Ainda não tem acesso? <br/>
+              <a href="#" className="text-blue-600 font-semibold underline decoration-2 underline-offset-2">Fale com a portaria</a>
+            </p>
+          </div>
         </div>
       </div>
     </div>

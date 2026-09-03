@@ -43,7 +43,7 @@ export function DashboardHome() {
         <p className="text-gray-500 mt-1">Bem-vindo ao painel da portaria do Condomínio Jardins.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         
         {/* Card 1 */}
         <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">

@@ -86,7 +86,7 @@ export function ReservasList() {
           <p className="text-gray-500 mt-1">Nenhuma reserva confirmada para este dia.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-6 overflow-x-auto">
           {reservas.map(reserva => (
             <div key={reserva.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
               <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex justify-between items-center">

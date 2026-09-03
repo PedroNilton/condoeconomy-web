@@ -7,7 +7,6 @@ import { ReservasList } from './pages/Reservas';
 import { ChamadosList } from './pages/Chamados';
 import { VisitantesList } from './pages/Visitantes/VisitantesList';
 import { MoradorLayout } from './pages/Morador/components/MoradorLayout';
-import { MoradorLogin } from './pages/Morador/Login/MoradorLogin';
 import { MoradorHome } from './pages/Morador/Home/MoradorHome';
 import { MoradorOuvidoria } from './pages/Morador/Ouvidoria/MoradorOuvidoria';
 import { MoradorReservas } from './pages/Morador/Reservas/MoradorReservas';
@@ -22,8 +21,8 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         
-        {/* Rotas protegidas (embutidas no Layout da Portaria) */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
+        {/* Rotas protegidas da Portaria */}
+        <Route path="/portaria" element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
           <Route path="encomendas" element={<EncomendasList />} />
           <Route path="reservas" element={<ReservasList />} />
@@ -31,8 +30,17 @@ function App() {
           <Route path="visitantes" element={<VisitantesList />} />
         </Route>
 
-        {/* Rotas do App do Morador (Mobile PWA) */}
-        <Route path="/app/login" element={<MoradorLogin />} />
+        {/* Rota Futura: Admin */}
+        <Route path="/admin" element={
+          <div className="min-h-screen flex items-center justify-center bg-gray-50 text-center p-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800 mb-2">Painel do Síndico</h1>
+              <p className="text-gray-500">Este módulo será construído na próxima fase.</p>
+            </div>
+          </div>
+        } />
+
+        {/* Rotas do App do Morador */}
         <Route path="/app" element={<MoradorLayout />}>
           <Route index element={<MoradorHome />} />
           <Route path="reservas" element={<MoradorReservas />} />
