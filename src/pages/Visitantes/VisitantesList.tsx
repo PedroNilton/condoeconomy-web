@@ -73,28 +73,28 @@ export function VisitantesList() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 h-full flex flex-col pb-20">
+      <div className="flex justify-between items-center px-4 pt-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Controle de Acesso</h1>
-          <p className="text-gray-500">Gerenciamento de visitantes e prestadores de serviço</p>
+          <h1 className="text-2xl font-bold text-gray-800">Visitantes</h1>
+          <p className="text-gray-500 text-sm">Controle de acesso do dia</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-        <div className="flex gap-4">
-          <div className="flex-1 relative">
+      <div className="px-4">
+        <div className="flex flex-col gap-3 bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="relative">
             <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input 
               type="text" 
-              placeholder="Buscar por nome, documento ou unidade..." 
+              placeholder="Buscar por nome ou unidade..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 outline-none text-sm"
             />
           </div>
           <select 
-            className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-600 focus:border-transparent outline-none"
+            className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-600 outline-none"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -106,97 +106,82 @@ export function VisitantesList() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="p-4 font-semibold text-sm text-gray-600">Visitante</th>
-                <th className="p-4 font-semibold text-sm text-gray-600">Tipo</th>
-                <th className="p-4 font-semibold text-sm text-gray-600">Destino / Responsável</th>
-                <th className="p-4 font-semibold text-sm text-gray-600">Status / Horários</th>
-                <th className="p-4 font-semibold text-sm text-gray-600 text-right">Ação</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-gray-500">Carregando visitantes de hoje...</td>
-                </tr>
-              ) : filteredVisitantes.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-gray-500">Nenhum visitante encontrado para hoje.</td>
-                </tr>
-              ) : (
-                filteredVisitantes.map(visitante => (
-                  <tr key={visitante.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                          <Users className="w-5 h-5 text-gray-500" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-800">{visitante.nome}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        visitante.tipo === 'VISITANTE' ? 'bg-purple-100 text-purple-800' : 'bg-orange-100 text-orange-800'
+      <div className="flex-1 px-4 overflow-y-auto no-scrollbar">
+        {loading ? (
+          <div className="text-center py-10 text-gray-500">Carregando visitantes...</div>
+        ) : filteredVisitantes.length === 0 ? (
+          <div className="text-center py-10 text-gray-500">Nenhum visitante encontrado.</div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {filteredVisitantes.map(visitante => (
+              <div key={visitante.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-gray-600" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-800 text-sm">{visitante.nome}</p>
+                      <span className={`inline-flex items-center px-2 py-0.5 mt-1 rounded text-[10px] font-bold ${
+                        visitante.tipo === 'VISITANTE' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
                       }`}>
-                        {visitante.tipo === 'VISITANTE' ? 'Visitante' : 'Prest. de Serviço'}
+                        {visitante.tipo === 'VISITANTE' ? 'VISITANTE' : 'PRESTADOR'}
                       </span>
-                    </td>
-                    <td className="p-4">
-                      <p className="font-medium text-gray-800">{visitante.unidadeDestino}</p>
-                      <p className="text-sm text-gray-500">Aut: {visitante.moradorResponsavel}</p>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex flex-col gap-1">
-                        {visitante.status === 'AGUARDANDO' && (
-                          <span className="inline-flex items-center gap-1 text-sm font-medium text-yellow-600">
-                            <Clock className="w-4 h-4" /> Aguardando
-                          </span>
-                        )}
-                        {visitante.status === 'NO_CONDOMINIO' && (
-                          <span className="inline-flex items-center gap-1 text-sm font-medium text-blue-600">
-                            <UserCheck className="w-4 h-4" /> No Condomínio (Entrou {formatHora(visitante.horaEntrada)})
-                          </span>
-                        )}
-                        {visitante.status === 'FINALIZADO' && (
-                          <span className="inline-flex items-center gap-1 text-sm font-medium text-gray-500">
-                            <CheckCircle2 className="w-4 h-4" /> Entrou {formatHora(visitante.horaEntrada)} • Saiu às {formatHora(visitante.horaSaida)}
-                          </span>
-                        )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500">Destino</p>
+                    <p className="font-bold text-gray-800 text-sm">{visitante.unidadeDestino}</p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-3 mb-3 border border-gray-100">
+                  <div className="flex flex-col gap-1.5">
+                    {visitante.status === 'AGUARDANDO' && (
+                      <span className="flex items-center gap-1 text-xs font-semibold text-yellow-600">
+                        <Clock className="w-3.5 h-3.5" /> Aguardando chegada
+                      </span>
+                    )}
+                    {visitante.status === 'NO_CONDOMINIO' && (
+                      <span className="flex items-center gap-1 text-xs font-semibold text-blue-600">
+                        <UserCheck className="w-3.5 h-3.5" /> No Condomínio (Entrou às {formatHora(visitante.horaEntrada)})
+                      </span>
+                    )}
+                    {visitante.status === 'FINALIZADO' && (
+                      <div className="flex flex-col gap-0.5 text-xs font-medium text-gray-500">
+                        <span className="flex items-center gap-1 text-green-600">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Entrou: {formatHora(visitante.horaEntrada)}
+                        </span>
+                        <span className="flex items-center gap-1 text-gray-600 ml-4 pl-4">
+                          ↳ Saiu: {formatHora(visitante.horaSaida)}
+                        </span>
                       </div>
-                    </td>
-                    <td className="p-4 text-right">
-                      {visitante.status === 'AGUARDANDO' && (
-                        <button 
-                          onClick={() => handleCheckin(visitante.id)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                        >
-                          Registrar Entrada
-                        </button>
-                      )}
-                      {visitante.status === 'NO_CONDOMINIO' && (
-                        <button 
-                          onClick={() => handleCheckout(visitante.id)}
-                          className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                        >
-                          Registrar Saída
-                        </button>
-                      )}
-                      {visitante.status === 'FINALIZADO' && (
-                        <span className="text-gray-400 text-sm italic pr-4">Finalizado</span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  {visitante.status === 'AGUARDANDO' && (
+                    <button 
+                      onClick={() => handleCheckin(visitante.id)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full transition-colors"
+                    >
+                      Registrar Entrada
+                    </button>
+                  )}
+                  {visitante.status === 'NO_CONDOMINIO' && (
+                    <button 
+                      onClick={() => handleCheckout(visitante.id)}
+                      className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium w-full transition-colors"
+                    >
+                      Registrar Saída
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
