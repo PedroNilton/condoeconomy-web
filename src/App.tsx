@@ -27,11 +27,6 @@ function App() {
         <Route path="/dashboard" element={<DashboardLayout />}>
           <Route index element={<DashboardHome />} />
           <Route path="encomendas" element={<EncomendasList />} />
-          <Route path="visitantes" element={
-            <div className="text-center py-12 text-gray-500">
-              Módulo de Visitantes (Em construção...)
-            </div>
-          } />
           <Route path="reservas" element={<ReservasList />} />
           <Route path="boletos" element={<BoletosList />} />
           <Route path="chamados" element={<ChamadosList />} />

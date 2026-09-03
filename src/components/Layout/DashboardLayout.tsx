@@ -1,13 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Package, CalendarDays, FileText, 
-  MessageSquare, LogOut, UserCheck, Users, ChevronLeft, ChevronRight, Building2, HelpCircle
+  MessageSquare, LogOut, UserCheck, ChevronLeft, ChevronRight, Building2, HelpCircle
 } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 export function DashboardLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('@CondoEconomy:token');
+    if (!token) {
+      navigate('/login', { replace: true });
+    }
+  }, [navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('@CondoEconomy:token');
@@ -80,19 +87,6 @@ export function DashboardLayout() {
           >
             <Package className="w-5 h-5 shrink-0" />
             {isSidebarOpen && <span className="whitespace-nowrap">Encomendas</span>}
-          </NavLink>
-
-          <NavLink 
-            to="/dashboard/visitantes"
-            className={({ isActive }) => 
-              `flex items-center py-3 rounded-lg transition-colors ${isSidebarOpen ? 'px-4 gap-3' : 'px-0 justify-center'} ${
-                isActive ? 'bg-blue-800/80 text-white font-medium' : 'text-blue-100 hover:bg-blue-900/50'
-              }`
-            }
-            title={!isSidebarOpen ? "Visitantes" : undefined}
-          >
-            <Users className="w-5 h-5 shrink-0" />
-            {isSidebarOpen && <span className="whitespace-nowrap">Visitantes</span>}
           </NavLink>
 
           <div className="pt-4 pb-2">

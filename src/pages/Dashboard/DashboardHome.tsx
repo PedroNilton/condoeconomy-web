@@ -1,6 +1,41 @@
-import { Package, Users, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Package, Users, AlertCircle, Loader2 } from 'lucide-react';
+import api from '../../services/api';
 
 export function DashboardHome() {
+  const [encomendas, setEncomendas] = useState(0);
+  const [visitantes, setVisitantes] = useState(0);
+  const [avisos, setAvisos] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        setLoading(true);
+        // 1. Encomendas Aguardando
+        const resEnc = await api.get('/api/v1/encomendas');
+        const aguardando = resEnc.data.filter((e: any) => e.status === 'AGUARDANDO_RETIRADA').length;
+        setEncomendas(aguardando);
+
+        // 2. Visitantes Hoje
+        const hoje = new Date().toISOString().split('T')[0];
+        const resVis = await api.get(`/api/v1/visitantes?dataVisita=${hoje}`);
+        setVisitantes(resVis.data.length);
+
+        // 3. Avisos (Chamados Abertos)
+        const resCham = await api.get('/api/v1/chamados');
+        const abertos = resCham.data.filter((c: any) => c.status === 'ABERTO').length;
+        setAvisos(abertos);
+      } catch (err) {
+        console.error('Erro ao carregar métricas:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMetrics();
+  }, []);
+
   return (
     <div className="space-y-6">
       <div>
@@ -17,7 +52,9 @@ export function DashboardHome() {
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Encomendas Aguardando</p>
-            <p className="text-2xl font-bold text-gray-900">14</p>
+            {loading ? <Loader2 className="w-6 h-6 animate-spin text-blue-600 mt-1" /> : (
+              <p className="text-2xl font-bold text-gray-900">{encomendas}</p>
+            )}
           </div>
         </div>
 
@@ -28,7 +65,9 @@ export function DashboardHome() {
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Visitantes Hoje</p>
-            <p className="text-2xl font-bold text-gray-900">32</p>
+            {loading ? <Loader2 className="w-6 h-6 animate-spin text-green-600 mt-1" /> : (
+              <p className="text-2xl font-bold text-gray-900">{visitantes}</p>
+            )}
           </div>
         </div>
 
@@ -38,8 +77,10 @@ export function DashboardHome() {
             <AlertCircle className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Avisos Pendentes</p>
-            <p className="text-2xl font-bold text-gray-900">2</p>
+            <p className="text-sm font-medium text-gray-500">Ouvidoria Pendente</p>
+            {loading ? <Loader2 className="w-6 h-6 animate-spin text-orange-600 mt-1" /> : (
+              <p className="text-2xl font-bold text-gray-900">{avisos}</p>
+            )}
           </div>
         </div>
 

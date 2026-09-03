@@ -1,13 +1,28 @@
-import { Building2, ArrowRight } from 'lucide-react';
+import { Building2, ArrowRight, Loader2 } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../../services/api';
 
 export function MoradorLogin() {
+  const [email, setEmail] = useState('carlos.silva@email.com');
+  const [senha, setSenha] = useState('123456');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulando login
-    navigate('/app');
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await api.post('/api/v1/auth/login', { email, senha });
+      localStorage.setItem('@CondoEconomy:token', response.data.token);
+      navigate('/app');
+    } catch (err) {
+      setError('Credenciais inválidas.');
+      setLoading(false);
+    }
   };
 
   return (
@@ -30,11 +45,18 @@ export function MoradorLogin() {
           <div className="flex-1">
             <form onSubmit={handleLogin} className="space-y-5 mt-10">
               
+              {error && (
+                <div className="bg-red-500/20 border border-red-500/50 text-red-100 p-3 rounded-lg text-sm text-center">
+                  {error}
+                </div>
+              )}
+
               <div className="space-y-1">
                 <label className="text-sm font-semibold text-gray-700">E-mail ou CPF</label>
                 <input 
                   type="text" 
-                  defaultValue="morador@jardins.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
                 />
               </div>
@@ -46,17 +68,23 @@ export function MoradorLogin() {
                 </div>
                 <input 
                   type="password" 
-                  defaultValue="123456"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
                 />
               </div>
 
               <button 
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 mt-4"
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 mt-4 disabled:opacity-70"
               >
-                Entrar
-                <ArrowRight className="w-5 h-5" />
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                  <>
+                    Entrar
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
               </button>
 
             </form>

@@ -4,8 +4,8 @@ import { Building2, Lock, Mail, ArrowRight } from 'lucide-react';
 import api from '../../services/api';
 
 export function Login() {
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
+  const [email, setEmail] = useState('porteiro@condominio.com');
+  const [senha, setSenha] = useState('123456');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();

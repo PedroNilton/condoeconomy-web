@@ -1,7 +1,17 @@
+import { useEffect } from 'react';
 import { Home, CalendarDays, FileText, MessageSquare, User } from 'lucide-react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 export function MoradorLayout() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('@CondoEconomy:token');
+    if (!token) {
+      navigate('/app/login', { replace: true });
+    }
+  }, [navigate]);
+
   return (
     <div className="min-h-screen bg-gray-100 flex justify-center">
       {/* Container que simula a tela do celular (Max Width) */}
