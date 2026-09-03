@@ -1,8 +1,34 @@
-import { Package, Bell, CalendarDays, FileText, Settings, UserCircle2 } from 'lucide-react';
+import { Package, Bell, CalendarDays, FileText, Settings, UserCircle2, Loader2, Megaphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import api from '../../../services/api';
+
+interface Aviso {
+  id: string;
+  titulo: string;
+  mensagem: string;
+  dataCriacao: string;
+  autor: string;
+}
 
 export function MoradorHome() {
   const navigate = useNavigate();
+  const [avisos, setAvisos] = useState<Aviso[]>([]);
+  const [loadingAvisos, setLoadingAvisos] = useState(true);
+
+  useEffect(() => {
+    const fetchAvisos = async () => {
+      try {
+        const res = await api.get('/api/v1/avisos');
+        setAvisos(res.data.slice(0, 3)); // Pega apenas os 3 avisos mais recentes para a Home
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingAvisos(false);
+      }
+    };
+    fetchAvisos();
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -15,8 +41,8 @@ export function MoradorHome() {
               <UserCircle2 className="w-8 h-8 text-blue-300" />
             </div>
             <div>
-              <p className="text-blue-100 text-sm font-medium">Olá, Carlos!</p>
-              <h2 className="text-white text-lg font-bold">Apt 101 - Bloco B</h2>
+              <p className="text-blue-100 text-sm font-medium">Olá, Morador!</p>
+              <h2 className="text-white text-lg font-bold">Bem-vindo</h2>
             </div>
           </div>
           <button className="relative w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center text-white hover:bg-blue-800 transition">
@@ -52,7 +78,7 @@ export function MoradorHome() {
         <div className="grid grid-cols-2 gap-4">
           
           <button 
-            onClick={() => navigate('/app/encomendas')}
+            onClick={() => alert('Em construção')}
             className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
           >
             <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 relative">
@@ -85,7 +111,7 @@ export function MoradorHome() {
           </button>
 
           <button 
-            onClick={() => navigate('/app/configuracoes')}
+            onClick={() => navigate('/app/perfil')}
             className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
           >
             <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-600">
@@ -100,16 +126,34 @@ export function MoradorHome() {
       {/* Mural de Avisos */}
       <div className="px-6 pb-6">
         <h3 className="text-sm font-bold text-gray-700 mb-4 tracking-wide uppercase">Mural do Síndico</h3>
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-          <div className="flex items-start gap-3">
-            <div className="w-2 h-2 mt-1.5 bg-blue-500 rounded-full"></div>
-            <div>
-              <h4 className="text-sm font-bold text-gray-800">Manutenção da Piscina</h4>
-              <p className="text-xs text-gray-500 mt-1">A piscina ficará interditada nesta quinta-feira (03/09) para tratamento de choque na água.</p>
-              <p className="text-[10px] text-gray-400 mt-2 font-medium">Há 2 horas • Administração</p>
-            </div>
+        
+        {loadingAvisos ? (
+          <div className="flex justify-center py-6">
+            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
           </div>
-        </div>
+        ) : avisos.length === 0 ? (
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
+             <Megaphone className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+             <p className="text-sm text-gray-500">Nenhum aviso no momento.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {avisos.map(aviso => (
+              <div key={aviso.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 mt-1.5 bg-blue-500 rounded-full shrink-0"></div>
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-800">{aviso.titulo}</h4>
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-3">{aviso.mensagem}</p>
+                    <p className="text-[10px] text-gray-400 mt-2 font-medium">
+                      {new Date(aviso.dataCriacao).toLocaleDateString('pt-BR')} • {aviso.autor}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
     </div>
