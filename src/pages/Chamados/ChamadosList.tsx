@@ -86,8 +86,8 @@ export function ChamadosList() {
               </div>
             </div>
             
-            <h5 className="font-semibold text-gray-800 text-sm mb-1 pl-2">{chamado.assunto}</h5>
-            <p className="text-xs text-gray-600 line-clamp-2 mb-3 pl-2">{chamado.descricao}</p>
+            <h5 className="font-semibold text-gray-800 text-sm mb-1 pl-2 break-words">{chamado.assunto}</h5>
+            <p className="text-xs text-gray-600 line-clamp-2 mb-3 pl-2 break-words">{chamado.descricao}</p>
             
             <div className="flex flex-col gap-3 mt-4 pt-3 border-t border-gray-100 pl-2">
               <div className="flex items-center justify-between">
@@ -132,20 +132,20 @@ export function ChamadosList() {
   );
 
   return (
-    <div className="space-y-6 h-full flex flex-col">
+    <div className="space-y-6 h-full flex flex-col pb-20 px-4 pt-4">
       {/* Header */}
       <div>
         <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
           <MessageSquare className="w-6 h-6 text-purple-600" />
-          Ouvidoria (Chamados)
+          Ouvidoria
         </h3>
-        <p className="text-gray-500 mt-1">Acompanhe as solicitações, reclamações e sugestões dos moradores.</p>
+        <p className="text-gray-500 mt-1 text-sm">Acompanhe as solicitações, reclamações e sugestões dos moradores.</p>
       </div>
 
       {loading ? (
         <div className="text-center py-10">Carregando chamados...</div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
+        <div className="flex flex-col gap-6 flex-1 overflow-y-auto no-scrollbar pb-6">
           <Column 
             title="Abertos" 
             statusId="ABERTO" 
