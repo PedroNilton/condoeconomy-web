@@ -1,21 +1,41 @@
+import { useState, useEffect } from 'react';
 import { DollarSign, TrendingUp, TrendingDown, AlertCircle, FileText } from 'lucide-react';
+import api from '../../../services/api';
+
+interface BoletoResumo {
+  id: string;
+  unidade: string;
+  valor: number;
+  status: string;
+  data: string;
+}
+
+interface DashboardMetrics {
+  receitaPrevista: number;
+  receitaArrecadada: number;
+  despesas: number;
+  inadimplencia: number;
+  unidadesInadimplentes: number;
+  boletosRecentes: BoletoResumo[];
+}
 
 export function FinancasAdminPanel() {
-  // Mock data for the financial dashboard
-  const metrics = {
-    receitaPrevista: 45000.00,
-    receitaArrecadada: 38500.00,
-    despesas: 22400.00,
-    inadimplencia: 14.4, // %
-    unidadesInadimplentes: 12
-  };
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
 
-  const boletosRecentes = [
-    { id: 1, unidade: 'Apto 101', valor: 450.00, status: 'PAGO', data: '10/10/2026' },
-    { id: 2, unidade: 'Apto 304', valor: 450.00, status: 'ATRASADO', data: '10/09/2026' },
-    { id: 3, unidade: 'Apto 202', valor: 450.00, status: 'PAGO', data: '09/10/2026' },
-    { id: 4, unidade: 'Apto 505', valor: 450.00, status: 'PENDENTE', data: '10/10/2026' },
-  ];
+  useEffect(() => {
+    api.get('/api/v1/financas/dashboard')
+      .then(res => setMetrics(res.data))
+      .catch(err => console.error(err));
+  }, []);
+
+  if (!metrics) {
+    return <div className="p-4 text-center">Carregando painel financeiro...</div>;
+  }
+
+  const { receitaPrevista, receitaArrecadada, despesas, inadimplencia, unidadesInadimplentes, boletosRecentes } = metrics;
+  
+  // Evitar divisao por zero
+  const progressoArrecadacao = receitaPrevista > 0 ? (receitaArrecadada / receitaPrevista) * 100 : 0;
 
   return (
     <div className="space-y-6 p-4 pb-24 h-full overflow-y-auto bg-gray-50 no-scrollbar">
@@ -36,7 +56,7 @@ export function FinancasAdminPanel() {
           </div>
           <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Arrecadado</p>
           <p className="text-lg font-bold text-gray-800 mt-1">
-            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.receitaArrecadada)}
+            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(receitaArrecadada)}
           </p>
         </div>
 
@@ -46,7 +66,7 @@ export function FinancasAdminPanel() {
           </div>
           <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">Despesas</p>
           <p className="text-lg font-bold text-gray-800 mt-1">
-             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.despesas)}
+             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(despesas)}
           </p>
         </div>
       </div>
@@ -55,9 +75,9 @@ export function FinancasAdminPanel() {
       <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 flex items-start gap-3">
         <AlertCircle className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
         <div>
-          <h4 className="text-sm font-bold text-orange-800">Inadimplência: {metrics.inadimplencia}%</h4>
+          <h4 className="text-sm font-bold text-orange-800">Inadimplência: {inadimplencia}%</h4>
           <p className="text-xs text-orange-600 mt-1">
-            {metrics.unidadesInadimplentes} unidades estão com boletos em atraso neste mês.
+            {unidadesInadimplentes} unidades estão com boletos em atraso neste mês.
           </p>
         </div>
       </div>
@@ -68,17 +88,17 @@ export function FinancasAdminPanel() {
           <div>
             <p className="text-xs font-semibold text-gray-500">Meta de Arrecadação</p>
             <p className="text-sm font-bold text-gray-800">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metrics.receitaPrevista)}
+              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(receitaPrevista)}
             </p>
           </div>
           <span className="text-xs font-bold text-blue-600">
-            {Math.round((metrics.receitaArrecadada / metrics.receitaPrevista) * 100)}%
+            {Math.round(progressoArrecadacao)}%
           </span>
         </div>
         <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
           <div 
             className="bg-blue-600 h-2.5 rounded-full" 
-            style={{ width: `${(metrics.receitaArrecadada / metrics.receitaPrevista) * 100}%` }}
+            style={{ width: `${Math.min(progressoArrecadacao, 100)}%` }}
           ></div>
         </div>
       </div>
