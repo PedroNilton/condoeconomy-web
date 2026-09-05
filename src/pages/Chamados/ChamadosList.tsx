@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MessageSquare, AlertTriangle, CheckCircle2, Clock, Wrench } from 'lucide-react';
 import api from '../../services/api';
+import { useWebSocket } from '../../hooks/useWebSocket';
 
 interface Chamado {
   id: string;
@@ -16,6 +17,11 @@ interface Chamado {
 export function ChamadosList() {
   const [chamados, setChamados] = useState<Chamado[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Hook WebSocket (só atualiza a lista se vier evento de UPDATE)
+  useWebSocket('/topic/chamados', () => {
+    fetchChamados();
+  });
 
   useEffect(() => {
     fetchChamados();

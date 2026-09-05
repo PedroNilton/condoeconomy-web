@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar, CheckCircle, XCircle, Loader2, Clock } from 'lucide-react';
 import api from '../../../services/api';
+import { useWebSocket } from '../../../hooks/useWebSocket';
 
 interface Reserva {
   id: string;
@@ -17,6 +18,10 @@ interface Reserva {
 export function ReservasApprovalPanel() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useWebSocket('/topic/reservas', () => {
+    fetchReservas();
+  });
 
   const fetchReservas = async () => {
     try {

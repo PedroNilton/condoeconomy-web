@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MessageSquareWarning, Loader2, RefreshCcw } from 'lucide-react';
 import api from '../../../services/api';
+import { useWebSocket } from '../../../hooks/useWebSocket';
 
 interface Chamado {
   id: string;
@@ -17,6 +18,10 @@ interface Chamado {
 export function OuvidoriaAdminPanel() {
   const [chamados, setChamados] = useState<Chamado[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useWebSocket('/topic/chamados', () => {
+    fetchChamados();
+  });
 
   const fetchChamados = async () => {
     try {

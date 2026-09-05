@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { UserCheck, Search, Users, CheckCircle2, Clock } from 'lucide-react';
 import api from '../../services/api';
+import { useWebSocket } from '../../hooks/useWebSocket';
 
 interface Visitante {
   id: string;
@@ -20,6 +21,10 @@ export function VisitantesList() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('TODOS'); // TODOS, AGUARDANDO, NO_CONDOMINIO, FINALIZADO
+
+  useWebSocket('/topic/visitantes', () => {
+    fetchVisitantes();
+  });
 
   const fetchVisitantes = async () => {
     try {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CalendarDays, MapPin, Users, CheckCircle, Clock } from 'lucide-react';
 import api from '../../services/api';
+import { useWebSocket } from '../../hooks/useWebSocket';
 
 interface Convidado {
   id: string;
@@ -27,6 +28,10 @@ export function ReservasList() {
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [dataSelecionada, setDataSelecionada] = useState<string>(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
+
+  useWebSocket('/topic/reservas', () => {
+    fetchReservas();
+  });
 
   useEffect(() => {
     fetchReservas();
