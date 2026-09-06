@@ -18,11 +18,13 @@ import { AvisosPanel } from './pages/Admin/Avisos/AvisosPanel';
 import { ReservasApprovalPanel } from './pages/Admin/Reservas/ReservasApprovalPanel';
 import { OuvidoriaAdminPanel } from './pages/Admin/Ouvidoria/OuvidoriaAdminPanel';
 import { FinancasAdminPanel } from './pages/Admin/Financas/FinancasAdminPanel';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
+      <NotificationProvider>
+        <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         
@@ -53,6 +55,7 @@ function App() {
           <Route path="perfil" element={<MoradorPerfil />} />
         </Route>
       </Routes>
+      </NotificationProvider>
     </BrowserRouter>
   );
 }

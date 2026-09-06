@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { Home, UserCheck, Package, CalendarDays, MessageSquare } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useNotification } from '../../contexts/NotificationContext';
 
 export function DashboardLayout() {
   const navigate = useNavigate();
+  const { counts } = useNotification();
 
   useEffect(() => {
     const token = localStorage.getItem('@CondoEconomy:token');
@@ -56,17 +58,31 @@ export function DashboardLayout() {
 
           <NavLink 
             to="/portaria/visitantes" 
-            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <UserCheck className="w-6 h-6" />
+            <div className="relative">
+              <UserCheck className="w-6 h-6" />
+              {counts.visitantesAguardando > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {counts.visitantesAguardando}
+                </span>
+              )}
+            </div>
             <span className="text-[10px] font-medium">Visitantes</span>
           </NavLink>
 
           <NavLink 
             to="/portaria/encomendas" 
-            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <Package className="w-6 h-6" />
+            <div className="relative">
+              <Package className="w-6 h-6" />
+              {counts.encomendasPendentes > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {counts.encomendasPendentes}
+                </span>
+              )}
+            </div>
             <span className="text-[10px] font-medium">Encomendas</span>
           </NavLink>
 
@@ -80,9 +96,16 @@ export function DashboardLayout() {
 
           <NavLink 
             to="/portaria/chamados" 
-            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <MessageSquare className="w-6 h-6" />
+            <div className="relative">
+              <MessageSquare className="w-6 h-6" />
+              {counts.chamadosPortaria > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {counts.chamadosPortaria}
+                </span>
+              )}
+            </div>
             <span className="text-[10px] font-medium">Ouvidoria</span>
           </NavLink>
 

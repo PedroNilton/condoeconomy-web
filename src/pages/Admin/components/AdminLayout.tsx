@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { Home, Megaphone, LogOut, Calendar, MessageSquareWarning } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useNotification } from '../../../contexts/NotificationContext';
 
 export function AdminLayout() {
   const navigate = useNavigate();
+  const { counts } = useNotification();
 
   useEffect(() => {
     const token = localStorage.getItem('@CondoEconomy:token');
@@ -54,17 +56,31 @@ export function AdminLayout() {
 
           <NavLink 
             to="/admin/reservas" 
-            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-colors ${isActive ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <Calendar className="w-5 h-5" />
+            <div className="relative">
+              <Calendar className="w-5 h-5" />
+              {counts.reservasAdmin > 0 && (
+                <span className="absolute -top-1 -right-2 bg-yellow-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {counts.reservasAdmin}
+                </span>
+              )}
+            </div>
             <span className="text-[10px] font-medium">Reservas</span>
           </NavLink>
 
           <NavLink 
             to="/admin/ouvidoria" 
-            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-colors ${isActive ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            <MessageSquareWarning className="w-5 h-5" />
+            <div className="relative">
+              <MessageSquareWarning className="w-5 h-5" />
+              {counts.chamadosAdmin > 0 && (
+                <span className="absolute -top-1 -right-2 bg-yellow-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {counts.chamadosAdmin}
+                </span>
+              )}
+            </div>
             <span className="text-[10px] font-medium">Ouvidoria</span>
           </NavLink>
 
