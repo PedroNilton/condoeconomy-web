@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { UserCheck, Search, Users, CheckCircle2, Clock } from 'lucide-react';
+import { UserCheck, Search, Users, CheckCircle2, Clock, QrCode, X } from 'lucide-react';
 import api from '../../services/api';
 import { useWebSocket } from '../../hooks/useWebSocket';
+import { QRScanner } from './components/QRScanner';
 
 interface Visitante {
   id: string;
@@ -20,7 +21,8 @@ export function VisitantesList() {
   const [visitantes, setVisitantes] = useState<Visitante[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('TODOS'); // TODOS, AGUARDANDO, NO_CONDOMINIO, FINALIZADO
+  const [statusFilter, setStatusFilter] = useState('TODOS');
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   useWebSocket('/topic/visitantes', () => {
     fetchVisitantes();
@@ -29,7 +31,6 @@ export function VisitantesList() {
   const fetchVisitantes = async () => {
     try {
       setLoading(true);
-      // Busca visitantes de hoje
       const hoje = new Date().toISOString().split('T')[0];
       const res = await api.get(`/api/v1/visitantes?dataVisita=${hoje}`);
       setVisitantes(res.data);
@@ -188,6 +189,42 @@ export function VisitantesList() {
           </div>
         )}
       </div>
+
+      {/* Floating Action Button */}
+      <button 
+        onClick={() => setIsScannerOpen(true)}
+        className="absolute bottom-20 right-4 bg-blue-600 text-white p-4 rounded-full shadow-[0_4px_15px_rgba(37,99,235,0.4)] hover:bg-blue-700 transition"
+      >
+        <QrCode className="w-6 h-6" />
+      </button>
+
+      {/* Scanner Modal */}
+      {isScannerOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 relative flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setIsScannerOpen(false)}
+              className="absolute right-4 top-4 w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition z-10"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            <h3 className="text-xl font-bold text-gray-800 mb-4 mt-2">Ler QR Code</h3>
+            
+            <div className="w-full mb-6 relative">
+              <QRScanner 
+                onScanSuccess={(decodedText) => {
+                  handleCheckin(decodedText);
+                  setIsScannerOpen(false);
+                }} 
+              />
+            </div>
+            
+            <p className="text-sm text-gray-500 text-center mb-2">Aponte a câmera para o QR Code do visitante para liberar o acesso automaticamente.</p>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

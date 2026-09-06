@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { UserPlus, Loader2, ArrowLeft, UserCheck, Clock } from 'lucide-react';
+import { UserCheck, UserPlus, ArrowLeft, Clock, Loader2, QrCode, X } from 'lucide-react';
 import api from '../../../services/api';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface Visitante {
   id: string;
@@ -14,6 +15,7 @@ export function MoradorVisitantes() {
   const [visitantes, setVisitantes] = useState<Visitante[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedQrCode, setSelectedQrCode] = useState<string | null>(null);
 
   // Form states
   const [nome, setNome] = useState('');
@@ -169,7 +171,7 @@ export function MoradorVisitantes() {
         ) : (
           <div className="space-y-4">
             {visitantes.map(vis => (
-              <div key={vis.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 relative overflow-hidden">
+              <div key={vis.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 relative overflow-hidden flex justify-between items-center">
                 <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${
                   vis.status === 'AGUARDANDO' ? 'bg-yellow-500' :
                   vis.status === 'NO_CONDOMINIO' ? 'bg-blue-500' : 'bg-gray-300'
@@ -177,13 +179,6 @@ export function MoradorVisitantes() {
                 <div className="pl-3">
                   <div className="flex justify-between items-start mb-1">
                     <h4 className="font-bold text-gray-800 text-sm">{vis.nome}</h4>
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-md border uppercase ${
-                      vis.status === 'AGUARDANDO' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                      vis.status === 'NO_CONDOMINIO' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                      'bg-gray-50 text-gray-600 border-gray-200'
-                    }`}>
-                      {vis.status.replace('_', ' ')}
-                    </span>
                   </div>
                   <p className="text-xs text-gray-500 mb-3 font-medium">
                     {vis.tipo === 'VISITANTE' ? 'Visitante' : 'Prest. Serviço'}
@@ -193,13 +188,63 @@ export function MoradorVisitantes() {
                     <span className="bg-gray-50 px-2 py-1 rounded flex items-center gap-1 border border-gray-100">
                       <Clock className="w-3.5 h-3.5" /> {new Date(vis.dataVisita).toLocaleDateString('pt-BR')}
                     </span>
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-md border uppercase ${
+                      vis.status === 'AGUARDANDO' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                      vis.status === 'NO_CONDOMINIO' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                      'bg-gray-50 text-gray-600 border-gray-200'
+                    }`}>
+                      {vis.status.replace('_', ' ')}
+                    </span>
                   </div>
                 </div>
+
+                {vis.status === 'AGUARDANDO' && (
+                  <button 
+                    onClick={() => setSelectedQrCode(vis.id)}
+                    className="p-3 bg-gray-50 text-blue-600 hover:bg-blue-50 rounded-xl transition"
+                    title="Ver QR Code"
+                  >
+                    <QrCode className="w-6 h-6" />
+                  </button>
+                )}
+
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Modal QR Code */}
+      {selectedQrCode && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 relative flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setSelectedQrCode(null)}
+              className="absolute right-4 top-4 w-8 h-8 flex items-center justify-center bg-gray-100 text-gray-600 rounded-full hover:bg-gray-200 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 mb-4 mt-2">
+              <QrCode className="w-6 h-6" />
+            </div>
+            
+            <h3 className="text-xl font-bold text-gray-800 mb-1 text-center">Código de Acesso</h3>
+            <p className="text-sm text-gray-500 text-center mb-6">Apresente este QR Code na portaria para entrar mais rápido.</p>
+
+            <div className="bg-white p-4 border border-gray-200 rounded-2xl shadow-sm mb-6">
+              <QRCodeSVG value={selectedQrCode} size={200} />
+            </div>
+            
+            <button 
+              onClick={() => setSelectedQrCode(null)}
+              className="w-full font-bold py-3 text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );
