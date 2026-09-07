@@ -28,7 +28,7 @@ export function AdminLayout() {
         <header className="bg-red-900 text-white flex justify-between items-center px-4 h-16 shrink-0 shadow-md z-10">
           <div>
             <h2 className="text-lg font-bold tracking-wider">SÍNDICO</h2>
-            <p className="text-[10px] text-red-200 uppercase tracking-widest">Condomínio Jardins</p>
+            <p className="text-[10px] text-red-200 uppercase tracking-widest">Condomínio Mar Egeu</p>
           </div>
           <button 
             onClick={handleLogout}

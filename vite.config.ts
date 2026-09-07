@@ -12,9 +12,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
-        name: 'CondoEconomy',
-        short_name: 'CondoEconomy',
-        description: 'O app do seu condomínio',
+        name: 'Portal Mar Egeu',
+        short_name: 'Mar Egeu',
+        description: 'App do Condomínio Mar Egeu',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',

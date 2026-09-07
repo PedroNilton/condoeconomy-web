@@ -1,4 +1,4 @@
-import { Building2, ArrowRight, Loader2 } from 'lucide-react';
+import { Waves, ArrowRight, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
@@ -31,7 +31,7 @@ export function Login() {
       }
       
     } catch (err) {
-      setError('Credenciais inválidas.');
+      setError('Credenciais invǭlidas.');
       setLoading(false);
     }
   };
@@ -41,16 +41,16 @@ export function Login() {
       <div className="w-full max-w-md bg-white h-screen flex flex-col shadow-2xl overflow-hidden relative">
         
         {/* Background Decorativo */}
-        <div className="absolute top-0 w-full h-64 bg-gradient-to-br from-blue-700 to-blue-950 rounded-b-[40px] shadow-lg"></div>
+        <div className="absolute top-0 w-full h-64 bg-gradient-to-br from-cyan-600 to-blue-900 rounded-b-[40px] shadow-lg"></div>
 
         <div className="relative z-10 flex flex-col h-full px-8 pt-20">
           
           <div className="flex flex-col items-center mb-12">
             <div className="w-20 h-20 bg-white rounded-2xl shadow-xl flex items-center justify-center mb-4">
-              <Building2 className="w-10 h-10 text-blue-600" />
+              <Waves className="w-10 h-10 text-cyan-600" />
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-wide">CondoEconomy</h1>
-            <p className="text-blue-100 text-sm mt-1">O app do seu condomínio</p>
+            <h1 className="text-2xl font-bold text-white tracking-wide">Mar Egeu</h1>
+            <p className="text-blue-100 text-sm mt-1">Portal do Condomínio</p>
           </div>
 
           <div className="flex-1">

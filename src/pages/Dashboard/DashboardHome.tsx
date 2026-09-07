@@ -40,7 +40,7 @@ export function DashboardHome() {
     <div className="space-y-6">
       <div>
         <h3 className="text-2xl font-semibold text-gray-800">Visão Geral</h3>
-        <p className="text-gray-500 mt-1">Bem-vindo ao painel da portaria do Condomínio Jardins.</p>
+        <p className="text-gray-500 mt-1">Bem-vindo ao painel da portaria do Condomínio Mar Egeu.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

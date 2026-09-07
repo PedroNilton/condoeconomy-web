@@ -28,7 +28,7 @@ export function DashboardLayout() {
         <header className="bg-blue-900 text-white flex justify-between items-center px-4 h-16 shrink-0 shadow-md z-10">
           <div>
             <h2 className="text-lg font-bold tracking-wider">PORTARIA</h2>
-            <p className="text-[10px] text-blue-200 uppercase tracking-widest">Condomínio Jardins</p>
+            <p className="text-[10px] text-blue-200 uppercase tracking-widest">Condomínio Mar Egeu</p>
           </div>
           <button 
             onClick={handleLogout}
