@@ -69,7 +69,7 @@ export function ReservasApprovalPanel() {
   }
 
   return (
-    <div className="p-6 pb-24 h-full overflow-y-auto bg-gray-50">
+    <div className="h-full overflow-y-auto no-scrollbar">
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center text-red-600">
           <Calendar className="w-5 h-5" />

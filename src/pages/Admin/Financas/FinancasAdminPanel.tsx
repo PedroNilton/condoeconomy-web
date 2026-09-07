@@ -38,7 +38,7 @@ export function FinancasAdminPanel() {
   const progressoArrecadacao = receitaPrevista > 0 ? (receitaArrecadada / receitaPrevista) * 100 : 0;
 
   return (
-    <div className="space-y-6 p-4 pb-24 h-full overflow-y-auto bg-gray-50 no-scrollbar">
+    <div className="space-y-6 h-full overflow-y-auto no-scrollbar">
       {/* Header */}
       <div>
         <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">

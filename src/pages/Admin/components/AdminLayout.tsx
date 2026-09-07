@@ -39,7 +39,7 @@ export function AdminLayout() {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-0 no-scrollbar relative">
+        <main className="flex-1 overflow-y-auto p-4 pb-20 no-scrollbar relative">
           <Outlet />
         </main>
 
