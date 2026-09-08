@@ -74,13 +74,15 @@ export function MoradorPerfil() {
       {/* Header Profile */}
       <div className="bg-blue-600 px-6 pt-12 pb-8 rounded-b-[40px] shadow-md">
         <div className="flex flex-col items-center">
-          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg mb-4 border-4 border-blue-500 relative overflow-hidden">
-            {foto ? (
-              <img src={foto} alt="Perfil" className="w-full h-full object-cover" />
-            ) : (
-              <UserCircle2 className="w-16 h-16 text-blue-300" />
-            )}
-            <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 rounded-full border-2 border-white"></div>
+          <div className="relative mb-4 shadow-lg rounded-full">
+            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center border-4 border-blue-500 overflow-hidden">
+              {foto ? (
+                <img src={foto} alt="Perfil" className="w-full h-full object-cover" />
+              ) : (
+                <UserCircle2 className="w-16 h-16 text-blue-300" />
+              )}
+            </div>
+            <div className="absolute bottom-1 right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white shadow-sm z-10"></div>
           </div>
           <h2 className="text-xl font-bold text-white text-center">{nome}</h2>
           <p className="text-blue-200 text-sm font-medium mt-1">Apto {apto} {bloco ? `• Bloco ${bloco}` : ''}</p>
