@@ -132,7 +132,7 @@ export function VisitantesList() {
                     <div>
                       <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">{visitante.nome}</p>
                       <span className={`inline-flex items-center px-2 py-0.5 mt-1 rounded text-[10px] font-bold ${
-                        visitante.tipo === 'VISITANTE' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
+                        visitante.tipo === 'VISITANTE' ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400' : 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400'
                       }`}>
                         {visitante.tipo === 'VISITANTE' ? 'VISITANTE' : 'PRESTADOR'}
                       </span>

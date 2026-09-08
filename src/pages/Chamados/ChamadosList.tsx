@@ -71,7 +71,7 @@ export function ChamadosList() {
     <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 flex flex-col gap-4 min-h-[500px]">
       <div className="flex items-center justify-between">
         <h4 className="font-semibold text-gray-700 dark:text-gray-200">{title}</h4>
-        <span className="bg-gray-200 text-gray-600 dark:text-gray-300 text-xs font-bold px-2 py-1 rounded-full">
+        <span className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs font-bold px-2 py-1 rounded-full">
           {items.length}
         </span>
       </div>
@@ -106,7 +106,7 @@ export function ChamadosList() {
                   {statusId === 'ABERTO' && (
                     <button 
                       onClick={() => handleUpdateStatus(chamado.id, 'EM_ANDAMENTO')}
-                      className="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-medium transition"
+                      className="text-xs bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 px-3 py-1.5 rounded-lg font-medium transition"
                     >
                       Atender
                     </button>
@@ -114,7 +114,7 @@ export function ChamadosList() {
                   {statusId === 'EM_ANDAMENTO' && (
                     <button 
                       onClick={() => handleUpdateStatus(chamado.id, 'RESOLVIDO')}
-                      className="text-xs bg-green-50 text-green-600 hover:bg-green-100 px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1"
+                      className="text-xs bg-green-50 dark:bg-green-900/40 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/60 px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" /> Resolver
                     </button>

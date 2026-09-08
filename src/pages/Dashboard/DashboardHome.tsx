@@ -57,13 +57,13 @@ export function DashboardHome() {
           onClick={() => navigate('/portaria/encomendas')}
           className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4 hover:border-blue-300 hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <div className="bg-blue-100 p-3 rounded-lg text-blue-700">
+          <div className="bg-blue-100 dark:bg-blue-900/40 p-3 rounded-lg text-blue-700 dark:text-blue-400">
             <Package className="w-8 h-8" />
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Encomendas Aguardando</p>
             {loading ? <Loader2 className="w-6 h-6 animate-spin text-blue-600 mt-1" /> : (
-              <p className="text-2xl font-bold text-gray-900">{encomendas}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{encomendas}</p>
             )}
           </div>
         </button>
@@ -73,13 +73,13 @@ export function DashboardHome() {
           onClick={() => navigate('/portaria/visitantes')}
           className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4 hover:border-green-300 hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-green-500"
         >
-          <div className="bg-green-100 p-3 rounded-lg text-green-700">
+          <div className="bg-green-100 dark:bg-green-900/40 p-3 rounded-lg text-green-700 dark:text-green-400">
             <Users className="w-8 h-8" />
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Visitantes Hoje</p>
             {loading ? <Loader2 className="w-6 h-6 animate-spin text-green-600 mt-1" /> : (
-              <p className="text-2xl font-bold text-gray-900">{visitantes}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitantes}</p>
             )}
           </div>
         </button>
@@ -89,13 +89,13 @@ export function DashboardHome() {
           onClick={() => navigate('/portaria/chamados')}
           className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4 hover:border-orange-300 hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-orange-500"
         >
-          <div className="bg-orange-100 p-3 rounded-lg text-orange-700">
+          <div className="bg-orange-100 dark:bg-orange-900/40 p-3 rounded-lg text-orange-700 dark:text-orange-400">
             <AlertCircle className="w-8 h-8" />
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Ouvidoria Pendente</p>
             {loading ? <Loader2 className="w-6 h-6 animate-spin text-orange-600 mt-1" /> : (
-              <p className="text-2xl font-bold text-gray-900">{avisos}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{avisos}</p>
             )}
           </div>
         </button>

@@ -52,9 +52,9 @@ export function EncomendasList() {
   };
 
   const getStatusStyle = (status: string) => {
-    if (status === 'AGUARDANDO_RETIRADA') return 'bg-blue-100 text-blue-800';
-    if (status === 'RETIRADA') return 'bg-green-100 text-green-800';
-    if (status === 'ENTREGUE') return 'bg-green-100 text-green-800';
+    if (status === 'AGUARDANDO_RETIRADA') return 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-400';
+    if (status === 'RETIRADA') return 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400';
+    if (status === 'ENTREGUE') return 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400';
     return 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100';
   };
 
@@ -138,7 +138,7 @@ export function EncomendasList() {
             <div className="bg-gray-50 dark:bg-gray-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100 dark:border-gray-700">
               <Package className="w-8 h-8 text-gray-400" />
             </div>
-            <h4 className="text-lg font-medium text-gray-900">Nenhuma encomenda encontrada</h4>
+            <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">Nenhuma encomenda encontrada</h4>
             <p className="text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">Não há pacotes registrados no momento ou eles não correspondem aos filtros aplicados.</p>
           </div>
         ) : (
@@ -159,7 +159,7 @@ export function EncomendasList() {
               <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {filteredEncomendas.map((enc) => (
                   <tr key={enc.id} className="hover:bg-gray-50 dark:bg-gray-900 transition-colors">
-                    <td className="px-6 py-4 font-medium text-gray-900">{enc.codigoRastreio}</td>
+                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">{enc.codigoRastreio}</td>
                     <td className="px-6 py-4 text-gray-700 dark:text-gray-200">{enc.destinatario}</td>
                     <td className="px-6 py-4 text-gray-700 dark:text-gray-200 font-medium">{enc.unidade}</td>
                     <td className="px-6 py-4 text-gray-500 dark:text-gray-400">{enc.transportadora}</td>

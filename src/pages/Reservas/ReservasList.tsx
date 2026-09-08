@@ -84,10 +84,10 @@ export function ReservasList() {
         <div className="text-center py-20 text-gray-500 dark:text-gray-400">Carregando agenda...</div>
       ) : reservas.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-12 text-center shadow-sm">
-          <div className="bg-purple-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CalendarDays className="w-8 h-8 text-purple-400" />
+          <div className="bg-purple-50 dark:bg-purple-900/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CalendarDays className="w-8 h-8 text-purple-400 dark:text-purple-300" />
           </div>
-          <h4 className="text-lg font-medium text-gray-900">Agenda Livre</h4>
+          <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">Agenda Livre</h4>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Nenhuma reserva confirmada para este dia.</p>
         </div>
       ) : (
@@ -103,7 +103,7 @@ export function ReservasList() {
                     <span className="flex items-center gap-1">Apto: <strong className="text-gray-800 dark:text-gray-100">{reserva.unidade}</strong> ({reserva.moradorSolicitante})</span>
                   </div>
                 </div>
-                <div className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                <div className="px-3 py-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400 rounded-full text-xs font-semibold">
                   {reserva.status}
                 </div>
               </div>
