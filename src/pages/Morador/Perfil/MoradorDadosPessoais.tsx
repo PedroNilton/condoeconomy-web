@@ -7,6 +7,8 @@ export function MoradorDadosPessoais() {
   const navigate = useNavigate();
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
+  const [apartamento, setApartamento] = useState('');
+  const [bloco, setBloco] = useState('');
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
@@ -16,6 +18,8 @@ export function MoradorDadosPessoais() {
         const res = await api.get('/api/v1/perfil/dados');
         setNome(res.data.nome || '');
         setTelefone(res.data.telefone || '');
+        setApartamento(res.data.apartamento || '');
+        setBloco(res.data.bloco || '');
       } catch (err) {
         console.error(err);
       } finally {
@@ -29,7 +33,7 @@ export function MoradorDadosPessoais() {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.put('/api/v1/perfil/dados', { nome, telefone });
+      await api.put('/api/v1/perfil/dados', { nome, telefone, apartamento, bloco });
       alert('Dados salvos com sucesso!');
       navigate(-1);
     } catch (err) {
@@ -77,6 +81,29 @@ export function MoradorDadosPessoais() {
                 placeholder="(00) 00000-0000"
               />
             </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Apartamento</label>
+                <input 
+                  type="text" 
+                  value={apartamento}
+                  onChange={e => setApartamento(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  placeholder="Ex: 101"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Bloco</label>
+                <input 
+                  type="text" 
+                  value={bloco}
+                  onChange={e => setBloco(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  placeholder="Ex: B"
+                />
+              </div>
+            </div>
 
             <button 
               type="submit" 
@@ -84,7 +111,7 @@ export function MoradorDadosPessoais() {
               className="w-full mt-6 flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 active:bg-blue-800 transition-colors disabled:opacity-70"
             >
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-              Salvar Alteraçes
+              Salvar Alterações
             </button>
           </form>
         )}
