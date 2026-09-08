@@ -64,8 +64,8 @@ export function ReservasList() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-            <CalendarDays className="w-10 h-10 text-blue-900" strokeWidth={2.5} />
-            Agenda de Áreas Comuns
+            <CalendarDays className="w-6 h-6 text-blue-900" />
+            Reservas
           </h3>
           <p className="text-gray-500 mt-1">Controle os salões e a entrada de convidados no dia.</p>
         </div>
