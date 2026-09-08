@@ -111,7 +111,7 @@ export function MoradorVisitantes() {
               <select 
                 value={tipo}
                 onChange={e => setTipo(e.target.value)}
-                className="w-full p-3.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 shadow-sm"
+                className="w-full p-3.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 shadow-sm"
                 required
               >
                 <option value="VISITANTE">Visitante / Convidado</option>

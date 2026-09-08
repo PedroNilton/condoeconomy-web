@@ -111,7 +111,7 @@ export function EncomendasList() {
         <select 
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 outline-none focus:ring-2 focus:ring-blue-600"
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 outline-none focus:ring-2 focus:ring-blue-600"
         >
           <option value="">Todos os Status</option>
           <option value="AGUARDANDO_RETIRADA">Aguardando Retirada</option>

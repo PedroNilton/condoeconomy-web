@@ -114,7 +114,7 @@ export function MoradorReservas() {
               <select 
                 value={selectedArea}
                 onChange={e => setSelectedArea(e.target.value)}
-                className="w-full p-3.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 shadow-sm"
+                className="w-full p-3.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 shadow-sm"
                 required
               >
                 <option value="">Selecione uma área...</option>
