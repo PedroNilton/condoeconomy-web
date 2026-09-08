@@ -142,52 +142,57 @@ export function EncomendasList() {
             <p className="text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">Não há pacotes registrados no momento ou eles não correspondem aos filtros aplicados.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400 text-sm border-b border-gray-200 dark:border-gray-700">
-                  <th className="px-6 py-4 font-medium">Código</th>
-                  <th className="px-6 py-4 font-medium">Destinatário</th>
-                  <th className="px-6 py-4 font-medium">Unidade</th>
-                  <th className="px-6 py-4 font-medium">Transportadora</th>
-                  <th className="px-6 py-4 font-medium">Data Chegada</th>
-                  <th className="px-6 py-4 font-medium">Data Retirada</th>
-                  <th className="px-6 py-4 font-medium">Status</th>
-                  <th className="px-6 py-4 font-medium text-right">Ação</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                {filteredEncomendas.map((enc) => (
-                  <tr key={enc.id} className="hover:bg-gray-50 dark:bg-gray-900 transition-colors">
-                    <td className="px-6 py-4 font-medium text-gray-900 dark:text-gray-100">{enc.codigoRastreio}</td>
-                    <td className="px-6 py-4 text-gray-700 dark:text-gray-200">{enc.destinatario}</td>
-                    <td className="px-6 py-4 text-gray-700 dark:text-gray-200 font-medium">{enc.unidade}</td>
-                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400">{enc.transportadora}</td>
-                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
-                      {enc.dataChegada ? new Date(enc.dataChegada).toLocaleString('pt-BR') : '-'}
-                    </td>
-                    <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
-                      {enc.dataRetirada ? new Date(enc.dataRetirada).toLocaleString('pt-BR') : '-'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold tracking-wide ${getStatusStyle(enc.status)}`}>
-                        {formatStatus(enc.status)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {enc.status === 'AGUARDANDO_RETIRADA' && (
-                        <button 
-                          onClick={() => handleRetirar(enc.id)}
-                          className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
-                        >
-                          Confirmar Entrega
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="flex flex-col gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
+            {filteredEncomendas.map((enc) => (
+              <div key={enc.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col gap-3 transition-colors">
+                
+                {/* Cabeçalho do Card */}
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-bold text-gray-900 dark:text-gray-100 text-sm">{enc.codigoRastreio}</h4>
+                    <span className={`inline-block mt-1 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${getStatusStyle(enc.status)}`}>
+                      {formatStatus(enc.status)}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Unidade</p>
+                    <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">{enc.unidade}</p>
+                  </div>
+                </div>
+
+                {/* Detalhes (Destinatário e Transp) */}
+                <div className="grid grid-cols-2 gap-2 bg-gray-50 dark:bg-gray-900 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                  <div>
+                    <p className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Destinatário</p>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{enc.destinatario}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Transportadora</p>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200 line-clamp-1">{enc.transportadora}</p>
+                  </div>
+                </div>
+
+                {/* Datas e Ação */}
+                <div className="flex items-center justify-between mt-1">
+                  <div className="flex flex-col text-xs text-gray-500 dark:text-gray-400">
+                    <span>Chegada: {enc.dataChegada ? new Date(enc.dataChegada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '-'}</span>
+                    {enc.status !== 'AGUARDANDO_RETIRADA' && (
+                      <span>Retirada: {enc.dataRetirada ? new Date(enc.dataRetirada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '-'}</span>
+                    )}
+                  </div>
+                  
+                  {enc.status === 'AGUARDANDO_RETIRADA' && (
+                    <button 
+                      onClick={() => handleRetirar(enc.id)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-colors active:scale-95"
+                    >
+                      Confirmar Entrega
+                    </button>
+                  )}
+                </div>
+
+              </div>
+            ))}
           </div>
         )}
       </div>
