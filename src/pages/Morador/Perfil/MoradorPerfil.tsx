@@ -57,7 +57,7 @@ export function MoradorPerfil() {
       title: 'Configurações',
       items: [
         { icon: <Bell className="w-5 h-5" />, label: 'Notificações' },
-        { icon: <Shield className="w-5 h-5" />, label: 'Segurança e Senha' },
+        { icon: <ShieldCheck className="w-5 h-5" />, label: 'Segurança e Senha' },
       ]
     },
     {
