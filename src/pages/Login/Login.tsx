@@ -2,6 +2,7 @@ import { Waves, ArrowRight, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
+import { ThemeToggle } from '../../components/ThemeToggle';
 
 export function Login() {
   const [email, setEmail] = useState('');
@@ -31,14 +32,17 @@ export function Login() {
       }
       
     } catch (err) {
-      setError('Credenciais invǭlidas.');
+      setError('Credenciais inválidas.');
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-800 flex justify-center">
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 h-screen flex flex-col shadow-2xl overflow-hidden relative">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-800 flex justify-center relative">
+      <div className="absolute top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+      <div className="w-full max-w-md bg-white dark:bg-gray-900 h-screen flex flex-col shadow-2xl overflow-hidden relative">
         
         {/* Background Decorativo */}
         <div className="absolute top-0 w-full h-64 bg-gradient-to-br from-cyan-600 to-blue-900 rounded-b-[40px] shadow-lg"></div>
