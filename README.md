@@ -1,32 +1,72 @@
-# React + TypeScript + Vite
+# CondoEconomy Web 🏢
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Uma plataforma web moderna e mobile-first para a gestão inteligente de condomínios, conectando Síndicos, Porteiros e Moradores em um ecossistema digital centralizado.
 
-Currently, two official plugins are available:
+## 🚀 Tecnologias Utilizadas
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **React 18** com **TypeScript**
+- **Vite** para build super-rápido
+- **Tailwind CSS v4** para estilização utilitária e Dark Mode
+- **React Router Dom** para roteamento
+- **Lucide React** para ícones limpos e responsivos
+- **Axios** para consumo de API REST
+- **StompJS / SockJS** para comunicação em tempo real via WebSockets
 
-## React Compiler
+## ✨ Funcionalidades e Telas
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+O sistema é dividido em três "perfis" principais de acesso, cada um com suas próprias ferramentas:
 
-## Expanding the Oxlint configuration
+### 1. Painel do Síndico (Admin)
+- Dashboard Financeiro (Resumo de Arrecadação, Despesas e Inadimplência).
+- Gestão de Boletos (Filtro por status: Pago, Pendente, Atrasado).
+- Aprovação de Reservas de Áreas Comuns.
+- Painel de Ouvidoria (Gerenciamento de chamados abertos pelos moradores).
+- Gestão de Avisos e Comunicados Oficiais.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+### 2. Painel da Portaria
+- Gestão de Encomendas (Chegada e Retirada).
+- Controle de Visitantes e Prestadores de Serviço (Check-in rápido).
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+### 3. Aplicativo do Morador
+- Visualização de Boletos e Pagamentos.
+- Solicitação de Reservas de Espaços Comuns (Churrasqueira, Salão de Festas).
+- Abertura de Chamados e Tickets na Ouvidoria.
+- Histórico de Visitantes e Encomendas.
+- Geração de QR Code de Acesso.
+
+### Interface
+- **Mobile-First:** Layout baseado em "Cards", 100% otimizado para celulares.
+- **Dark Mode:** Botão de alternância com suporte nativo em todas as telas, garantindo alto contraste e conforto visual.
+
+## ⚙️ Como Executar o Projeto
+
+### Pré-requisitos
+- Node.js (v18 ou superior)
+- npm ou yarn
+
+### Passo a Passo
+
+1. Instale as dependências do projeto:
+```bash
+npm install
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+2. Inicie o servidor de desenvolvimento:
+```bash
+npm run dev
+```
+
+3. Acesse a aplicação no seu navegador:
+```text
+http://localhost:5173
+```
+
+## 🔐 Acesso de Teste (Mock)
+Utilize as credenciais abaixo para testar os diferentes perfis (a senha padrão para todos é `admin`):
+
+- **Morador:** `carlos.silva@email.com`
+- **Portaria:** `porteiro@condominio.com`
+- **Síndico:** `sindico@condominio.com`
+
+---
+*Desenvolvido para revolucionar a administração condominial.*
