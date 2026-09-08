@@ -138,20 +138,22 @@ export function ChamadosList() {
   );
 
   return (
-    <div className="space-y-6 h-full flex flex-col pb-20 px-4 pt-4">
+    <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-          <MessageSquare className="w-6 h-6 text-purple-600" />
-          Ouvidoria
-        </h3>
-        <p className="text-gray-500 mt-1 text-sm">Acompanhe as solicitações, reclamações e sugestões dos moradores.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+            <MessageSquare className="w-6 h-6 text-blue-900" />
+            Ouvidoria
+          </h3>
+          <p className="text-gray-500 mt-1">Acompanhe as solicitações, reclamações e sugestões dos moradores.</p>
+        </div>
       </div>
 
       {loading ? (
         <div className="text-center py-10">Carregando chamados...</div>
       ) : (
-        <div className="flex flex-col gap-6 flex-1 overflow-y-auto no-scrollbar pb-6">
+        <div className="flex flex-col gap-6">
           <Column 
             title="Abertos" 
             statusId="ABERTO" 

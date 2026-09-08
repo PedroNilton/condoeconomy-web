@@ -64,7 +64,7 @@ export function ReservasList() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-            <CalendarDays className="w-6 h-6 text-purple-600" />
+            <CalendarDays className="w-6 h-6 text-blue-900" />
             Agenda de Áreas Comuns
           </h3>
           <p className="text-gray-500 mt-1">Controle os salões e a entrada de convidados no dia.</p>
@@ -75,7 +75,7 @@ export function ReservasList() {
             type="date" 
             value={dataSelecionada}
             onChange={(e) => setDataSelecionada(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-600"
+            className="px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-600"
           />
         </div>
       </div>

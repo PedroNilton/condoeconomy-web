@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Package, Users, AlertCircle, Loader2 } from 'lucide-react';
+import { Package, Users, AlertCircle, Loader2, LayoutDashboard } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
@@ -40,9 +40,14 @@ export function DashboardHome() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-2xl font-semibold text-gray-800">Visão Geral</h3>
-        <p className="text-gray-500 mt-1">Bem-vindo ao painel da portaria do Condomínio Mar Egeu.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+            <LayoutDashboard className="w-6 h-6 text-blue-900" />
+            Visão Geral
+          </h3>
+          <p className="text-gray-500 mt-1">Bem-vindo ao painel da portaria do Condomínio Mar Egeu.</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

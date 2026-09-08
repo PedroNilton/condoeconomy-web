@@ -79,15 +79,18 @@ export function VisitantesList() {
   };
 
   return (
-    <div className="space-y-6 h-full flex flex-col pb-20">
-      <div className="flex justify-between items-center px-4 pt-4">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Visitantes</h1>
-          <p className="text-gray-500 text-sm">Controle de acesso do dia</p>
+          <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+            <Users className="w-6 h-6 text-blue-900" />
+            Visitantes
+          </h3>
+          <p className="text-gray-500 mt-1">Controle de acesso do dia.</p>
         </div>
       </div>
 
-      <div className="px-4">
+      <div>
         <div className="flex flex-col gap-3 bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div className="relative">
             <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -112,7 +115,7 @@ export function VisitantesList() {
         </div>
       </div>
 
-      <div className="flex-1 px-4 overflow-y-auto no-scrollbar">
+      <div className="flex-1 overflow-y-auto no-scrollbar">
         {loading ? (
           <div className="text-center py-10 text-gray-500">Carregando visitantes...</div>
         ) : filteredVisitantes.length === 0 ? (
