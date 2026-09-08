@@ -1,8 +1,8 @@
-# CondoEconomy Web 🏢
+# CondoEconomy Web
 
 Uma plataforma web moderna e mobile-first para a gestão inteligente de condomínios, conectando Síndicos, Porteiros e Moradores em um ecossistema digital centralizado.
 
-## 🚀 Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 - **React 18** com **TypeScript**
 - **Vite** para build super-rápido
@@ -12,7 +12,7 @@ Uma plataforma web moderna e mobile-first para a gestão inteligente de condomí
 - **Axios** para consumo de API REST
 - **StompJS / SockJS** para comunicação em tempo real via WebSockets
 
-## ✨ Funcionalidades e Telas
+## Funcionalidades e Telas
 
 O sistema é dividido em três "perfis" principais de acesso, cada um com suas próprias ferramentas:
 
@@ -38,7 +38,7 @@ O sistema é dividido em três "perfis" principais de acesso, cada um com suas p
 - **Mobile-First:** Layout baseado em "Cards", 100% otimizado para celulares.
 - **Dark Mode:** Botão de alternância com suporte nativo em todas as telas, garantindo alto contraste e conforto visual.
 
-## ⚙️ Como Executar o Projeto
+## Como Executar o Projeto
 
 ### Pré-requisitos
 - Node.js (v18 ou superior)
@@ -61,7 +61,7 @@ npm run dev
 http://localhost:5173
 ```
 
-## 🔐 Acesso de Teste (Mock)
+## Acesso de Teste (Mock)
 Utilize as credenciais abaixo para testar os diferentes perfis (a senha padrão para todos é `admin`):
 
 - **Morador:** `carlos.silva@email.com`
