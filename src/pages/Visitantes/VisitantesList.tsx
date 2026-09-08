@@ -83,7 +83,7 @@ export function VisitantesList() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-            <Users className="w-8 h-8 text-blue-900" />
+            <Users className="w-6 h-6 text-blue-900" />
             Visitantes
           </h3>
           <p className="text-gray-500 mt-1">Controle de acesso do dia.</p>
