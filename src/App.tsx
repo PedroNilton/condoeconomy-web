@@ -1,5 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from './pages/Login';
+import { MoradorDadosPessoais } from './pages/Morador/Perfil/MoradorDadosPessoais';
+import { MoradorVeiculos } from './pages/Morador/Perfil/MoradorVeiculos';
+import { MoradorPets } from './pages/Morador/Perfil/MoradorPets';
+import { MoradorAdicionais } from './pages/Morador/Perfil/MoradorAdicionais';
 import { DashboardLayout } from './components/Layout';
 import { DashboardHome } from './pages/Dashboard';
 import { EncomendasList } from './pages/Encomendas/EncomendasList';
@@ -53,6 +57,10 @@ function App() {
           <Route path="ouvidoria" element={<MoradorOuvidoria />} />
           <Route path="visitantes" element={<MoradorVisitantes />} />
           <Route path="perfil" element={<MoradorPerfil />} />
+          <Route path="perfil/dados" element={<MoradorDadosPessoais />} />
+          <Route path="perfil/veiculos" element={<MoradorVeiculos />} />
+          <Route path="perfil/pets" element={<MoradorPets />} />
+          <Route path="perfil/adicionais" element={<MoradorAdicionais />} />
         </Route>
       </Routes>
       </NotificationProvider>

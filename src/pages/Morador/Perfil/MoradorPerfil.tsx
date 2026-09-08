@@ -24,10 +24,10 @@ export function MoradorPerfil() {
     {
       title: 'Minha Unidade',
       items: [
-        { icon: <UserCircle2 className="w-5 h-5" />, label: 'Dados Pessoais' },
-        { icon: <Users className="w-5 h-5" />, label: 'Moradores Adicionais' },
-        { icon: <PawPrint className="w-5 h-5" />, label: 'Meus Pets' },
-        { icon: <Car className="w-5 h-5" />, label: 'Meus Veículos' },
+        { icon: <UserCircle2 className="w-5 h-5" />, label: 'Dados Pessoais', route: '/app/perfil/dados' },
+        { icon: <Users className="w-5 h-5" />, label: 'Moradores Adicionais', route: '/app/perfil/adicionais' },
+        { icon: <PawPrint className="w-5 h-5" />, label: 'Meus Pets', route: '/app/perfil/pets' },
+        { icon: <Car className="w-5 h-5" />, label: 'Meus Veículos', route: '/app/perfil/veiculos' },
       ]
     },
     {
@@ -75,6 +75,7 @@ export function MoradorPerfil() {
               {group.items.map((item, idx) => (
                 <button 
                   key={idx}
+                  onClick={() => item.route ? navigate(item.route) : null}
                   className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors active:bg-gray-100"
                 >
                   <div className="flex items-center gap-3">
