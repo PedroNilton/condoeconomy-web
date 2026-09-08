@@ -67,15 +67,15 @@ export function MoradorBoletos() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
       
-      <header className="bg-white pt-10 pb-4 px-6 flex items-center justify-between border-b border-gray-200 sticky top-0 z-10">
+      <header className="bg-white dark:bg-gray-800 pt-10 pb-4 px-6 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
         <div>
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-600" />
             Meus Boletos
           </h2>
-          <p className="text-xs text-gray-500 mt-0.5">Acompanhe as taxas condominiais</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Acompanhe as taxas condominiais</p>
         </div>
       </header>
 
@@ -86,11 +86,11 @@ export function MoradorBoletos() {
             <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
           </div>
         ) : boletos.length === 0 ? (
-          <div className="bg-white rounded-2xl p-8 border border-gray-100 text-center shadow-sm">
-            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-100 dark:border-gray-700 text-center shadow-sm">
+            <div className="w-16 h-16 bg-gray-50 dark:bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-3">
               <FileText className="w-8 h-8 text-gray-300" />
             </div>
-            <p className="text-gray-500 text-sm font-medium">Nenhum boleto encontrado para sua unidade.</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Nenhum boleto encontrado para sua unidade.</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -98,14 +98,14 @@ export function MoradorBoletos() {
               const vencido = boleto.status === 'PENDENTE' && isVencido(boleto.dataVencimento);
               
               return (
-                <div key={boleto.id} className={`bg-white rounded-2xl p-5 shadow-sm border ${vencido ? 'border-red-200' : 'border-gray-100'} relative overflow-hidden`}>
+                <div key={boleto.id} className={`bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-sm border ${vencido ? 'border-red-200' : 'border-gray-100 dark:border-gray-700'} relative overflow-hidden`}>
                   
                   {vencido && <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-500"></div>}
                   
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <h4 className="font-bold text-gray-800 text-sm">Taxa Condominial</h4>
-                      <p className="text-xs text-gray-500 mt-0.5">Vencimento: {new Date(boleto.dataVencimento).toLocaleDateString('pt-BR')}</p>
+                      <h4 className="font-bold text-gray-800 dark:text-gray-100 text-sm">Taxa Condominial</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Vencimento: {new Date(boleto.dataVencimento).toLocaleDateString('pt-BR')}</p>
                     </div>
                     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md border uppercase tracking-wider ${getStatusColor(boleto.status, boleto.dataVencimento)}`}>
                       {boleto.status === 'PENDENTE' && vencido ? 'VENCIDO' : boleto.status}
@@ -113,22 +113,22 @@ export function MoradorBoletos() {
                   </div>
                   
                   <div className="flex justify-between items-end mb-4">
-                    <span className="text-2xl font-black text-gray-800 tracking-tight">
+                    <span className="text-2xl font-black text-gray-800 dark:text-gray-100 tracking-tight">
                       {formatCurrency(boleto.valor)}
                     </span>
                   </div>
 
                   {boleto.status === 'PENDENTE' && (
-                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 flex flex-col gap-2 mt-4">
+                    <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-700 flex flex-col gap-2 mt-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-xs font-semibold text-gray-500">Código de Barras</span>
+                        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Código de Barras</span>
                       </div>
                       <div className="flex gap-2">
                         <input 
                           type="text" 
                           readOnly 
                           value={boleto.linhaDigitavel}
-                          className="flex-1 bg-white text-xs text-gray-600 p-2.5 rounded-lg border border-gray-200 focus:outline-none"
+                          className="flex-1 bg-white dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-300 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 focus:outline-none"
                         />
                         <button 
                           onClick={() => handleCopy(boleto.id, boleto.linhaDigitavel)}

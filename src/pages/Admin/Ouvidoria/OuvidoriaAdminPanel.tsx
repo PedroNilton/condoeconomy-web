@@ -41,7 +41,7 @@ export function OuvidoriaAdminPanel() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-gray-50">
+      <div className="flex h-full items-center justify-center bg-gray-50 dark:bg-gray-900">
         <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
       </div>
     );
@@ -53,46 +53,46 @@ export function OuvidoriaAdminPanel() {
         <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center text-red-600">
           <MessageSquareWarning className="w-5 h-5" />
         </div>
-        <h2 className="text-xl font-bold text-gray-800">Ouvidoria (Escalonados)</h2>
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Ouvidoria (Escalonados)</h2>
       </div>
 
       <div className="flex gap-2 mb-4">
-        <button onClick={fetchChamados} className="flex items-center gap-2 text-sm text-gray-600 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm">
+        <button onClick={fetchChamados} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-lg shadow-sm">
            <RefreshCcw className="w-4 h-4" /> Atualizar
         </button>
       </div>
 
       {chamados.length === 0 ? (
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center">
           <MessageSquareWarning className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500">Nenhum chamado escalado para a administração no momento.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum chamado escalado para a administração no momento.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {chamados.map(chamado => (
-            <div key={chamado.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+            <div key={chamado.id} className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <span className="inline-block bg-red-100 text-red-700 text-xs font-bold px-2.5 py-0.5 rounded-full mb-2">
                     ESCALADO
                   </span>
-                  <h3 className="font-bold text-gray-800">{chamado.assunto}</h3>
-                  <p className="text-xs text-gray-500">{chamado.categoria} • {new Date(chamado.dataAbertura).toLocaleDateString('pt-BR')}</p>
+                  <h3 className="font-bold text-gray-800 dark:text-gray-100">{chamado.assunto}</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{chamado.categoria} • {new Date(chamado.dataAbertura).toLocaleDateString('pt-BR')}</p>
                 </div>
               </div>
               
-              <div className="text-sm text-gray-600 mb-4 bg-red-50 p-3 rounded-lg border border-red-100">
+              <div className="text-sm text-gray-600 dark:text-gray-300 mb-4 bg-red-50 p-3 rounded-lg border border-red-100">
                 <p>{chamado.descricao}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <p className="text-xs text-gray-400">Morador</p>
-                  <p className="font-medium text-gray-800">{chamado.moradorSolicitante}</p>
+                  <p className="font-medium text-gray-800 dark:text-gray-100">{chamado.moradorSolicitante}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-400">Unidade</p>
-                  <p className="font-medium text-gray-800">{chamado.unidadeTexto}</p>
+                  <p className="font-medium text-gray-800 dark:text-gray-100">{chamado.unidadeTexto}</p>
                 </div>
               </div>
 

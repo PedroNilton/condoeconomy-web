@@ -98,23 +98,23 @@ export function MoradorReservas() {
 
   if (isFormOpen) {
     return (
-      <div className="flex flex-col h-full bg-gray-50 relative">
-        <header className="bg-white p-4 flex items-center gap-3 border-b border-gray-200 sticky top-0 z-10 shadow-sm">
-          <button onClick={() => setIsFormOpen(false)} className="text-gray-500 hover:text-gray-800 p-2 -ml-2">
+      <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 relative">
+        <header className="bg-white dark:bg-gray-800 p-4 flex items-center gap-3 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10 shadow-sm">
+          <button onClick={() => setIsFormOpen(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:text-gray-100 p-2 -ml-2">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h2 className="text-lg font-bold text-gray-800">Nova Reserva</h2>
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Nova Reserva</h2>
         </header>
 
         <form onSubmit={handleSubmit} className="p-6 flex-1 overflow-y-auto pb-20">
           <div className="space-y-6">
             
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700">O que você quer reservar?</label>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">O que você quer reservar?</label>
               <select 
                 value={selectedArea}
                 onChange={e => setSelectedArea(e.target.value)}
-                className="w-full p-3.5 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 shadow-sm"
+                className="w-full p-3.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 shadow-sm"
                 required
               >
                 <option value="">Selecione uma área...</option>
@@ -127,47 +127,47 @@ export function MoradorReservas() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700">Título do Evento</label>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Título do Evento</label>
               <input 
                 type="text" 
                 value={titulo}
                 onChange={e => setTitulo(e.target.value)}
                 placeholder="Ex: Aniversário do João"
-                className="w-full p-3.5 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 shadow-sm"
+                className="w-full p-3.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 shadow-sm"
                 required
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700">Data do Evento</label>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Data do Evento</label>
               <input 
                 type="date" 
                 value={dataSelecionada}
                 onChange={e => setDataSelecionada(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
-                className="w-full p-3.5 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 shadow-sm"
+                className="w-full p-3.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 shadow-sm"
                 required
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-gray-700">Início</label>
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Início</label>
                 <input 
                   type="time" 
                   value={inicio}
                   onChange={e => setInicio(e.target.value)}
-                  className="w-full p-3.5 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 shadow-sm"
+                  className="w-full p-3.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 shadow-sm"
                   required
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-gray-700">Fim</label>
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Fim</label>
                 <input 
                   type="time" 
                   value={fim}
                   onChange={e => setFim(e.target.value)}
-                  className="w-full p-3.5 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 shadow-sm"
+                  className="w-full p-3.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 shadow-sm"
                   required
                 />
               </div>
@@ -195,16 +195,16 @@ export function MoradorReservas() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
       
       {/* Header Fixo */}
-      <header className="bg-white pt-10 pb-4 px-6 flex items-center justify-between border-b border-gray-200 sticky top-0 z-10">
+      <header className="bg-white dark:bg-gray-800 pt-10 pb-4 px-6 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
         <div>
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <CalendarDays className="w-5 h-5 text-blue-600" />
             Minhas Reservas
           </h2>
-          <p className="text-xs text-gray-500 mt-0.5">Gerencie os espaços do condomínio</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Gerencie os espaços do condomínio</p>
         </div>
       </header>
 
@@ -218,38 +218,38 @@ export function MoradorReservas() {
           Nova Reserva
         </button>
 
-        <h3 className="text-sm font-bold text-gray-700 mb-4 tracking-wide uppercase">Próximos Eventos</h3>
+        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-4 tracking-wide uppercase">Próximos Eventos</h3>
         
         {loading ? (
           <div className="flex justify-center py-10">
             <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
           </div>
         ) : minhasReservas.length === 0 ? (
-          <div className="bg-white rounded-2xl p-8 border border-gray-100 text-center shadow-sm">
-            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-100 dark:border-gray-700 text-center shadow-sm">
+            <div className="w-16 h-16 bg-gray-50 dark:bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-3">
               <CalendarDays className="w-8 h-8 text-gray-300" />
             </div>
-            <p className="text-gray-500 text-sm font-medium">Você não tem reservas agendadas.</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Você não tem reservas agendadas.</p>
           </div>
         ) : (
           <div className="space-y-4">
             {minhasReservas.map(res => (
-              <div key={res.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 relative overflow-hidden">
+              <div key={res.id} className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 relative overflow-hidden">
                 <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500"></div>
                 <div className="pl-3">
                   <div className="flex justify-between items-start mb-1">
-                    <h4 className="font-bold text-gray-800 text-sm">{res.titulo}</h4>
+                    <h4 className="font-bold text-gray-800 dark:text-gray-100 text-sm">{res.titulo}</h4>
                     <span className="text-[10px] font-bold px-2 py-1 rounded-md border bg-yellow-50 text-yellow-700 border-yellow-200 uppercase">
                       {res.status}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-600 font-medium mb-3">{res.areaComumNome}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-300 font-medium mb-3">{res.areaComumNome}</p>
                   
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <span className="bg-gray-50 px-2 py-1 rounded">
+                  <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                    <span className="bg-gray-50 dark:bg-gray-900 px-2 py-1 rounded">
                       📅 {new Date(res.data).toLocaleDateString('pt-BR')}
                     </span>
-                    <span className="bg-gray-50 px-2 py-1 rounded">
+                    <span className="bg-gray-50 dark:bg-gray-900 px-2 py-1 rounded">
                       ⏰ {res.inicio} às {res.fim}
                     </span>
                   </div>

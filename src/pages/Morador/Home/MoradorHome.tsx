@@ -31,13 +31,13 @@ export function MoradorHome() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
       
       {/* Header Topo */}
       <header className="bg-blue-600 pt-12 pb-6 px-6 rounded-b-[30px] shadow-md relative">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-inner">
+            <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-inner">
               <UserCircle2 className="w-8 h-8 text-blue-300" />
             </div>
             <div>
@@ -52,14 +52,14 @@ export function MoradorHome() {
         </div>
 
         {/* Card de Boleto Aberto */}
-        <div className="bg-white rounded-2xl p-4 shadow-lg flex items-center justify-between border-l-4 border-yellow-400">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-lg flex items-center justify-between border-l-4 border-yellow-400">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center text-yellow-600">
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs text-gray-500 font-medium">Taxa Condominial</p>
-              <p className="text-sm font-bold text-gray-800">Vence em 3 dias</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Taxa Condominial</p>
+              <p className="text-sm font-bold text-gray-800 dark:text-gray-100">Vence em 3 dias</p>
             </div>
           </div>
           <button 
@@ -73,13 +73,13 @@ export function MoradorHome() {
 
       {/* Grid de Atalhos */}
       <div className="p-6">
-        <h3 className="text-sm font-bold text-gray-700 mb-4 tracking-wide uppercase">Serviços Rápidos</h3>
+        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-4 tracking-wide uppercase">Serviços Rápidos</h3>
         
         <div className="grid grid-cols-2 gap-4">
           
           <button 
             onClick={() => alert('Em construção')}
-            className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
+            className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
           >
             <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 relative">
               <Package className="w-6 h-6" />
@@ -87,37 +87,37 @@ export function MoradorHome() {
                 1
               </span>
             </div>
-            <span className="text-sm font-semibold text-gray-700">Encomendas</span>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Encomendas</span>
           </button>
 
           <button 
             onClick={() => navigate('/app/reservas')}
-            className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
+            className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
           >
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
               <CalendarDays className="w-6 h-6" />
             </div>
-            <span className="text-sm font-semibold text-gray-700">Reservar Salão</span>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Reservar Salão</span>
           </button>
 
           <button 
             onClick={() => navigate('/app/visitantes')}
-            className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
+            className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
           >
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
               <UserCircle2 className="w-6 h-6" />
             </div>
-            <span className="text-sm font-semibold text-gray-700">Visitantes</span>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Visitantes</span>
           </button>
 
           <button 
             onClick={() => navigate('/app/perfil')}
-            className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
+            className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
           >
-            <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-600">
+            <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300">
               <Settings className="w-6 h-6" />
             </div>
-            <span className="text-sm font-semibold text-gray-700">Configurações</span>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Configurações</span>
           </button>
 
         </div>
@@ -125,26 +125,26 @@ export function MoradorHome() {
 
       {/* Mural de Avisos */}
       <div className="px-6 pb-6">
-        <h3 className="text-sm font-bold text-gray-700 mb-4 tracking-wide uppercase">Mural do Síndico</h3>
+        <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-4 tracking-wide uppercase">Mural do Síndico</h3>
         
         {loadingAvisos ? (
           <div className="flex justify-center py-6">
             <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
           </div>
         ) : avisos.length === 0 ? (
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center">
              <Megaphone className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-             <p className="text-sm text-gray-500">Nenhum aviso no momento.</p>
+             <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum aviso no momento.</p>
           </div>
         ) : (
           <div className="space-y-3">
             {avisos.map(aviso => (
-              <div key={aviso.id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+              <div key={aviso.id} className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <div className="flex items-start gap-3">
                   <div className="w-2 h-2 mt-1.5 bg-blue-500 rounded-full shrink-0"></div>
                   <div>
-                    <h4 className="text-sm font-bold text-gray-800">{aviso.titulo}</h4>
-                    <p className="text-xs text-gray-500 mt-1 line-clamp-3">{aviso.mensagem}</p>
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-100">{aviso.titulo}</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-3">{aviso.mensagem}</p>
                     <p className="text-[10px] text-gray-400 mt-2 font-medium">
                       {new Date(aviso.dataCriacao).toLocaleDateString('pt-BR')} • {aviso.autor}
                     </p>

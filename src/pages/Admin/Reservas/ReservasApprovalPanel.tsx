@@ -62,7 +62,7 @@ export function ReservasApprovalPanel() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-gray-50">
+      <div className="flex h-full items-center justify-center bg-gray-50 dark:bg-gray-900">
         <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
       </div>
     );
@@ -74,38 +74,38 @@ export function ReservasApprovalPanel() {
         <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center text-red-600">
           <Calendar className="w-5 h-5" />
         </div>
-        <h2 className="text-xl font-bold text-gray-800">Aprovação de Reservas</h2>
+        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Aprovação de Reservas</h2>
       </div>
 
       {reservas.length === 0 ? (
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center">
           <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
-          <h3 className="text-lg font-bold text-gray-800 mb-1">Tudo em dia!</h3>
-          <p className="text-sm text-gray-500">Não há reservas aguardando sua aprovação.</p>
+          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-1">Tudo em dia!</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Não há reservas aguardando sua aprovação.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {reservas.map(reserva => (
-            <div key={reserva.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+            <div key={reserva.id} className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 text-xs font-bold px-2.5 py-0.5 rounded-full mb-2">
                     <Clock className="w-3 h-3" /> Pendente
                   </span>
-                  <h3 className="font-bold text-gray-800">{reserva.titulo}</h3>
-                  <p className="text-sm text-gray-500">{reserva.areaComumNome}</p>
+                  <h3 className="font-bold text-gray-800 dark:text-gray-100">{reserva.titulo}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{reserva.areaComumNome}</p>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-2 mb-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-xl border border-gray-100">
+              <div className="grid grid-cols-2 gap-2 mb-4 text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
                 <div>
                   <p className="text-xs text-gray-400">Morador</p>
-                  <p className="font-medium text-gray-800">{reserva.moradorSolicitante}</p>
+                  <p className="font-medium text-gray-800 dark:text-gray-100">{reserva.moradorSolicitante}</p>
                   <p className="text-xs">{reserva.unidadeTexto}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-400">Horário</p>
-                  <p className="font-medium text-gray-800">{new Date(reserva.dataReserva).toLocaleDateString('pt-BR')} {reserva.horaInicio.substring(0,5)}</p>
+                  <p className="font-medium text-gray-800 dark:text-gray-100">{new Date(reserva.dataReserva).toLocaleDateString('pt-BR')} {reserva.horaInicio.substring(0,5)}</p>
                 </div>
               </div>
 
@@ -118,7 +118,7 @@ export function ReservasApprovalPanel() {
                 </button>
                 <button 
                   onClick={() => handleRejeitar(reserva.id)}
-                  className="flex-1 bg-gray-100 text-gray-700 font-bold py-2.5 rounded-xl hover:bg-gray-200 transition flex items-center justify-center gap-2"
+                  className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold py-2.5 rounded-xl hover:bg-gray-200 transition flex items-center justify-center gap-2"
                 >
                   <XCircle className="w-4 h-4" /> Rejeitar
                 </button>

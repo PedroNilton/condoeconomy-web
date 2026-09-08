@@ -51,7 +51,7 @@ export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProp
 
       {/* Código de Rastreio */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Código de Rastreio</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Código de Rastreio</label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
             <Package size={18} />
@@ -62,7 +62,7 @@ export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProp
             required
             value={formData.codigoRastreio}
             onChange={handleChange}
-            className="pl-10 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow"
+            className="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow"
             placeholder="Ex: BR123456789BR"
           />
         </div>
@@ -70,7 +70,7 @@ export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProp
 
       {/* Destinatário */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Destinatário (Morador)</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Destinatário (Morador)</label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
             <User size={18} />
@@ -81,7 +81,7 @@ export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProp
             required
             value={formData.destinatario}
             onChange={handleChange}
-            className="pl-10 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow"
+            className="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow"
             placeholder="Nome do morador"
           />
         </div>
@@ -89,7 +89,7 @@ export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProp
 
       {/* Unidade */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Unidade / Apartamento</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Unidade / Apartamento</label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
             <MapPin size={18} />
@@ -100,7 +100,7 @@ export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProp
             required
             value={formData.unidade}
             onChange={handleChange}
-            className="pl-10 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow"
+            className="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow"
             placeholder="Ex: Bloco A - Apto 204"
           />
         </div>
@@ -108,7 +108,7 @@ export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProp
 
       {/* Transportadora */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Transportadora</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Transportadora</label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
             <Truck size={18} />
@@ -119,7 +119,7 @@ export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProp
             required
             value={formData.transportadora}
             onChange={handleChange}
-            className="pl-10 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow"
+            className="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow"
             placeholder="Ex: Correios, Loggi, Mercado Livre"
           />
         </div>
@@ -131,7 +131,7 @@ export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProp
           type="button"
           onClick={onCancel}
           disabled={loading}
-          className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
+          className="px-4 py-2 text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 rounded-lg transition-colors font-medium"
         >
           Cancelar
         </button>

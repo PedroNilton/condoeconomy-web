@@ -58,14 +58,14 @@ export function MoradorDadosPessoais() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
       
       {/* Header */}
-      <header className="bg-white px-6 py-4 flex items-center border-b border-gray-200">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-500 hover:bg-gray-100 rounded-full">
+      <header className="bg-white dark:bg-gray-800 px-6 py-4 flex items-center border-b border-gray-200 dark:border-gray-700">
+        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:bg-gray-800 rounded-full">
           <ArrowLeft className="w-6 h-6" />
         </button>
-        <h1 className="text-lg font-bold text-gray-800 ml-2">Dados Pessoais</h1>
+        <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100 ml-2">Dados Pessoais</h1>
       </header>
 
       <div className="p-6 flex-1 overflow-y-auto">
@@ -74,7 +74,7 @@ export function MoradorDadosPessoais() {
         ) : (
           <form onSubmit={handleSave} className="space-y-4">
             <div className="flex flex-col items-center mb-6">
-              <div className="w-24 h-24 bg-gray-100 rounded-full overflow-hidden shadow-inner flex items-center justify-center border-4 border-white mb-3">
+              <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden shadow-inner flex items-center justify-center border-4 border-white mb-3">
                 {foto ? (
                   <img src={foto} alt="Perfil" className="w-full h-full object-cover" />
                 ) : (
@@ -88,45 +88,45 @@ export function MoradorDadosPessoais() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Nome Completo</label>
               <input 
                 type="text" 
                 required
                 value={nome}
                 onChange={e => setNome(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 placeholder="Seu nome"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Telefone (WhatsApp)</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Telefone (WhatsApp)</label>
               <input 
                 type="text" 
                 value={telefone}
                 onChange={e => setTelefone(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 placeholder="(00) 00000-0000"
               />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Apartamento</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Apartamento</label>
                 <input 
                   type="text" 
                   value={apartamento}
                   onChange={e => setApartamento(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   placeholder="Ex: 101"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Bloco</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Bloco</label>
                 <input 
                   type="text" 
                   value={bloco}
                   onChange={e => setBloco(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                   placeholder="Ex: Amorgos, Milos"
                 />
               </div>

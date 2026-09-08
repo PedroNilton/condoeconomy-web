@@ -63,11 +63,11 @@ export function BoletosList() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+          <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <FileText className="w-6 h-6 text-purple-600" />
             Gestão Financeira
           </h3>
-          <p className="text-gray-500 mt-1">Consulte os boletos e o status de inadimplência das unidades.</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Consulte os boletos e o status de inadimplência das unidades.</p>
         </div>
         
         <form onSubmit={handleSearch} className="flex gap-2">
@@ -78,7 +78,7 @@ export function BoletosList() {
               placeholder="Buscar por unidade (Ex: 101)"
               value={buscaUnidade}
               onChange={(e) => setBuscaUnidade(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-purple-600 w-full sm:w-64"
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:ring-2 focus:ring-purple-600 w-full sm:w-64"
             />
           </div>
           <button type="submit" className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition">
@@ -88,10 +88,10 @@ export function BoletosList() {
       </div>
 
       {/* Lista */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-600">
-            <thead className="bg-gray-50 text-gray-700 border-b border-gray-200">
+          <table className="w-full text-left text-sm text-gray-600 dark:text-gray-300">
+            <thead className="bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700">
               <tr>
                 <th className="px-6 py-4 font-semibold">Unidade / Morador</th>
                 <th className="px-6 py-4 font-semibold">Competência</th>
@@ -105,21 +105,21 @@ export function BoletosList() {
               {loading ? (
                 <tr><td colSpan={6} className="text-center py-8">Carregando...</td></tr>
               ) : boletos.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-8 text-gray-500">Nenhum boleto encontrado.</td></tr>
+                <tr><td colSpan={6} className="text-center py-8 text-gray-500 dark:text-gray-400">Nenhum boleto encontrado.</td></tr>
               ) : (
                 boletos.map(boleto => {
                   const statusConf = getStatusConfig(boleto.status);
                   return (
-                    <tr key={boleto.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                    <tr key={boleto.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:bg-gray-900 transition-colors">
                       <td className="px-6 py-4">
-                        <div className="font-medium text-gray-800">{boleto.unidadeTexto}</div>
-                        <div className="text-xs text-gray-500">{boleto.moradorResponsavel}</div>
+                        <div className="font-medium text-gray-800 dark:text-gray-100">{boleto.unidadeTexto}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{boleto.moradorResponsavel}</div>
                       </td>
                       <td className="px-6 py-4 font-medium">{boleto.competencia}</td>
                       <td className="px-6 py-4">
                         {new Date(boleto.dataVencimento).toLocaleDateString('pt-BR')}
                       </td>
-                      <td className="px-6 py-4 font-medium text-gray-800">
+                      <td className="px-6 py-4 font-medium text-gray-800 dark:text-gray-100">
                         R$ {boleto.valor.toFixed(2).replace('.', ',')}
                       </td>
                       <td className="px-6 py-4">
@@ -130,7 +130,7 @@ export function BoletosList() {
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-2">
                           <button 
-                            className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                            className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                             title="Copiar Linha Digitável"
                             onClick={() => {
                               navigator.clipboard.writeText(boleto.linhaDigitavel);
@@ -143,7 +143,7 @@ export function BoletosList() {
                           {boleto.status !== 'PAGO' && (
                             <button 
                               onClick={() => handleBaixarBoleto(boleto.id)}
-                              className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                              className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                               title="Marcar como Pago (Dar Baixa Manual)"
                             >
                               <CheckCircle className="w-4 h-4" />

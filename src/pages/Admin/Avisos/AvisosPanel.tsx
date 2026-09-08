@@ -55,11 +55,11 @@ export function AvisosPanel() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+          <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <Megaphone className="w-5 h-5 text-red-600" />
             Mural de Avisos
           </h3>
-          <p className="text-gray-500 text-sm mt-1">Gerencie os comunicados oficiais.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Gerencie os comunicados oficiais.</p>
         </div>
         <button 
           onClick={() => setModalOpen(true)}
@@ -74,22 +74,22 @@ export function AvisosPanel() {
           <Loader2 className="w-8 h-8 animate-spin text-red-600" />
         </div>
       ) : avisos.length === 0 ? (
-        <div className="bg-white p-8 rounded-xl text-center shadow-sm border border-gray-100">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl text-center shadow-sm border border-gray-100 dark:border-gray-700">
           <Megaphone className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">Nenhum aviso no mural.</p>
+          <p className="text-gray-500 dark:text-gray-400">Nenhum aviso no mural.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {avisos.map(aviso => (
-            <div key={aviso.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
+            <div key={aviso.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
               <div className="flex justify-between items-start mb-2">
-                <h4 className="font-bold text-gray-800">{aviso.titulo}</h4>
-                <span className="text-[10px] text-gray-400 font-medium bg-gray-100 px-2 py-1 rounded">
+                <h4 className="font-bold text-gray-800 dark:text-gray-100">{aviso.titulo}</h4>
+                <span className="text-[10px] text-gray-400 font-medium bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
                   {new Date(aviso.dataCriacao).toLocaleDateString('pt-BR')}
                 </span>
               </div>
-              <p className="text-gray-600 text-sm whitespace-pre-line">{aviso.mensagem}</p>
+              <p className="text-gray-600 dark:text-gray-300 text-sm whitespace-pre-line">{aviso.mensagem}</p>
               <p className="text-xs text-red-600 font-medium mt-3 text-right">Por: {aviso.autor}</p>
             </div>
           ))}
@@ -99,7 +99,7 @@ export function AvisosPanel() {
       {/* Modal Criar Aviso */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="bg-red-600 p-4 text-white flex justify-between items-center">
               <h3 className="font-bold text-lg">Novo Comunicado</h3>
               <button onClick={() => setModalOpen(false)} className="text-red-200 hover:text-white">
@@ -108,22 +108,22 @@ export function AvisosPanel() {
             </div>
             <form onSubmit={handlePostAviso} className="p-5 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Título</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Título</label>
                 <input 
                   type="text" 
                   value={novoTitulo}
                   onChange={e => setNovoTitulo(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-red-500"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 outline-none focus:ring-2 focus:ring-red-500"
                   placeholder="Ex: Manutenção na bomba d'água"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Mensagem</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">Mensagem</label>
                 <textarea 
                   value={novaMensagem}
                   onChange={e => setNovaMensagem(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-red-500 min-h-[120px]"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 outline-none focus:ring-2 focus:ring-red-500 min-h-[120px]"
                   placeholder="Escreva os detalhes do aviso..."
                   required
                 ></textarea>

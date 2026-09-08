@@ -63,27 +63,27 @@ export function ChamadosList() {
       case 'MANUTENCAO': return <Wrench className="w-4 h-4 text-orange-500" />;
       case 'RECLAMACAO': return <AlertTriangle className="w-4 h-4 text-red-500" />;
       case 'SUGESTAO': return <MessageSquare className="w-4 h-4 text-blue-500" />;
-      default: return <MessageSquare className="w-4 h-4 text-gray-500" />;
+      default: return <MessageSquare className="w-4 h-4 text-gray-500 dark:text-gray-400" />;
     }
   };
 
   const Column = ({ title, statusId, items }: { title: string, statusId: string, items: Chamado[] }) => (
-    <div className="bg-gray-100 rounded-xl p-4 flex flex-col gap-4 min-h-[500px]">
+    <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 flex flex-col gap-4 min-h-[500px]">
       <div className="flex items-center justify-between">
-        <h4 className="font-semibold text-gray-700">{title}</h4>
-        <span className="bg-gray-200 text-gray-600 text-xs font-bold px-2 py-1 rounded-full">
+        <h4 className="font-semibold text-gray-700 dark:text-gray-200">{title}</h4>
+        <span className="bg-gray-200 text-gray-600 dark:text-gray-300 text-xs font-bold px-2 py-1 rounded-full">
           {items.length}
         </span>
       </div>
       
       <div className="flex flex-col gap-3">
         {items.map(chamado => (
-          <div key={chamado.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition relative overflow-hidden">
+          <div key={chamado.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition relative overflow-hidden">
             {(chamado as any).escaladoSindico && (
               <div className="absolute top-0 left-0 w-1 h-full bg-red-500" title="Escalado para o Síndico" />
             )}
             <div className="flex justify-between items-start mb-2 pl-2">
-              <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">
+              <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
                 {chamado.unidadeTexto}
               </span>
               <div className="flex items-center gap-1 text-xs text-gray-400">
@@ -92,12 +92,12 @@ export function ChamadosList() {
               </div>
             </div>
             
-            <h5 className="font-semibold text-gray-800 text-sm mb-1 pl-2 break-words">{chamado.assunto}</h5>
-            <p className="text-xs text-gray-600 line-clamp-2 mb-3 pl-2 break-words">{chamado.descricao}</p>
+            <h5 className="font-semibold text-gray-800 dark:text-gray-100 text-sm mb-1 pl-2 break-words">{chamado.assunto}</h5>
+            <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 mb-3 pl-2 break-words">{chamado.descricao}</p>
             
-            <div className="flex flex-col gap-3 mt-4 pt-3 border-t border-gray-100 pl-2">
+            <div className="flex flex-col gap-3 mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 pl-2">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs font-medium text-gray-600">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-300">
                   {getCategoriaIcon(chamado.categoria)}
                   {chamado.categoria}
                 </div>
@@ -142,11 +142,11 @@ export function ChamadosList() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+          <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <MessageSquare className="w-6 h-6 text-blue-900" />
             Ouvidoria
           </h3>
-          <p className="text-gray-500 mt-1">Acompanhe as solicitações, reclamações e sugestões dos moradores.</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Acompanhe as solicitações, reclamações e sugestões dos moradores.</p>
         </div>
       </div>
 

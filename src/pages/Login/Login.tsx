@@ -37,8 +37,8 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center">
-      <div className="w-full max-w-md bg-white h-screen flex flex-col shadow-2xl overflow-hidden relative">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-800 flex justify-center">
+      <div className="w-full max-w-md bg-white dark:bg-gray-800 h-screen flex flex-col shadow-2xl overflow-hidden relative">
         
         {/* Background Decorativo */}
         <div className="absolute top-0 w-full h-64 bg-gradient-to-br from-cyan-600 to-blue-900 rounded-b-[40px] shadow-lg"></div>
@@ -46,7 +46,7 @@ export function Login() {
         <div className="relative z-10 flex flex-col h-full px-8 pt-20">
           
           <div className="flex flex-col items-center mb-12">
-            <div className="w-20 h-20 bg-white rounded-2xl shadow-xl flex items-center justify-center mb-4">
+            <div className="w-20 h-20 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center mb-4">
               <Waves className="w-10 h-10 text-cyan-600" />
             </div>
             <h1 className="text-2xl font-bold text-white tracking-wide">Mar Egeu</h1>
@@ -63,25 +63,25 @@ export function Login() {
               )}
 
               <div className="space-y-1">
-                <label className="text-sm font-semibold text-gray-700">E-mail ou CPF</label>
+                <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">E-mail ou CPF</label>
                 <input 
                   type="text" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
                 />
               </div>
 
               <div className="space-y-1">
                 <div className="flex justify-between items-center">
-                  <label className="text-sm font-semibold text-gray-700">Senha</label>
+                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Senha</label>
                   <a href="#" className="text-xs text-blue-600 font-medium">Esqueceu?</a>
                 </div>
                 <input 
                   type="password" 
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
                 />
               </div>
 
@@ -102,7 +102,7 @@ export function Login() {
           </div>
 
           <div className="pb-8 text-center">
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Ainda não tem acesso? <br/>
               <a href="#" className="text-blue-600 font-semibold underline decoration-2 underline-offset-2">Fale com a portaria</a>
             </p>

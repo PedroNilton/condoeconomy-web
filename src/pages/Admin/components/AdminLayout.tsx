@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Home, Megaphone, LogOut, Calendar, MessageSquareWarning } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { ThemeToggle } from '../../../components/ThemeToggle';
 
 export function AdminLayout() {
   const navigate = useNavigate();
@@ -20,22 +21,25 @@ export function AdminLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-800 flex justify-center">
       {/* Container Mobile/Tablet */}
-      <div className="w-full max-w-md bg-gray-50 h-screen shadow-2xl flex flex-col relative overflow-hidden">
+      <div className="w-full max-w-md bg-gray-50 dark:bg-gray-900 h-screen shadow-2xl flex flex-col relative overflow-hidden">
         
         {/* Header Administração */}
-        <header className="bg-red-900 text-white flex justify-between items-center px-4 h-16 shrink-0 shadow-md z-10">
+        <header className="bg-red-900 dark:bg-red-950 text-white flex justify-between items-center px-4 h-16 shrink-0 shadow-md z-10">
           <div>
             <h2 className="text-lg font-bold tracking-wider">SÍNDICO</h2>
             <p className="text-[10px] text-red-200 uppercase tracking-widest">Condomínio Mar Egeu</p>
           </div>
-          <button 
-            onClick={handleLogout}
-            className="w-10 h-10 bg-red-800 rounded-full flex items-center justify-center text-red-100 hover:bg-red-700 hover:text-white transition-colors"
-          >
-            <LogOut className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <button 
+              onClick={handleLogout}
+              className="w-10 h-10 bg-red-800 dark:bg-red-900 rounded-full flex items-center justify-center text-red-100 hover:bg-red-700 hover:text-white transition-colors"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </header>
 
         {/* Main Content */}
@@ -44,11 +48,11 @@ export function AdminLayout() {
         </main>
 
         {/* Tab Bar (Menu Inferior) */}
-        <nav className="absolute bottom-0 w-full bg-white border-t border-gray-200 flex justify-around items-center h-16 px-1 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] z-50">
+        <nav className="absolute bottom-0 w-full bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 px-1 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] z-50">
           <NavLink 
             to="/admin" 
             end
-            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-red-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <Megaphone className="w-5 h-5" />
             <span className="text-[10px] font-medium">Mural</span>
@@ -56,7 +60,7 @@ export function AdminLayout() {
 
           <NavLink 
             to="/admin/reservas" 
-            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-colors ${isActive ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-colors ${isActive ? 'text-red-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <div className="relative">
               <Calendar className="w-5 h-5" />
@@ -71,7 +75,7 @@ export function AdminLayout() {
 
           <NavLink 
             to="/admin/ouvidoria" 
-            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-colors ${isActive ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-colors ${isActive ? 'text-red-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <div className="relative">
               <MessageSquareWarning className="w-5 h-5" />
@@ -86,7 +90,7 @@ export function AdminLayout() {
 
           <NavLink 
             to="/admin/painel" 
-            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-red-600' : 'text-gray-400 hover:text-gray-600'}`}
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-red-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <Home className="w-5 h-5" />
             <span className="text-[10px] font-medium">Finanças</span>

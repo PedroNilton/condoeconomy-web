@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Home, UserCheck, Package, CalendarDays, MessageSquare } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useNotification } from '../../contexts/NotificationContext';
+import { ThemeToggle } from '../ThemeToggle';
 
 export function DashboardLayout() {
   const navigate = useNavigate();
@@ -20,23 +21,25 @@ export function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-800 flex justify-center">
       {/* Container que simula a tela do celular/tablet */}
-      <div className="w-full max-w-md bg-gray-50 h-screen shadow-2xl flex flex-col relative overflow-hidden">
+      <div className="w-full max-w-md bg-gray-50 dark:bg-gray-900 h-screen shadow-2xl flex flex-col relative overflow-hidden">
         
         {/* Header Fixo no Topo */}
-        <header className="bg-blue-900 text-white flex justify-between items-center px-4 h-16 shrink-0 shadow-md z-10">
+        <header className="bg-blue-900 dark:bg-blue-950 text-white flex justify-between items-center px-4 h-16 shrink-0 shadow-md z-10">
           <div>
             <h2 className="text-lg font-bold tracking-wider">PORTARIA</h2>
             <p className="text-[10px] text-blue-200 uppercase tracking-widest">Condomínio Mar Egeu</p>
           </div>
-          <button 
-            onClick={handleLogout}
-            className="w-10 h-10 bg-blue-800 rounded-full flex items-center justify-center text-blue-100 hover:bg-red-500 hover:text-white transition-colors"
-          >
-            <Home className="w-5 h-5 hidden" /> {/* Dummy para manter import */}
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-          </button>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <button 
+              onClick={handleLogout}
+              className="w-10 h-10 bg-blue-800 dark:bg-blue-900 rounded-full flex items-center justify-center text-blue-100 hover:bg-red-500 hover:text-white transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </button>
+          </div>
         </header>
 
         {/* Conteúdo Principal (scrollável) */}
@@ -45,12 +48,12 @@ export function DashboardLayout() {
         </main>
 
         {/* Tab Bar (Menu Inferior Mobile) */}
-        <nav className="absolute bottom-0 w-full bg-white border-t border-gray-200 flex justify-around items-center h-16 px-2 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] z-50">
+        <nav className="absolute bottom-0 w-full bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 px-2 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] z-50">
           
           <NavLink 
             to="/portaria" 
             end
-            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <Home className="w-6 h-6" />
             <span className="text-[10px] font-medium">Início</span>
@@ -58,7 +61,7 @@ export function DashboardLayout() {
 
           <NavLink 
             to="/portaria/visitantes" 
-            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <div className="relative">
               <UserCheck className="w-6 h-6" />
@@ -73,7 +76,7 @@ export function DashboardLayout() {
 
           <NavLink 
             to="/portaria/encomendas" 
-            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <div className="relative">
               <Package className="w-6 h-6" />
@@ -88,7 +91,7 @@ export function DashboardLayout() {
 
           <NavLink 
             to="/portaria/reservas" 
-            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <CalendarDays className="w-6 h-6" />
             <span className="text-[10px] font-medium">Reservas</span>
@@ -96,7 +99,7 @@ export function DashboardLayout() {
 
           <NavLink 
             to="/portaria/chamados" 
-            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <div className="relative">
               <MessageSquare className="w-6 h-6" />

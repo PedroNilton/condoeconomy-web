@@ -23,48 +23,51 @@ import { ReservasApprovalPanel } from './pages/Admin/Reservas/ReservasApprovalPa
 import { OuvidoriaAdminPanel } from './pages/Admin/Ouvidoria/OuvidoriaAdminPanel';
 import { FinancasAdminPanel } from './pages/Admin/Financas/FinancasAdminPanel';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
   return (
-    <BrowserRouter>
-      <NotificationProvider>
-        <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<Login />} />
-        
-        {/* Rotas protegidas da Portaria */}
-        <Route path="/portaria" element={<DashboardLayout />}>
-          <Route index element={<DashboardHome />} />
-          <Route path="encomendas" element={<EncomendasList />} />
-          <Route path="reservas" element={<ReservasList />} />
-          <Route path="chamados" element={<ChamadosList />} />
-          <Route path="visitantes" element={<VisitantesList />} />
-        </Route>
+    <ThemeProvider>
+      <BrowserRouter>
+        <NotificationProvider>
+          <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login />} />
+          
+          {/* Rotas protegidas da Portaria */}
+          <Route path="/portaria" element={<DashboardLayout />}>
+            <Route index element={<DashboardHome />} />
+            <Route path="encomendas" element={<EncomendasList />} />
+            <Route path="reservas" element={<ReservasList />} />
+            <Route path="chamados" element={<ChamadosList />} />
+            <Route path="visitantes" element={<VisitantesList />} />
+          </Route>
 
-        {/* Rotas do Admin */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AvisosPanel />} />
-          <Route path="reservas" element={<ReservasApprovalPanel />} />
-          <Route path="ouvidoria" element={<OuvidoriaAdminPanel />} />
-          <Route path="painel" element={<FinancasAdminPanel />} />
-        </Route>
+          {/* Rotas do Admin */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AvisosPanel />} />
+            <Route path="reservas" element={<ReservasApprovalPanel />} />
+            <Route path="ouvidoria" element={<OuvidoriaAdminPanel />} />
+            <Route path="painel" element={<FinancasAdminPanel />} />
+          </Route>
 
-        {/* Rotas do App do Morador */}
-        <Route path="/app" element={<MoradorLayout />}>
-          <Route index element={<MoradorHome />} />
-          <Route path="reservas" element={<MoradorReservas />} />
-          <Route path="boletos" element={<MoradorBoletos />} />
-          <Route path="ouvidoria" element={<MoradorOuvidoria />} />
-          <Route path="visitantes" element={<MoradorVisitantes />} />
-          <Route path="perfil" element={<MoradorPerfil />} />
-          <Route path="perfil/dados" element={<MoradorDadosPessoais />} />
-          <Route path="perfil/veiculos" element={<MoradorVeiculos />} />
-          <Route path="perfil/pets" element={<MoradorPets />} />
-          <Route path="perfil/adicionais" element={<MoradorAdicionais />} />
-        </Route>
-      </Routes>
-      </NotificationProvider>
-    </BrowserRouter>
+          {/* Rotas do App do Morador */}
+          <Route path="/app" element={<MoradorLayout />}>
+            <Route index element={<MoradorHome />} />
+            <Route path="reservas" element={<MoradorReservas />} />
+            <Route path="boletos" element={<MoradorBoletos />} />
+            <Route path="ouvidoria" element={<MoradorOuvidoria />} />
+            <Route path="visitantes" element={<MoradorVisitantes />} />
+            <Route path="perfil" element={<MoradorPerfil />} />
+            <Route path="perfil/dados" element={<MoradorDadosPessoais />} />
+            <Route path="perfil/veiculos" element={<MoradorVeiculos />} />
+            <Route path="perfil/pets" element={<MoradorPets />} />
+            <Route path="perfil/adicionais" element={<MoradorAdicionais />} />
+          </Route>
+        </Routes>
+        </NotificationProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 

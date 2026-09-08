@@ -82,7 +82,7 @@ export function MoradorOuvidoria() {
     if (status === 'ABERTO') return 'bg-yellow-100 text-yellow-800 border-yellow-200';
     if (status === 'EM_ANDAMENTO') return 'bg-blue-100 text-blue-800 border-blue-200';
     if (status === 'RESOLVIDO') return 'bg-green-100 text-green-800 border-green-200';
-    return 'bg-gray-100 text-gray-800 border-gray-200';
+    return 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 border-gray-200 dark:border-gray-700';
   };
 
   const getStatusLabel = (status: string) => {
@@ -94,23 +94,23 @@ export function MoradorOuvidoria() {
 
   if (isFormOpen) {
     return (
-      <div className="flex flex-col h-full bg-gray-50">
-        <header className="bg-white p-4 flex items-center gap-3 border-b border-gray-200 sticky top-0 z-10 shadow-sm">
-          <button onClick={() => setIsFormOpen(false)} className="text-gray-500 hover:text-gray-800 p-2 -ml-2">
+      <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
+        <header className="bg-white dark:bg-gray-800 p-4 flex items-center gap-3 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10 shadow-sm">
+          <button onClick={() => setIsFormOpen(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:text-gray-100 p-2 -ml-2">
             Voltar
           </button>
-          <h2 className="text-lg font-bold text-gray-800">Nova Mensagem</h2>
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Nova Mensagem</h2>
         </header>
 
         <form onSubmit={handleSubmit} className="p-6 flex-1 flex flex-col">
           <div className="space-y-5 flex-1">
             
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700">Categoria</label>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Categoria</label>
               <select 
                 value={categoria}
                 onChange={e => setCategoria(e.target.value)}
-                className="w-full p-3 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                className="w-full p-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                 required
               >
                 <option value="">Selecione...</option>
@@ -123,25 +123,25 @@ export function MoradorOuvidoria() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700">Assunto</label>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Assunto</label>
               <input 
                 type="text" 
                 value={assunto}
                 onChange={e => setAssunto(e.target.value)}
                 placeholder="Ex: Lâmpada queimada no corredor"
-                className="w-full p-3 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                className="w-full p-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
                 required
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700">Mensagem</label>
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Mensagem</label>
               <textarea 
                 rows={5}
                 value={descricao}
                 onChange={e => setDescricao(e.target.value)}
                 placeholder="Descreva com detalhes o que aconteceu..."
-                className="w-full p-3 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 resize-none"
+                className="w-full p-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 resize-none"
                 required
               />
             </div>
@@ -162,16 +162,16 @@ export function MoradorOuvidoria() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
       
       {/* Header Fixo */}
-      <header className="bg-white pt-10 pb-4 px-6 flex items-center justify-between border-b border-gray-200 sticky top-0 z-10">
+      <header className="bg-white dark:bg-gray-800 pt-10 pb-4 px-6 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
         <div>
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-blue-600" />
             Ouvidoria
           </h2>
-          <p className="text-xs text-gray-500 mt-0.5">Fale direto com a administração</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Fale direto com a administração</p>
         </div>
         
         <button 
@@ -190,24 +190,24 @@ export function MoradorOuvidoria() {
           </div>
         ) : chamados.length === 0 ? (
           <div className="text-center py-10">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
               <MessageSquare className="w-8 h-8 text-gray-400" />
             </div>
-            <p className="text-gray-500 text-sm">Você ainda não enviou nenhuma mensagem.</p>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Você ainda não enviou nenhuma mensagem.</p>
           </div>
         ) : (
           <div className="space-y-4">
             {chamados.map(chamado => (
-              <div key={chamado.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3">
+              <div key={chamado.id} className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col gap-3">
                 
                 <div className="flex justify-between items-start gap-2">
-                  <h4 className="font-bold text-gray-800 text-sm leading-tight">{chamado.assunto}</h4>
+                  <h4 className="font-bold text-gray-800 dark:text-gray-100 text-sm leading-tight">{chamado.assunto}</h4>
                   <span className={`text-[10px] font-bold px-2 py-1 rounded-md border whitespace-nowrap ${getStatusStyle(chamado.status)}`}>
                     {getStatusLabel(chamado.status)}
                   </span>
                 </div>
                 
-                <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
                   {chamado.descricao}
                 </p>
 

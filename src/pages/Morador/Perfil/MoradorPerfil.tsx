@@ -10,11 +10,15 @@ import {
   HelpCircle, 
   LogOut, 
   ChevronRight,
-  PawPrint
+  PawPrint,
+  Moon
 } from 'lucide-react';
+
+import { useTheme } from '../../../contexts/ThemeContext';
 
 export function MoradorPerfil() {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   const [nome, setNome] = useState('Carregando...');
   const [apto, setApto] = useState('');
@@ -56,6 +60,7 @@ export function MoradorPerfil() {
     {
       title: 'Configurações',
       items: [
+        { icon: <Moon className="w-5 h-5" />, label: theme === 'light' ? 'Modo Escuro' : 'Modo Claro', onClick: toggleTheme },
         { icon: <Bell className="w-5 h-5" />, label: 'Notificações' },
         { icon: <ShieldCheck className="w-5 h-5" />, label: 'Segurança e Senha' },
       ]
@@ -69,13 +74,13 @@ export function MoradorPerfil() {
   ];
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 pb-20 overflow-y-auto">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 pb-20 overflow-y-auto">
       
       {/* Header Profile */}
       <div className="bg-blue-600 px-6 pt-12 pb-8 rounded-b-[40px] shadow-md">
         <div className="flex flex-col items-center">
           <div className="relative mb-4 shadow-lg rounded-full">
-            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center border-4 border-blue-500 overflow-hidden">
+            <div className="w-24 h-24 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center border-4 border-blue-500 overflow-hidden">
               {foto ? (
                 <img src={foto} alt="Perfil" className="w-full h-full object-cover" />
               ) : (
@@ -94,23 +99,26 @@ export function MoradorPerfil() {
         
         {menuGroups.map((group, index) => (
           <div key={index}>
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 px-2">
+            <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 px-2">
               {group.title}
             </h3>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-100">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden divide-y divide-gray-100 dark:divide-gray-700">
               {group.items.map((item, idx) => (
                 <button 
                   key={idx}
-                  onClick={() => item.route ? navigate(item.route) : null}
-                  className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors active:bg-gray-100"
+                  onClick={() => {
+                    if (item.onClick) item.onClick();
+                    else if (item.route) navigate(item.route);
+                  }}
+                  className="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-700 transition-colors active:bg-gray-100 dark:bg-gray-800 dark:active:bg-gray-600"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="text-gray-400">
+                    <div className="text-gray-400 dark:text-gray-500 dark:text-gray-400">
                       {item.icon}
                     </div>
-                    <span className="text-sm font-semibold text-gray-700">{item.label}</span>
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{item.label}</span>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-300" />
+                  <ChevronRight className="w-4 h-4 text-gray-300 dark:text-gray-500 dark:text-gray-400" />
                 </button>
               ))}
             </div>

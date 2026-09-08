@@ -42,11 +42,11 @@ export function DashboardHome() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+          <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
             <LayoutDashboard className="w-6 h-6 text-blue-900" />
             Visão Geral
           </h3>
-          <p className="text-gray-500 mt-1">Bem-vindo ao painel da portaria do Condomínio Mar Egeu.</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Bem-vindo ao painel da portaria do Condomínio Mar Egeu.</p>
         </div>
       </div>
 
@@ -55,13 +55,13 @@ export function DashboardHome() {
         {/* Card 1 */}
         <button 
           onClick={() => navigate('/portaria/encomendas')}
-          className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4 hover:border-blue-300 hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4 hover:border-blue-300 hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <div className="bg-blue-100 p-3 rounded-lg text-blue-700">
             <Package className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Encomendas Aguardando</p>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Encomendas Aguardando</p>
             {loading ? <Loader2 className="w-6 h-6 animate-spin text-blue-600 mt-1" /> : (
               <p className="text-2xl font-bold text-gray-900">{encomendas}</p>
             )}
@@ -71,13 +71,13 @@ export function DashboardHome() {
         {/* Card 2 */}
         <button 
           onClick={() => navigate('/portaria/visitantes')}
-          className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4 hover:border-green-300 hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4 hover:border-green-300 hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-green-500"
         >
           <div className="bg-green-100 p-3 rounded-lg text-green-700">
             <Users className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Visitantes Hoje</p>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Visitantes Hoje</p>
             {loading ? <Loader2 className="w-6 h-6 animate-spin text-green-600 mt-1" /> : (
               <p className="text-2xl font-bold text-gray-900">{visitantes}</p>
             )}
@@ -87,13 +87,13 @@ export function DashboardHome() {
         {/* Card 3 */}
         <button 
           onClick={() => navigate('/portaria/chamados')}
-          className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4 hover:border-orange-300 hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-orange-500"
+          className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4 hover:border-orange-300 hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-orange-500"
         >
           <div className="bg-orange-100 p-3 rounded-lg text-orange-700">
             <AlertCircle className="w-8 h-8" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Ouvidoria Pendente</p>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Ouvidoria Pendente</p>
             {loading ? <Loader2 className="w-6 h-6 animate-spin text-orange-600 mt-1" /> : (
               <p className="text-2xl font-bold text-gray-900">{avisos}</p>
             )}
