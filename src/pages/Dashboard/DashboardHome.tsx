@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Package, Users, AlertCircle, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
 export function DashboardHome() {
@@ -7,6 +8,7 @@ export function DashboardHome() {
   const [visitantes, setVisitantes] = useState(0);
   const [avisos, setAvisos] = useState(0);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -46,7 +48,10 @@ export function DashboardHome() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         
         {/* Card 1 */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+        <button 
+          onClick={() => navigate('/portaria/encomendas')}
+          className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4 hover:border-blue-300 hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
           <div className="bg-blue-100 p-3 rounded-lg text-blue-700">
             <Package className="w-8 h-8" />
           </div>
@@ -56,10 +61,13 @@ export function DashboardHome() {
               <p className="text-2xl font-bold text-gray-900">{encomendas}</p>
             )}
           </div>
-        </div>
+        </button>
 
         {/* Card 2 */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+        <button 
+          onClick={() => navigate('/portaria/visitantes')}
+          className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4 hover:border-green-300 hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
           <div className="bg-green-100 p-3 rounded-lg text-green-700">
             <Users className="w-8 h-8" />
           </div>
@@ -69,10 +77,13 @@ export function DashboardHome() {
               <p className="text-2xl font-bold text-gray-900">{visitantes}</p>
             )}
           </div>
-        </div>
+        </button>
 
         {/* Card 3 */}
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4">
+        <button 
+          onClick={() => navigate('/portaria/chamados')}
+          className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center gap-4 hover:border-orange-300 hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-orange-500"
+        >
           <div className="bg-orange-100 p-3 rounded-lg text-orange-700">
             <AlertCircle className="w-8 h-8" />
           </div>
@@ -82,7 +93,7 @@ export function DashboardHome() {
               <p className="text-2xl font-bold text-gray-900">{avisos}</p>
             )}
           </div>
-        </div>
+        </button>
 
       </div>
     </div>
