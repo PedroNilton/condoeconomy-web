@@ -9,6 +9,7 @@ export function MoradorDadosPessoais() {
   const [telefone, setTelefone] = useState('');
   const [apartamento, setApartamento] = useState('');
   const [bloco, setBloco] = useState('');
+  const [foto, setFoto] = useState('');
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
@@ -20,6 +21,7 @@ export function MoradorDadosPessoais() {
         setTelefone(res.data.telefone || '');
         setApartamento(res.data.apartamento || '');
         setBloco(res.data.bloco || '');
+        setFoto(res.data.foto || '');
       } catch (err) {
         console.error(err);
       } finally {
@@ -29,11 +31,22 @@ export function MoradorDadosPessoais() {
     fetchData();
   }, []);
 
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFoto(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.put('/api/v1/perfil/dados', { nome, telefone, apartamento, bloco });
+      await api.put('/api/v1/perfil/dados', { nome, telefone, apartamento, bloco, foto });
       alert('Dados salvos com sucesso!');
       navigate(-1);
     } catch (err) {
@@ -55,11 +68,25 @@ export function MoradorDadosPessoais() {
         <h1 className="text-lg font-bold text-gray-800 ml-2">Dados Pessoais</h1>
       </header>
 
-      <div className="p-6 flex-1">
+      <div className="p-6 flex-1 overflow-y-auto">
         {fetching ? (
            <div className="flex justify-center mt-10"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>
         ) : (
           <form onSubmit={handleSave} className="space-y-4">
+            <div className="flex flex-col items-center mb-6">
+              <div className="w-24 h-24 bg-gray-100 rounded-full overflow-hidden shadow-inner flex items-center justify-center border-4 border-white mb-3">
+                {foto ? (
+                  <img src={foto} alt="Perfil" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-gray-400 font-medium">Sem foto</span>
+                )}
+              </div>
+              <label className="text-sm text-blue-600 font-bold cursor-pointer hover:underline">
+                Alterar Foto
+                <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+              </label>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
               <input 
@@ -100,7 +127,7 @@ export function MoradorDadosPessoais() {
                   value={bloco}
                   onChange={e => setBloco(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                  placeholder="Ex: B"
+                  placeholder="Ex: Amorgos, Milos"
                 />
               </div>
             </div>

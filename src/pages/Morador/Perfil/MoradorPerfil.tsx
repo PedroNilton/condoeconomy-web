@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import api from '../../../services/api';
 import { 
   UserCircle2, 
   Car, 
@@ -13,6 +15,27 @@ import {
 
 export function MoradorPerfil() {
   const navigate = useNavigate();
+
+  const [nome, setNome] = useState('Carregando...');
+  const [apto, setApto] = useState('');
+  const [bloco, setBloco] = useState('');
+  const [foto, setFoto] = useState('');
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await api.get('/api/v1/perfil/dados');
+        setNome(res.data.nome || 'Usuário');
+        setApto(res.data.apartamento || 'S/N');
+        setBloco(res.data.bloco || '');
+        setFoto(res.data.foto || '');
+      } catch (err) {
+        console.error(err);
+        setNome('Erro ao carregar');
+      }
+    };
+    fetchUser();
+  }, []);
 
   const handleLogout = () => {
     // Limpar auth tokens
@@ -34,7 +57,7 @@ export function MoradorPerfil() {
       title: 'Configurações',
       items: [
         { icon: <Bell className="w-5 h-5" />, label: 'Notificações' },
-        { icon: <ShieldCheck className="w-5 h-5" />, label: 'Segurança e Senha' },
+        { icon: <Shield className="w-5 h-5" />, label: 'Segurança e Senha' },
       ]
     },
     {
@@ -51,15 +74,16 @@ export function MoradorPerfil() {
       {/* Header Profile */}
       <div className="bg-blue-600 px-6 pt-12 pb-8 rounded-b-[40px] shadow-md">
         <div className="flex flex-col items-center">
-          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg mb-4 border-4 border-blue-500 relative">
-            <UserCircle2 className="w-16 h-16 text-blue-300" />
+          <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg mb-4 border-4 border-blue-500 relative overflow-hidden">
+            {foto ? (
+              <img src={foto} alt="Perfil" className="w-full h-full object-cover" />
+            ) : (
+              <UserCircle2 className="w-16 h-16 text-blue-300" />
+            )}
             <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 rounded-full border-2 border-white"></div>
           </div>
-          <h2 className="text-xl font-bold text-white text-center">Carlos Silva</h2>
-          <p className="text-blue-200 text-sm font-medium mt-1">Apto 101 • Bloco B</p>
-          <span className="mt-3 px-3 py-1 bg-blue-700/50 text-blue-100 text-xs font-semibold rounded-full border border-blue-500/50">
-            Proprietário
-          </span>
+          <h2 className="text-xl font-bold text-white text-center">{nome}</h2>
+          <p className="text-blue-200 text-sm font-medium mt-1">Apto {apto} {bloco ? `• Bloco ${bloco}` : ''}</p>
         </div>
       </div>
 
