@@ -24,7 +24,6 @@ import { OuvidoriaAdminPanel } from './pages/Admin/Ouvidoria/OuvidoriaAdminPanel
 import { FinancasAdminPanel } from './pages/Admin/Financas/FinancasAdminPanel';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { VisitantesList } from './pages/Visitantes/VisitantesList';
 import { AutoCheckin } from './pages/Public/AutoCheckin';
 import { NotificacoesList } from './pages/Notificacoes/NotificacoesList';
 import { MoradorEncomendas } from './pages/Morador/Encomendas/MoradorEncomendas';
@@ -77,5 +76,3 @@ export default function App() {
     </ThemeProvider>
   );
 }
-
-export default App;

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Bell, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
@@ -26,7 +26,7 @@ export function NotificacoesList() {
 
   const markAsRead = async (id: string) => {
     try {
-      await api.put(/api/v1/notificacoes/ + id + /lida);
+      await api.put('/api/v1/notificacoes/' + id + '/lida');
       fetchNotificacoes();
     } catch (err) {
       console.error(err);
@@ -56,7 +56,7 @@ export function NotificacoesList() {
           notificacoes.map(n => (
             <div 
               key={n.id} 
-              className={p-4 rounded-xl shadow-sm border \}
+              className={`p-4 rounded-xl shadow-sm border ${n.lida ? 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700' : 'bg-white dark:bg-gray-800 border-blue-200 dark:border-blue-800'}`}
             >
               <div className="flex justify-between items-start mb-2">
                 <h3 className="font-bold text-gray-800 dark:text-white">{n.titulo}</h3>

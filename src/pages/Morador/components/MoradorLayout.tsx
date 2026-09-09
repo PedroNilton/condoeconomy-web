@@ -26,7 +26,7 @@ export function MoradorLayout() {
         <nav className="absolute bottom-0 w-full bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 px-2 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] z-50">
           
           <NavLink 
-            to="/morador" 
+            to="/app" 
             end
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
@@ -35,7 +35,7 @@ export function MoradorLayout() {
           </NavLink>
 
           <NavLink 
-            to="/morador/reservas" 
+            to="/app/reservas" 
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <CalendarDays className="w-6 h-6" />
@@ -43,7 +43,7 @@ export function MoradorLayout() {
           </NavLink>
 
           <NavLink 
-            to="/morador/encomendas" 
+            to="/app/encomendas" 
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <Package className="w-6 h-6" />
@@ -51,7 +51,7 @@ export function MoradorLayout() {
           </NavLink>
 
           <NavLink 
-            to="/morador/ouvidoria" 
+            to="/app/ouvidoria" 
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <MessageSquare className="w-6 h-6" />
@@ -59,7 +59,7 @@ export function MoradorLayout() {
           </NavLink>
 
           <NavLink 
-            to="/morador/perfil" 
+            to="/app/perfil" 
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <User className="w-6 h-6" />

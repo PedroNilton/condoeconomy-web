@@ -77,7 +77,7 @@ export function MoradorHome() {
             </div>
           </div>
           <button 
-            onClick={() => navigate('/morador/notificacoes')}
+            onClick={() => navigate('/app/notificacoes')}
             className="relative w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center text-white hover:bg-blue-800 transition"
           >
             <Bell className="w-5 h-5" />
@@ -114,7 +114,7 @@ export function MoradorHome() {
         <div className="grid grid-cols-2 gap-4">
           
           <button 
-            onClick={() => navigate('/morador/encomendas')}
+            onClick={() => navigate('/app/encomendas')}
             className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
           >
             <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 relative">
