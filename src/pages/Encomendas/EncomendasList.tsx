@@ -11,7 +11,7 @@ interface Encomenda {
   unidade: string;
   transportadora: string;
   status: string;
-  dataChegada: string;
+  dataRecebimento: string;
   dataRetirada?: string;
 }
 
@@ -175,7 +175,7 @@ export function EncomendasList() {
                 {/* Datas e Ação */}
                 <div className="flex items-center justify-between mt-1">
                   <div className="flex flex-col text-xs text-gray-500 dark:text-gray-400">
-                    <span>Chegada: {enc.dataChegada ? new Date(enc.dataChegada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '-'}</span>
+                    <span>Chegada: {enc.dataRecebimento ? new Date(enc.dataRecebimento).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '-'}</span>
                     {enc.status !== 'AGUARDANDO_RETIRADA' && (
                       <span>Retirada: {enc.dataRetirada ? new Date(enc.dataRetirada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '-'}</span>
                     )}
