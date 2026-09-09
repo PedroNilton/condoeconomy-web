@@ -11,7 +11,7 @@ export function useWebSocket(topic: string, onMessageReceived: () => void) {
 
   useEffect(() => {
     const client = new Client({
-      brokerURL: 'ws://localhost:8080/ws',
+      brokerURL: `ws://${window.location.hostname}:8080/ws`,
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,

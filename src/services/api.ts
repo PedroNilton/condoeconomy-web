@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Instância base do Axios apontando para a nossa API Java local
 const api = axios.create({
-  baseURL: 'http://localhost:8080',
+  baseURL: `http://${window.location.hostname}:8080`,
   timeout: 10000,
 });
 
