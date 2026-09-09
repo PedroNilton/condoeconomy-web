@@ -24,6 +24,7 @@ import { OuvidoriaAdminPanel } from './pages/Admin/Ouvidoria/OuvidoriaAdminPanel
 import { FinancasAdminPanel } from './pages/Admin/Financas/FinancasAdminPanel';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { AutoCheckin } from './pages/Public/AutoCheckin';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
           <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/auto-checkin" element={<AutoCheckin />} />
           
           {/* Rotas protegidas da Portaria */}
           <Route path="/portaria" element={<DashboardLayout />}>

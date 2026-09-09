@@ -2,19 +2,22 @@ import { useState, useEffect } from 'react';
 import { UserCheck, Search, Users, CheckCircle2, Clock, QrCode, X } from 'lucide-react';
 import api from '../../services/api';
 import { useWebSocket } from '../../hooks/useWebSocket';
-import { QRScanner } from './components/QRScanner';
+import { QRCodeCanvas } from 'qrcode.react';
 
 interface Visitante {
   id: string;
   nome: string;
+  sobrenome: string;
   documento: string;
   dataVisita: string;
+  blocoDestino: string;
   unidadeDestino: string;
   moradorResponsavel: string;
-  tipo: string;
-  status: string;
-  horaEntrada: string | null;
-  horaSaida: string | null;
+  placaVeiculo: string;
+  tipo: 'VISITANTE' | 'PRESTADOR_SERVICO';
+  status: 'AGUARDANDO_LIBERACAO' | 'NO_CONDOMINIO' | 'FINALIZADO';
+  horaEntrada?: string;
+  horaSaida?: string;
 }
 
 export function VisitantesList() {
@@ -73,7 +76,7 @@ export function VisitantesList() {
     return matchSearch && matchStatus;
   });
 
-  const formatHora = (dateStr: string | null) => {
+  const formatHora = (dateStr: string | null | undefined) => {
     if (!dateStr) return '--:--';
     return new Date(dateStr).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   };
@@ -108,7 +111,7 @@ export function VisitantesList() {
             onChange={(e) => setStatusFilter(e.target.value)}
           >
             <option value="TODOS">Todos os Status</option>
-            <option value="AGUARDANDO">Aguardando Chegada</option>
+            <option value="AGUARDANDO_LIBERACAO">Aguardando Chegada</option>
             <option value="NO_CONDOMINIO">No Condomínio</option>
             <option value="FINALIZADO">Visita Finalizada</option>
           </select>
@@ -130,7 +133,7 @@ export function VisitantesList() {
                       <Users className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                     </div>
                     <div>
-                      <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">{visitante.nome}</p>
+                      <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">{visitante.nome} {visitante.sobrenome}</p>
                       <span className={`inline-flex items-center px-2 py-0.5 mt-1 rounded text-[10px] font-bold ${
                         visitante.tipo === 'VISITANTE' ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400' : 'bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400'
                       }`}>
@@ -140,15 +143,15 @@ export function VisitantesList() {
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-gray-500 dark:text-gray-400">Destino</p>
-                    <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">{visitante.unidadeDestino}</p>
+                    <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">Bl {visitante.blocoDestino} - Ap {visitante.unidadeDestino}</p>
                   </div>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 mb-3 border border-gray-100 dark:border-gray-700">
                   <div className="flex flex-col gap-1.5">
-                    {visitante.status === 'AGUARDANDO' && (
+                    {visitante.status === 'AGUARDANDO_LIBERACAO' && (
                       <span className="flex items-center gap-1 text-xs font-semibold text-yellow-600">
-                        <Clock className="w-3.5 h-3.5" /> Aguardando chegada
+                        <Clock className="w-3.5 h-3.5" /> Aguardando liberação da portaria
                       </span>
                     )}
                     {visitante.status === 'NO_CONDOMINIO' && (
@@ -170,12 +173,12 @@ export function VisitantesList() {
                 </div>
 
                 <div className="flex justify-end gap-2">
-                  {visitante.status === 'AGUARDANDO' && (
+                  {visitante.status === 'AGUARDANDO_LIBERACAO' && (
                     <button 
                       onClick={() => handleCheckin(visitante.id)}
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full transition-colors"
                     >
-                      Registrar Entrada
+                      Permitir Entrada
                     </button>
                   )}
                   {visitante.status === 'NO_CONDOMINIO' && (
@@ -183,7 +186,7 @@ export function VisitantesList() {
                       onClick={() => handleCheckout(visitante.id)}
                       className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium w-full transition-colors"
                     >
-                      Registrar Saída
+                      Encerrar Visita
                     </button>
                   )}
                 </div>
@@ -201,29 +204,32 @@ export function VisitantesList() {
         <QrCode className="w-6 h-6" />
       </button>
 
-      {/* Scanner Modal */}
+      {/* Auto-Checkin Modal */}
       {isScannerOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-3xl w-full max-w-sm p-6 relative flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
             <button 
               onClick={() => setIsScannerOpen(false)}
-              className="absolute right-4 top-4 w-8 h-8 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-200 transition z-10"
+              className="absolute right-4 top-4 w-8 h-8 flex items-center justify-center bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition z-10"
             >
               <X className="w-5 h-5" />
             </button>
             
-            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4 mt-2">Ler QR Code</h3>
+            <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2 mt-2">Auto Check-in</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">Peça para o visitante ler este QR Code com a câmera do celular.</p>
             
-            <div className="w-full mb-6 relative">
-              <QRScanner 
-                onScanSuccess={(decodedText) => {
-                  handleCheckin(decodedText);
-                  setIsScannerOpen(false);
-                }} 
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-center mb-6">
+              <QRCodeCanvas 
+                value={`${window.location.origin}/auto-checkin`}
+                size={220}
+                level="H"
+                includeMargin={true}
               />
             </div>
             
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-2">Aponte a câmera para o QR Code do visitante para liberar o acesso automaticamente.</p>
+            <p className="text-xs text-blue-600 dark:text-blue-400 text-center font-medium bg-blue-50 dark:bg-blue-900/30 px-4 py-2 rounded-lg">
+              Ele fará o cadastro e aparecerá na lista aguardando sua liberação!
+            </p>
           </div>
         </div>
       )}

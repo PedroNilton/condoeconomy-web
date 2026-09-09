@@ -107,8 +107,8 @@ export function MoradorPerfil() {
                 <button 
                   key={idx}
                   onClick={() => {
-                    if (item.onClick) item.onClick();
-                    else if (item.route) navigate(item.route);
+                    if ((item as any).onClick) (item as any).onClick();
+                    else if ((item as any).route) navigate((item as any).route);
                   }}
                   className="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-700 transition-colors active:bg-gray-100 dark:bg-gray-800 dark:active:bg-gray-600"
                 >
