@@ -112,7 +112,7 @@ export function MoradorEncomendas() {
               className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
             >
               <div className="flex justify-between items-start mb-4">
-                <span className={px-2.5 py-1 text-xs font-semibold rounded-full }>
+                <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusStyle(encomenda.status)}`}>
                   {formatStatus(encomenda.status)}
                 </span>
               </div>
@@ -153,3 +153,6 @@ export function MoradorEncomendas() {
     </div>
   );
 }
+
+
+
