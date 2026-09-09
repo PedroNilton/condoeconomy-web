@@ -2,6 +2,7 @@ import { Package, Bell, CalendarDays, FileText, Settings, UserCircle2, Loader2, 
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from '../../../services/api';
+import { useWebSocket } from '../../../hooks/useWebSocket';
 
 interface Aviso {
   id: string;
@@ -15,6 +16,36 @@ export function MoradorHome() {
   const navigate = useNavigate();
   const [avisos, setAvisos] = useState<Aviso[]>([]);
   const [loadingAvisos, setLoadingAvisos] = useState(true);
+  const [usuarioNome, setUsuarioNome] = useState('Morador');
+  const [usuarioId, setUsuarioId] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchProfile = async () => {
+    try {
+      const res = await api.get('/api/v1/perfil/dados');
+      setUsuarioNome(res.data.nome.split(' ')[0]);
+      setUsuarioId(res.data.id);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await api.get('/api/v1/notificacoes/nao-lidas/count');
+      setUnreadCount(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Escuta WebSocket de notificacoes privadas para este usuario
+  useWebSocket(usuarioId ? `/topic/notificacoes/${usuarioId}` : '', fetchUnreadCount);
+
+  useEffect(() => {
+    fetchProfile();
+    fetchUnreadCount();
+  }, []);
 
   useEffect(() => {
     const fetchAvisos = async () => {
@@ -41,13 +72,18 @@ export function MoradorHome() {
               <UserCircle2 className="w-8 h-8 text-blue-300" />
             </div>
             <div>
-              <p className="text-blue-100 text-sm font-medium">Olá, Morador!</p>
+              <p className="text-blue-100 text-sm font-medium">Olá, {usuarioNome}!</p>
               <h2 className="text-white text-lg font-bold">Bem-vindo</h2>
             </div>
           </div>
-          <button className="relative w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center text-white hover:bg-blue-800 transition">
+          <button 
+            onClick={() => navigate('/morador/notificacoes')}
+            className="relative w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center text-white hover:bg-blue-800 transition"
+          >
             <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-blue-700"></span>
+            {unreadCount > 0 && (
+              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-blue-700"></span>
+            )}
           </button>
         </div>
 

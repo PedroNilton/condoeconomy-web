@@ -19,11 +19,13 @@ export function useWebSocket(topic: string, onMessageReceived: () => void) {
 
     client.onConnect = function () {
       setIsConnected(true);
-      client.subscribe(topic, (message) => {
-        if (message.body === 'UPDATE') {
-          callbackRef.current();
-        }
-      });
+      if (topic) {
+        client.subscribe(topic, (message) => {
+          if (message.body === 'UPDATE') {
+            callbackRef.current();
+          }
+        });
+      }
     };
 
     client.onStompError = function (frame) {

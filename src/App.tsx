@@ -24,9 +24,11 @@ import { OuvidoriaAdminPanel } from './pages/Admin/Ouvidoria/OuvidoriaAdminPanel
 import { FinancasAdminPanel } from './pages/Admin/Financas/FinancasAdminPanel';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { VisitantesList } from './pages/Visitantes/VisitantesList';
 import { AutoCheckin } from './pages/Public/AutoCheckin';
+import { NotificacoesList } from './pages/Notificacoes/NotificacoesList';
 
-function App() {
+export default function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
@@ -60,6 +62,7 @@ function App() {
             <Route path="boletos" element={<MoradorBoletos />} />
             <Route path="ouvidoria" element={<MoradorOuvidoria />} />
             <Route path="visitantes" element={<MoradorVisitantes />} />
+            <Route path="notificacoes" element={<NotificacoesList />} />
             <Route path="perfil" element={<MoradorPerfil />} />
             <Route path="perfil/dados" element={<MoradorDadosPessoais />} />
             <Route path="perfil/veiculos" element={<MoradorVeiculos />} />
