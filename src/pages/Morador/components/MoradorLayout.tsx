@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Home, CalendarDays, Package, MessageSquare, User } from 'lucide-react';
+import { Home, CalendarDays, Package, MessageSquare, User, Users } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 export function MoradorLayout() {
@@ -17,7 +17,7 @@ export function MoradorLayout() {
       {/* Container que simula a tela do celular (Max Width) */}
       <div className="w-full max-w-md bg-gray-50 dark:bg-gray-900 h-screen shadow-2xl flex flex-col relative overflow-hidden">
         
-        {/* Conteúdo Principal (scrollável) */}
+        {/* ConteÃºdo Principal (scrollÃ¡vel) */}
         <main className="flex-1 overflow-y-auto pb-20 no-scrollbar">
           <Outlet />
         </main>
@@ -30,15 +30,15 @@ export function MoradorLayout() {
             end
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
-            <Home className="w-6 h-6" />
-            <span className="text-[10px] font-medium">Início</span>
+            <Home className="w-5 h-5" />
+            <span className="text-[10px] font-medium">InÃ­cio</span>
           </NavLink>
 
           <NavLink 
             to="/app/reservas" 
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
-            <CalendarDays className="w-6 h-6" />
+            <CalendarDays className="w-5 h-5" />
             <span className="text-[10px] font-medium">Reservas</span>
           </NavLink>
 
@@ -46,7 +46,7 @@ export function MoradorLayout() {
             to="/app/encomendas" 
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
-            <Package className="w-6 h-6" />
+            <Package className="w-5 h-5" />
             <span className="text-[10px] font-medium">Encomendas</span>
           </NavLink>
 
@@ -54,15 +54,23 @@ export function MoradorLayout() {
             to="/app/ouvidoria" 
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
-            <MessageSquare className="w-6 h-6" />
+            <MessageSquare className="w-5 h-5" />
             <span className="text-[10px] font-medium">Ouvidoria</span>
+          </NavLink>
+
+          <NavLink 
+            to="/app/visitantes" 
+            className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
+          >
+            <Users className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Visitantes</span>
           </NavLink>
 
           <NavLink 
             to="/app/perfil" 
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
-            <User className="w-6 h-6" />
+            <User className="w-5 h-5" />
             <span className="text-[10px] font-medium">Perfil</span>
           </NavLink>
 
@@ -71,3 +79,4 @@ export function MoradorLayout() {
     </div>
   );
 }
+

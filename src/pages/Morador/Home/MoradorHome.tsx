@@ -1,4 +1,4 @@
-import { Package, Bell, CalendarDays, FileText, Settings, UserCircle2, Loader2, Megaphone } from 'lucide-react';
+import { Package, Bell, CalendarDays, FileText, Settings, UserCircle2, Loader2, Megaphone, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from '../../../services/api';
@@ -147,13 +147,33 @@ export function MoradorHome() {
           </button>
 
           <button 
+            onClick={() => navigate('/app/boletos')}
+            className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
+          >
+            <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600">
+              <FileText className="w-6 h-6" />
+            </div>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Boletos</span>
+          </button>
+
+          <button 
+            onClick={() => navigate('/app/ouvidoria')}
+            className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
+          >
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600">
+              <MessageSquare className="w-6 h-6" />
+            </div>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Ouvidoria</span>
+          </button>
+
+          <button 
             onClick={() => navigate('/app/perfil')}
             className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
           >
             <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-600 dark:text-gray-300">
               <Settings className="w-6 h-6" />
             </div>
-            <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Configurações</span>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">Perfil</span>
           </button>
 
         </div>
