@@ -14,7 +14,8 @@ export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProp
   const [formData, setFormData] = useState({
     codigoRastreio: '',
     destinatario: '',
-    unidade: '',
+    bloco: '',
+    apartamento: '',
     transportadora: ''
   });
 
@@ -30,7 +31,10 @@ export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProp
     try {
       // Por padrão, a API deve iniciar a encomenda como AGUARDANDO_RETIRADA
       await api.post('/api/v1/encomendas', {
-        ...formData,
+        codigoRastreio: formData.codigoRastreio,
+        transportadora: formData.transportadora,
+        destinatario: formData.destinatario,
+        unidade: `${formData.bloco} - ${formData.apartamento}`,
         status: 'AGUARDANDO_RETIRADA'
       });
       onSuccess();
@@ -87,22 +91,41 @@ export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProp
         </div>
       </div>
 
-      {/* Unidade */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Unidade / Apartamento</label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-            <MapPin size={18} />
+      {/* Bloco e Apartamento */}
+      <div className="flex gap-4">
+        <div className="flex-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Bloco</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+              <MapPin size={18} />
+            </div>
+            <input
+              type="text"
+              name="bloco"
+              required
+              value={formData.bloco}
+              onChange={handleChange}
+              className="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow"
+              placeholder="Ex: Bloco A"
+            />
           </div>
-          <input
-            type="text"
-            name="unidade"
-            required
-            value={formData.unidade}
-            onChange={handleChange}
-            className="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow"
-            placeholder="Ex: Bloco A - Apto 204"
-          />
+        </div>
+        <div className="flex-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Apartamento</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+              <MapPin size={18} />
+            </div>
+            <input
+              type="text"
+              name="apartamento"
+              required
+              value={formData.apartamento}
+              onChange={handleChange}
+              className="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow"
+              placeholder="Ex: 204"
+            />
+          </div>
         </div>
       </div>
 

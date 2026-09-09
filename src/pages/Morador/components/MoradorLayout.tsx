@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Home, CalendarDays, FileText, MessageSquare, User } from 'lucide-react';
+import { Home, CalendarDays, Package, MessageSquare, User } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 export function MoradorLayout() {
@@ -26,7 +26,7 @@ export function MoradorLayout() {
         <nav className="absolute bottom-0 w-full bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-around items-center h-16 px-2 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] z-50">
           
           <NavLink 
-            to="/app" 
+            to="/morador" 
             end
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
@@ -35,7 +35,7 @@ export function MoradorLayout() {
           </NavLink>
 
           <NavLink 
-            to="/app/reservas" 
+            to="/morador/reservas" 
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <CalendarDays className="w-6 h-6" />
@@ -43,15 +43,15 @@ export function MoradorLayout() {
           </NavLink>
 
           <NavLink 
-            to="/app/boletos" 
+            to="/morador/encomendas" 
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
-            <FileText className="w-6 h-6" />
-            <span className="text-[10px] font-medium">Boletos</span>
+            <Package className="w-6 h-6" />
+            <span className="text-[10px] font-medium">Encomendas</span>
           </NavLink>
 
           <NavLink 
-            to="/app/ouvidoria" 
+            to="/morador/ouvidoria" 
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <MessageSquare className="w-6 h-6" />
@@ -59,7 +59,7 @@ export function MoradorLayout() {
           </NavLink>
 
           <NavLink 
-            to="/app/perfil" 
+            to="/morador/perfil" 
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <User className="w-6 h-6" />

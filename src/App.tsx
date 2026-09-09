@@ -27,6 +27,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { VisitantesList } from './pages/Visitantes/VisitantesList';
 import { AutoCheckin } from './pages/Public/AutoCheckin';
 import { NotificacoesList } from './pages/Notificacoes/NotificacoesList';
+import { MoradorEncomendas } from './pages/Morador/Encomendas/MoradorEncomendas';
 
 export default function App() {
   return (
@@ -63,6 +64,7 @@ export default function App() {
             <Route path="ouvidoria" element={<MoradorOuvidoria />} />
             <Route path="visitantes" element={<MoradorVisitantes />} />
             <Route path="notificacoes" element={<NotificacoesList />} />
+            <Route path="encomendas" element={<MoradorEncomendas />} />
             <Route path="perfil" element={<MoradorPerfil />} />
             <Route path="perfil/dados" element={<MoradorDadosPessoais />} />
             <Route path="perfil/veiculos" element={<MoradorVeiculos />} />

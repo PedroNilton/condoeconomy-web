@@ -114,7 +114,7 @@ export function MoradorHome() {
         <div className="grid grid-cols-2 gap-4">
           
           <button 
-            onClick={() => alert('Em construção')}
+            onClick={() => navigate('/morador/encomendas')}
             className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center justify-center gap-3 active:scale-95 transition-transform"
           >
             <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 relative">
