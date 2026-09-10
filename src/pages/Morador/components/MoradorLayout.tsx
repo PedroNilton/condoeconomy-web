@@ -17,7 +17,7 @@ export function MoradorLayout() {
       {/* Container que simula a tela do celular (Max Width) */}
       <div className="w-full max-w-md bg-gray-50 dark:bg-gray-900 h-screen shadow-2xl flex flex-col relative overflow-hidden">
         
-        {/* ConteÃºdo Principal (scrollÃ¡vel) */}
+        {/* Conteúdo Principal (scrollável) */}
         <main className="flex-1 overflow-y-auto pb-20 no-scrollbar">
           <Outlet />
         </main>
@@ -31,7 +31,7 @@ export function MoradorLayout() {
             className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600 dark:text-gray-300'}`}
           >
             <Home className="w-5 h-5" />
-            <span className="text-[10px] font-medium">InÃ­cio</span>
+            <span className="text-[10px] font-medium">Início</span>
           </NavLink>
 
           <NavLink 
@@ -79,4 +79,3 @@ export function MoradorLayout() {
     </div>
   );
 }
-
