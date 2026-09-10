@@ -162,16 +162,14 @@ export function MoradorOuvidoria() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
-      
-      {/* Header Fixo */}
-      <header className="bg-white dark:bg-gray-800 pt-10 pb-4 px-6 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
+    <div className="space-y-6 p-4 pb-24">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-blue-600" />
+          <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            <MessageSquare className="w-6 h-6 text-blue-900 dark:text-blue-400" />
             Ouvidoria
-          </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Fale direto com a administração</p>
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Fale direto com a administração.</p>
         </div>
         
         <button 
@@ -180,10 +178,10 @@ export function MoradorOuvidoria() {
         >
           <Plus className="w-5 h-5" />
         </button>
-      </header>
+      </div>
 
       {/* Lista de Chamados */}
-      <div className="p-6">
+      <div>
         {loading ? (
           <div className="flex justify-center py-10">
             <Loader2 className="w-6 h-6 animate-spin text-blue-600" />

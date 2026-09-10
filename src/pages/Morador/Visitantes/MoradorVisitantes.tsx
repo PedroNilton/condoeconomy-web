@@ -134,19 +134,18 @@ export function MoradorVisitantes() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
-      
-      <header className="bg-white dark:bg-gray-800 pt-10 pb-4 px-6 flex items-center justify-between border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
+    <div className="space-y-6 p-4 pb-24">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-            <UserCheck className="w-5 h-5 text-blue-600" />
-            Autorizações
-          </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Libere o acesso para seus convidados</p>
+          <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            <UserCheck className="w-6 h-6 text-blue-900 dark:text-blue-400" />
+            Visitantes
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Libere o acesso para seus convidados.</p>
         </div>
-      </header>
+      </div>
 
-      <div className="p-6">
+      <div>
         <button 
           onClick={() => setIsFormOpen(true)}
           className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 rounded-2xl shadow-md flex items-center justify-center gap-2 transition-colors mb-6"
