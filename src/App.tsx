@@ -4,6 +4,9 @@ import { MoradorDadosPessoais } from './pages/Morador/Perfil/MoradorDadosPessoai
 import { MoradorVeiculos } from './pages/Morador/Perfil/MoradorVeiculos';
 import { MoradorPets } from './pages/Morador/Perfil/MoradorPets';
 import { MoradorAdicionais } from './pages/Morador/Perfil/MoradorAdicionais';
+import { MoradorNotificacoes } from './pages/Morador/Perfil/MoradorNotificacoes';
+import { MoradorSeguranca } from './pages/Morador/Perfil/MoradorSeguranca';
+import { MoradorAjuda } from './pages/Morador/Perfil/MoradorAjuda';
 import { DashboardLayout } from './components/Layout';
 import { DashboardHome } from './pages/Dashboard';
 import { EncomendasList } from './pages/Encomendas/EncomendasList';
@@ -75,6 +78,9 @@ export default function App() {
               <Route path="perfil/veiculos" element={<MoradorVeiculos />} />
               <Route path="perfil/pets" element={<MoradorPets />} />
               <Route path="perfil/adicionais" element={<MoradorAdicionais />} />
+              <Route path="perfil/notificacoes" element={<MoradorNotificacoes />} />
+              <Route path="perfil/seguranca" element={<MoradorSeguranca />} />
+              <Route path="perfil/ajuda" element={<MoradorAjuda />} />
             </Route>
           </Route>
         </Routes>

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Home, CalendarDays, Package, MessageSquare, User, Users } from 'lucide-react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { usePushNotifications } from '../../hooks/usePushNotifications';
+import { usePushNotifications } from '../../../hooks/usePushNotifications';
 
 export function MoradorLayout() {
   const navigate = useNavigate();

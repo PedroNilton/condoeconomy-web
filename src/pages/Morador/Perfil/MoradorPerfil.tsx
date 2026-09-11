@@ -61,14 +61,14 @@ export function MoradorPerfil() {
       title: 'Configurações',
       items: [
         { icon: <Moon className="w-5 h-5" />, label: theme === 'light' ? 'Modo Escuro' : 'Modo Claro', onClick: toggleTheme },
-        { icon: <Bell className="w-5 h-5" />, label: 'Notificações' },
-        { icon: <ShieldCheck className="w-5 h-5" />, label: 'Segurança e Senha' },
+        { icon: <Bell className="w-5 h-5" />, label: 'Notificações', route: '/app/perfil/notificacoes' },
+        { icon: <ShieldCheck className="w-5 h-5" />, label: 'Segurança e Senha', route: '/app/perfil/seguranca' },
       ]
     },
     {
       title: 'Suporte',
       items: [
-        { icon: <HelpCircle className="w-5 h-5" />, label: 'Central de Ajuda' },
+        { icon: <HelpCircle className="w-5 h-5" />, label: 'Central de Ajuda', route: '/app/perfil/ajuda' },
       ]
     }
   ];

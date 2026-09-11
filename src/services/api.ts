@@ -15,4 +15,19 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Interceptor para tratar token expirado (401/403)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      // Evitar loop de redirecionamento se já estiver na tela de login
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
+        localStorage.removeItem('@CondoEconomy:token');
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

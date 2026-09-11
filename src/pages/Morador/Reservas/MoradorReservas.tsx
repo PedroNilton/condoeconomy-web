@@ -46,19 +46,12 @@ export function MoradorReservas() {
       const areasRes = await api.get('/api/v1/reservas/areas-comuns');
       setAreas(areasRes.data);
 
-      // Para o MVP, vamos buscar as reservas do dia atual para popular a lista,
-      // idealmente teríamos uma rota /api/v1/reservas/minhas
-      // Aqui vamos simular pegando reservas de vários dias e filtrando pelo morador
+      // Busca as reservas do próprio morador! (Todas, incluindo as pendentes)
+      const reservasRes = await api.get(`/api/v1/reservas/minhas`);
       
-      // Simulação: buscar reservas do mês atual (gambiarra MVP)
-      const dataHoje = new Date().toISOString().split('T')[0];
-      const reservasRes = await api.get(`/api/v1/reservas?data=${dataHoje}`);
-      
-      // Filtra apenas do apartamento
-      const filtered = reservasRes.data.filter((r: Reserva) => r.unidade === 'Apto 101 - Bloco B');
-      setMinhasReservas(filtered);
+      setMinhasReservas(reservasRes.data);
     } catch (err) {
-      console.error(err);
+      console.error('Erro ao buscar dados', err);
     } finally {
       setLoading(false);
     }
@@ -230,29 +223,44 @@ export function MoradorReservas() {
           </div>
         ) : (
           <div className="space-y-4">
-            {minhasReservas.map(res => (
+            {minhasReservas.map(res => {
+              let statusColor = "bg-yellow-50 text-yellow-700 border-yellow-200";
+              let statusLabel = res.status;
+              
+              if (res.status === 'APROVADA') {
+                statusColor = "bg-green-50 text-green-700 border-green-200";
+                statusLabel = "Aprovada";
+              } else if (res.status === 'PENDENTE_APROVACAO') {
+                statusColor = "bg-yellow-50 text-yellow-700 border-yellow-200";
+                statusLabel = "Em Revisão";
+              } else if (res.status === 'REJEITADA') {
+                statusColor = "bg-red-50 text-red-700 border-red-200";
+                statusLabel = "Rejeitada";
+              }
+
+              return (
               <div key={res.id} className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 relative overflow-hidden">
-                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-500"></div>
+                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${res.status === 'APROVADA' ? 'bg-green-500' : res.status === 'REJEITADA' ? 'bg-red-500' : 'bg-yellow-500'}`}></div>
                 <div className="pl-3">
                   <div className="flex justify-between items-start mb-1">
                     <h4 className="font-bold text-gray-800 dark:text-gray-100 text-sm">{res.titulo}</h4>
-                    <span className="text-[10px] font-bold px-2 py-1 rounded-md border bg-yellow-50 text-yellow-700 border-yellow-200 uppercase">
-                      {res.status}
+                    <span className={`text-[10px] font-bold px-2 py-1 rounded-md border uppercase ${statusColor}`}>
+                      {statusLabel}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-300 font-medium mb-3">{res.areaComumNome}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-300 font-medium mb-3">{res.nomeArea}</p>
                   
                   <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                     <span className="bg-gray-50 dark:bg-gray-900 px-2 py-1 rounded">
-                      📅 {new Date(res.data).toLocaleDateString('pt-BR')}
+                      📅 {new Date(res.dataReserva).toLocaleDateString('pt-BR')}
                     </span>
                     <span className="bg-gray-50 dark:bg-gray-900 px-2 py-1 rounded">
-                      ⏰ {res.inicio} às {res.fim}
+                      ⏰ {res.horaInicio} às {res.horaFim}
                     </span>
                   </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
       </div>
