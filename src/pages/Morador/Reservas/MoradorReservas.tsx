@@ -18,7 +18,7 @@ interface Reserva {
   fim: string;
   unidade: string;
   morador: string;
-  status: string;
+  status: string;\n  motivoRejeicao?: string;
 }
 
 export function MoradorReservas() {
@@ -33,7 +33,20 @@ export function MoradorReservas() {
   const [titulo, setTitulo] = useState('');
   const [inicio, setInicio] = useState('10:00');
   const [fim, setFim] = useState('18:00');
+  const [convidados, setConvidados] = useState<{nome: string, documento: string}[]>([]);
+  const [guestName, setGuestName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleAddGuest = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if(guestName.trim() === '') return;
+    setConvidados([...convidados, { nome: guestName, documento: '' }]);
+    setGuestName('');
+  };
+
+  const handleRemoveGuest = (index: number) => {
+    setConvidados(convidados.filter((_, i) => i !== index));
+  };
 
   useEffect(() => {
     fetchData();
@@ -71,12 +84,13 @@ export function MoradorReservas() {
         data: dataSelecionada,
         inicio,
         fim,
-        convidados: [] // Lista vazia para o MVP
+        convidados
       });
       
       setIsFormOpen(false);
       setTitulo('');
       setDataSelecionada('');
+      setConvidados([]);
       
       // Atualiza lista
       fetchData();
@@ -164,6 +178,33 @@ export function MoradorReservas() {
                   required
                 />
               </div>
+            </div>
+
+            {/* Convidados Opcionais */}
+            <div className="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Convidados (Opcional)</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="Nome do convidado"
+                  value={guestName}
+                  onChange={e => setGuestName(e.target.value)}
+                  className="flex-1 p-3.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 shadow-sm text-sm"
+                />
+                <button onClick={handleAddGuest} className="bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 p-3.5 rounded-xl font-bold hover:bg-blue-200 transition-colors">
+                  + Adicionar
+                </button>
+              </div>
+              {convidados.length > 0 && (
+                <div className="flex flex-col gap-2 mt-3">
+                  {convidados.map((c, i) => (
+                    <div key={i} className="flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-lg shadow-sm">
+                      <span className="text-sm text-gray-800 dark:text-gray-200 font-medium">{c.nome}</span>
+                      <button onClick={() => handleRemoveGuest(i)} type="button" className="text-red-500 hover:text-red-700 font-bold px-2">X</button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex gap-3 items-start">
@@ -258,6 +299,11 @@ export function MoradorReservas() {
                       ⏰ {res.horaInicio} às {res.horaFim}
                     </span>
                   </div>
+                  {res.status === 'REJEITADA' && res.motivoRejeicao && (
+                    <div className="mt-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/50 p-2.5 rounded-lg">
+                      <p className="text-xs text-red-700 dark:text-red-400 font-medium">Motivo da recusa: {res.motivoRejeicao}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )})}

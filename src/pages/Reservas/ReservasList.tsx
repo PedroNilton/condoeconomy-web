@@ -20,7 +20,7 @@ interface Reserva {
   dataReserva: string;
   horaInicio: string;
   horaFim: string;
-  status: string;
+  status: string;\n  motivoRejeicao?: string;
   convidados: Convidado[];
 }
 
@@ -79,9 +79,13 @@ export function ReservasList() {
   };
 
   const handleRejeitar = async (reservaId: string) => {
-    if(!window.confirm('Tem certeza que deseja rejeitar esta reserva?')) return;
+    const motivo = window.prompt('Qual o motivo da recusa? (Obrigatório)');
+    if(!motivo || motivo.trim() === '') {
+      alert('Motivo da recusa é obrigatório.');
+      return;
+    }
     try {
-      await api.put(`/api/v1/reservas/${reservaId}/rejeitar`);
+      await api.put(`/api/v1/reservas/${reservaId}/rejeitar`, { motivo });
       fetchReservas();
     } catch (err) {
       alert('Erro ao rejeitar reserva.');
