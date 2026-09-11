@@ -53,8 +53,8 @@ export function Login() {
             <div className="w-20 h-20 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center mb-4">
               <Waves className="w-10 h-10 text-cyan-600" />
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-wide">Mar Egeu</h1>
-            <p className="text-blue-100 text-sm mt-1">Portal do Condomínio</p>
+            <h1 className="text-2xl font-bold text-white tracking-wide">Mar Egeu Condomínio</h1>
+            <p className="text-blue-100 text-sm mt-1">Acesso Restrito</p>
           </div>
 
           <div className="flex-1">

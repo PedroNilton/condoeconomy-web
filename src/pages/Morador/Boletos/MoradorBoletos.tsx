@@ -24,8 +24,8 @@ export function MoradorBoletos() {
   const fetchBoletos = async () => {
     try {
       setLoading(true);
-      // Filtra direto na API pela unidade do morador atual
-      const response = await api.get('/api/v1/boletos?unidade=Apto 101 - Bloco B');
+      // Backend automatically extracts and filters by the Morador's unit from JWT
+      const response = await api.get('/api/v1/boletos');
       
       // Ordenar por data de vencimento (mais próximos primeiro)
       const list = response.data;
