@@ -184,9 +184,15 @@ export function ReservasList() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
                     <h4 className="font-bold text-lg text-gray-900 dark:text-gray-100">{reserva.titulo}</h4>
-                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${activeTab === 'PENDENTES' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-500' : 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-500'}`}>
-                      {activeTab === 'PENDENTES' ? 'PENDENTE' : 'APROVADA'}
-                    </span>
+                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                        activeTab === 'PENDENTES' 
+                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-500' 
+                          : activeTab === 'APROVADAS'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-500'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-500'
+                      }`}>
+                        {activeTab === 'PENDENTES' ? 'PENDENTE' : activeTab === 'APROVADAS' ? 'APROVADA' : 'RECUSADA'}
+                      </span>
                   </div>
                   
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
