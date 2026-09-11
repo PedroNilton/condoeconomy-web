@@ -20,7 +20,8 @@ interface Reserva {
   dataReserva: string;
   horaInicio: string;
   horaFim: string;
-  status: string;\n  motivoRejeicao?: string;
+  status: string;
+  motivoRejeicao?: string;
   convidados: Convidado[];
 }
 

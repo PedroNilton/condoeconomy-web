@@ -18,7 +18,8 @@ interface Reserva {
   fim: string;
   unidade: string;
   morador: string;
-  status: string;\n  motivoRejeicao?: string;
+  status: string;
+  motivoRejeicao?: string;
 }
 
 export function MoradorReservas() {
