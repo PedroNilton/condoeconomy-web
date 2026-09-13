@@ -62,33 +62,37 @@ export function MoradorHome() {
   }, []);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col animate-fade-in">
       
       {/* Header Topo */}
-      <header className="bg-blue-600 pt-12 pb-6 px-6 rounded-b-[30px] shadow-md relative">
+      <header className="bg-blue-600 pt-12 pb-6 px-6 rounded-b-[30px] shadow-md relative animate-fade-in-up">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-inner">
-              <UserCircle2 className="w-8 h-8 text-blue-300" />
+            <div className="w-12 h-12 bg-white/10 dark:bg-slate-800 rounded-full flex items-center justify-center shadow-inner border border-slate-200 dark:border-slate-700">
+              <UserCircle2 className="w-8 h-8 text-cyan-600 dark:text-cyan-400" />
             </div>
             <div>
-              <p className="text-blue-100 text-sm font-medium">Olá, {usuarioNome}!</p>
-              <h2 className="text-white text-lg font-bold">Bem-vindo</h2>
+              <p className="text-blue-100 text-sm font-medium animate-fade-in-up" style={{ animationDelay: '100ms', opacity: 0 }}>Olá, {usuarioNome}!</p>
+              <h2 className="text-white text-lg font-bold animate-fade-in-up" style={{ animationDelay: '200ms', opacity: 0 }}>Bem-vindo</h2>
             </div>
           </div>
           <button 
             onClick={() => navigate('/app/notificacoes')}
-            className="relative w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center text-white hover:bg-blue-800 transition"
+            className="relative w-10 h-10 bg-white/10 dark:bg-slate-800 border border-white/20 dark:border-slate-700 rounded-full flex items-center justify-center text-white hover:bg-white/20 dark:hover:bg-slate-700 transition shadow-sm animate-fade-in-up"
+            style={{ animationDelay: '300ms', opacity: 0 }}
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-blue-700"></span>
+              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-blue-600 dark:border-slate-800"></span>
             )}
           </button>
         </div>
 
         {/* Card de Boleto Aberto */}
-        <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] flex items-center justify-between border-l-[6px] border-amber-400">
+        <div 
+          className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] flex items-center justify-between border-l-[6px] border-amber-400 animate-fade-in-up"
+          style={{ animationDelay: '400ms', opacity: 0 }}
+        >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-amber-50 dark:bg-amber-400/10 rounded-xl flex items-center justify-center text-amber-500">
               <FileText className="w-5 h-5" />
@@ -108,7 +112,7 @@ export function MoradorHome() {
       </header>
 
       {/* Grid de Atalhos */}
-      <div className="p-6">
+      <div className="p-6 animate-fade-in-up" style={{ animationDelay: '500ms', opacity: 0 }}>
         <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 mb-4 tracking-widest uppercase">Serviços Rápidos</h3>
         
         <div className="grid grid-cols-2 gap-4">
@@ -160,7 +164,7 @@ export function MoradorHome() {
       </div>
 
       {/* Mural de Avisos */}
-      <div className="px-6 pb-6">
+      <div className="px-6 pb-6 animate-fade-in-up" style={{ animationDelay: '600ms', opacity: 0 }}>
         <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 mb-4 tracking-widest uppercase">Mural do Síndico</h3>
         
         {loadingAvisos ? (
