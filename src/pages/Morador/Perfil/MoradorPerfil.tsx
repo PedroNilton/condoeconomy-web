@@ -74,7 +74,7 @@ export function MoradorPerfil() {
   ];
 
   return (
-    <div className="flex flex-col h-full pb-20 overflow-y-auto">
+    <div className="flex flex-col">
       
       {/* Header Profile */}
       <div className="bg-blue-600 px-6 pt-12 pb-8 rounded-b-[40px] shadow-md">

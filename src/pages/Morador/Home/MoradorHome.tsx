@@ -62,7 +62,7 @@ export function MoradorHome() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       
       {/* Header Topo */}
       <header className="bg-blue-600 pt-12 pb-6 px-6 rounded-b-[30px] shadow-md relative">
