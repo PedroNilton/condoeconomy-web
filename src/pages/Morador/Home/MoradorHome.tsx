@@ -65,30 +65,30 @@ export function MoradorHome() {
     <div className="flex flex-col h-full">
       
       {/* Header Topo */}
-      <header className="pt-12 pb-6 px-6 relative">
+      <header className="bg-blue-600 pt-12 pb-6 px-6 rounded-b-[30px] shadow-md relative">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/10 dark:bg-slate-800 rounded-full flex items-center justify-center shadow-inner border border-slate-200 dark:border-slate-700">
-              <UserCircle2 className="w-8 h-8 text-cyan-600 dark:text-cyan-400" />
+            <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-inner">
+              <UserCircle2 className="w-8 h-8 text-blue-300" />
             </div>
             <div>
-              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Olá, {usuarioNome}!</p>
-              <h2 className="text-slate-800 dark:text-white text-lg font-bold">Bem-vindo</h2>
+              <p className="text-blue-100 text-sm font-medium">Olá, {usuarioNome}!</p>
+              <h2 className="text-white text-lg font-bold">Bem-vindo</h2>
             </div>
           </div>
           <button 
             onClick={() => navigate('/app/notificacoes')}
-            className="relative w-10 h-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition shadow-sm"
+            className="relative w-10 h-10 bg-blue-700 rounded-full flex items-center justify-center text-white hover:bg-blue-800 transition"
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-white dark:border-slate-800"></span>
+              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-blue-700"></span>
             )}
           </button>
         </div>
 
         {/* Card de Boleto Aberto */}
-        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] flex items-center justify-between border-l-[6px] border-amber-400">
+        <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.1)] flex items-center justify-between border-l-[6px] border-amber-400">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-amber-50 dark:bg-amber-400/10 rounded-xl flex items-center justify-center text-amber-500">
               <FileText className="w-5 h-5" />
