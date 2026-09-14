@@ -1,4 +1,4 @@
-import { Package, Bell, CalendarDays, FileText, Settings, UserCircle2, Loader2, Megaphone, MessageSquare } from 'lucide-react';
+import { Package, UserCircle2, CalendarDays, Megaphone, Bell, Loader2, FileText, MessageSquare, Vote } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from '../../../services/api';
@@ -148,6 +148,16 @@ export function MoradorHome() {
               <UserCircle2 className="w-6 h-6" />
             </div>
             <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-300">Visitantes</span>
+          </button>
+
+          <button 
+            onClick={() => navigate('/app/assembleia')}
+            className="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700/50 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all hover:shadow-md"
+          >
+            <div className="w-12 h-12 bg-amber-50 dark:bg-amber-500/10 rounded-full flex items-center justify-center text-amber-500">
+              <Vote className="w-6 h-6" />
+            </div>
+            <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-300">Assembleia</span>
           </button>
 
           <button 

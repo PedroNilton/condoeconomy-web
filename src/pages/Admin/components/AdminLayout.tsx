@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Home, Megaphone, LogOut, Calendar, MessageSquareWarning } from 'lucide-react';
+import { Home, Megaphone, LogOut, Calendar, MessageSquareWarning, Vote } from 'lucide-react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { ThemeToggle } from '../../../components/ThemeToggle';
@@ -71,6 +71,13 @@ export function AdminLayout() {
                   </span>
                 )}
               </div>
+            </NavLink>
+
+            <NavLink 
+              to="/admin/assembleia" 
+              className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full relative transition-all duration-300 ${isActive ? 'text-rose-600 dark:text-rose-400 scale-110' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400'}`}
+            >
+              <Vote className={`w-5 h-5 ${location.pathname.includes('/assembleia') ? 'stroke-[2.5px]' : 'stroke-2'}`} />
             </NavLink>
 
             <NavLink 

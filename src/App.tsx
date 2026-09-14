@@ -31,6 +31,8 @@ import { AutoCheckin } from './pages/Public/AutoCheckin';
 import { NotificacoesList } from './pages/Notificacoes/NotificacoesList';
 import { MoradorEncomendas } from './pages/Morador/Encomendas/MoradorEncomendas';
 import { AuthGuard } from './components/AuthGuard';
+import { MoradorAssembleia } from './pages/Morador/Assembleia/MoradorAssembleia';
+import { AssembleiaAdminPanel } from './pages/Admin/Assembleia/AssembleiaAdminPanel';
 
 export default function App() {
   return (
@@ -57,6 +59,7 @@ export default function App() {
           <Route element={<AuthGuard allowedRoles={['ROLE_ADMIN', 'ROLE_SINDICO', 'ROLE_SUPER_ADMIN']} />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AvisosPanel />} />
+              <Route path="assembleia" element={<AssembleiaAdminPanel />} />
               <Route path="reservas" element={<ReservasApprovalPanel />} />
               <Route path="ouvidoria" element={<OuvidoriaAdminPanel />} />
               <Route path="painel" element={<FinancasAdminPanel />} />
@@ -70,6 +73,7 @@ export default function App() {
               <Route path="reservas" element={<MoradorReservas />} />
               <Route path="boletos" element={<MoradorBoletos />} />
               <Route path="ouvidoria" element={<MoradorOuvidoria />} />
+              <Route path="assembleia" element={<MoradorAssembleia />} />
               <Route path="visitantes" element={<MoradorVisitantes />} />
               <Route path="notificacoes" element={<NotificacoesList />} />
               <Route path="encomendas" element={<MoradorEncomendas />} />
