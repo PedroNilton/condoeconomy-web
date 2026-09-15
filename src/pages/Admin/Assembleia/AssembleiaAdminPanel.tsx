@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, X, BarChart3, Clock, CheckCircle2, Vote } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { Plus, X, BarChart3, Vote } from 'lucide-react';
+import api from '../../../services/api';
 
 interface OpcaoResultado {
   opcaoId: string;
@@ -35,19 +34,14 @@ export function AssembleiaAdminPanel() {
 
   const fetchVotacoes = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/votacoes', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (!response.ok) throw new Error('Erro ao buscar votações');
-      const data = await response.json();
+      const response = await api.get('/api/v1/votacoes');
+      const data = response.data;
       
       // Buscar resultados de cada votação
       const resultados = await Promise.all(
         data.map(async (v: any) => {
-          const res = await fetch(`http://localhost:8080/api/v1/votacoes/${v.id}/resultado`, {
-             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-          });
-          return res.json();
+          const res = await api.get(`/api/v1/votacoes/${v.id}/resultado`);
+          return res.data;
         })
       );
       setVotacoes(resultados);
@@ -61,42 +55,29 @@ export function AssembleiaAdminPanel() {
   const handleCriar = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:8080/api/v1/votacoes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          titulo,
-          descricao,
-          dataEncerramento: new Date(dataEncerramento).toISOString(),
-          opcoes: opcoes.filter(o => o.trim() !== '')
-        })
+      await api.post('/api/v1/votacoes', {
+        titulo,
+        descricao,
+        dataEncerramento: new Date(dataEncerramento).toISOString(),
+        opcoes: opcoes.filter(o => o.trim() !== '')
       });
 
-      if (response.ok) {
-        setShowNovaModal(false);
-        setTitulo('');
-        setDescricao('');
-        setDataEncerramento('');
-        setOpcoes(['', '']);
-        fetchVotacoes();
-      } else {
-        alert('Erro ao criar votação');
-      }
+      setShowNovaModal(false);
+      setTitulo('');
+      setDescricao('');
+      setDataEncerramento('');
+      setOpcoes(['', '']);
+      fetchVotacoes();
     } catch (err) {
       console.error(err);
+      alert('Erro ao criar votação');
     }
   };
 
   const handleEncerrar = async (id: string) => {
     if (!window.confirm('Tem certeza que deseja encerrar esta assembleia?')) return;
     try {
-      await fetch(`http://localhost:8080/api/v1/votacoes/${id}/encerrar`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      await api.put(`/api/v1/votacoes/${id}/encerrar`);
       fetchVotacoes();
     } catch (err) {
       console.error(err);

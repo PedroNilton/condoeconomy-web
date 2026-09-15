@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../../contexts/AuthContext';
 import { CheckCircle2, ChevronRight, Vote, AlertCircle } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import api from '../../../services/api';
 
 interface Opcao {
   id: string;
@@ -22,7 +20,6 @@ interface Votacao {
 }
 
 export function MoradorAssembleia() {
-  const { user } = useAuth();
   const [votacoes, setVotacoes] = useState<Votacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -35,14 +32,8 @@ export function MoradorAssembleia() {
 
   const fetchVotacoes = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/v1/votacoes/ativas', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      if (!response.ok) throw new Error('Erro ao carregar assembleias');
-      const data = await response.json();
-      setVotacoes(data);
+      const response = await api.get('/api/v1/votacoes/ativas');
+      setVotacoes(response.data);
     } catch (err) {
       setError('Não foi possível carregar as votações abertas.');
     } finally {
@@ -54,19 +45,7 @@ export function MoradorAssembleia() {
     if (!votacaoSelecionada) return;
     setVotoLoad(opcaoId);
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/votacoes/${votacaoSelecionada.id}/votar`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ opcaoId })
-      });
-
-      if (!response.ok) {
-        const errorMsg = await response.text();
-        throw new Error(errorMsg || 'Erro ao registrar voto');
-      }
+      await api.post(`/api/v1/votacoes/${votacaoSelecionada.id}/votar`, { opcaoId });
 
       // Atualiza o estado
       setVotacoes(votacoes.map(v => 
@@ -74,7 +53,7 @@ export function MoradorAssembleia() {
       ));
       setVotacaoSelecionada(null);
     } catch (err: any) {
-      alert(err.message);
+      alert(err.response?.data?.message || 'Erro ao registrar voto');
     } finally {
       setVotoLoad(null);
     }
