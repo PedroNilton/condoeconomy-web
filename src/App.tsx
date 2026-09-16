@@ -28,6 +28,7 @@ import { FinancasAdminPanel } from './pages/Admin/Financas/FinancasAdminPanel';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AutoCheckin } from './pages/Public/AutoCheckin';
+import { ConsultaVeiculos } from './pages/Portaria/Veiculos/ConsultaVeiculos';
 import { NotificacoesList } from './pages/Notificacoes/NotificacoesList';
 import { MoradorEncomendas } from './pages/Morador/Encomendas/MoradorEncomendas';
 import { AuthGuard } from './components/AuthGuard';
@@ -52,6 +53,7 @@ export default function App() {
               <Route path="reservas" element={<ReservasList />} />
               <Route path="chamados" element={<ChamadosList />} />
               <Route path="visitantes" element={<VisitantesList />} />
+              <Route path="veiculos" element={<ConsultaVeiculos />} />
             </Route>
           </Route>
 

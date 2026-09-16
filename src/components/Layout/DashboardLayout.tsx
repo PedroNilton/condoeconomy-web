@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Home, UserCheck, Package, CalendarDays, MessageSquare, LogOut } from 'lucide-react';
+import { Home, UserCheck, Package, CalendarDays, MessageSquare, LogOut, Car } from 'lucide-react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useNotification } from '../../contexts/NotificationContext';
 import { ThemeToggle } from '../ThemeToggle';
@@ -107,6 +107,13 @@ export function DashboardLayout() {
                   </span>
                 )}
               </div>
+            </NavLink>
+
+            <NavLink 
+              to="/portaria/veiculos" 
+              className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-all duration-300 ${isActive ? 'text-cyan-600 dark:text-cyan-400 scale-110' : 'text-slate-400 hover:text-slate-600 dark:text-slate-400'}`}
+            >
+              <Car className={`w-5 h-5 ${location.pathname.includes('/veiculos') ? 'stroke-[2.5px]' : 'stroke-2'}`} />
             </NavLink>
 
           </nav>
