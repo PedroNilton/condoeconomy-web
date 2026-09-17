@@ -70,3 +70,7 @@ Utilize as credenciais abaixo para testar os diferentes perfis (a senha padrão 
 
 ---
 *Desenvolvido para revolucionar a administração condominial.*
+
+## Atualizações recentes
+- **Veículos**: Novo módulo de consulta de veículos para a portaria.
+
