@@ -62,63 +62,68 @@ export function ReservasApprovalPanel() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
+      <div className="flex h-full items-center justify-center bg-ds-bg">
+        <Loader2 className="w-8 h-8 text-ds-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="h-full overflow-y-auto no-scrollbar">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center text-red-600">
-          <Calendar className="w-5 h-5" />
+    <div className="h-full overflow-y-auto no-scrollbar space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <p className="text-ds-dim text-xs font-bold uppercase tracking-wider mb-1">Aprovações</p>
+          <h2 className="text-ds-text text-2xl font-extrabold tracking-tight flex items-center gap-2">
+            Reservas Pendentes
+          </h2>
         </div>
-        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Aprovação de Reservas</h2>
       </div>
 
       {reservas.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center">
-          <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-3" />
-          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-1">Tudo em dia!</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Não há reservas aguardando sua aprovação.</p>
+        <div className="bg-ds-card p-8 rounded-[16px] text-center shadow-sm border border-ds-border">
+          <div className="w-16 h-16 bg-ds-success-dim border border-ds-success/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-ds-success" />
+          </div>
+          <p className="text-ds-text font-bold mb-1">Tudo em dia!</p>
+          <p className="text-ds-dim text-sm">Não há reservas aguardando sua aprovação.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {reservas.map(reserva => (
-            <div key={reserva.id} className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div key={reserva.id} className="bg-ds-card p-5 rounded-[16px] shadow-sm border border-ds-border">
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <span className="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 text-xs font-bold px-2.5 py-0.5 rounded-full mb-2">
+                  <span className="inline-flex items-center gap-1.5 font-mono text-[10.5px] font-semibold px-[9px] py-[4px] rounded-full uppercase tracking-wider bg-ds-warning-dim text-ds-warning mb-2">
                     <Clock className="w-3 h-3" /> Pendente
                   </span>
-                  <h3 className="font-bold text-gray-800 dark:text-gray-100">{reserva.titulo}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{reserva.areaComumNome}</p>
+                  <h3 className="font-bold text-ds-text text-[15px]">{reserva.titulo}</h3>
+                  <p className="text-[13.5px] text-ds-dim mt-0.5">{reserva.areaComumNome}</p>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-2 mb-4 text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
+              <div className="grid grid-cols-2 gap-2 mb-5 text-[13px] text-ds-dim bg-ds-bg p-3 rounded-xl border border-ds-border">
                 <div>
-                  <p className="text-xs text-gray-400">Morador</p>
-                  <p className="font-medium text-gray-800 dark:text-gray-100">{reserva.moradorSolicitante}</p>
+                  <p className="text-[11px] text-ds-faint font-bold uppercase tracking-wider mb-0.5">Morador</p>
+                  <p className="font-bold text-ds-text">{reserva.moradorSolicitante}</p>
                   <p className="text-xs">{reserva.unidadeTexto}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">Horário</p>
-                  <p className="font-medium text-gray-800 dark:text-gray-100">{new Date(reserva.dataReserva).toLocaleDateString('pt-BR')} {reserva.horaInicio.substring(0,5)}</p>
+                  <p className="text-[11px] text-ds-faint font-bold uppercase tracking-wider mb-0.5">Horário</p>
+                  <p className="font-bold text-ds-text">{new Date(reserva.dataReserva).toLocaleDateString('pt-BR')}</p>
+                  <p className="text-xs">{reserva.horaInicio.substring(0,5)} às {reserva.horaFim.substring(0,5)}</p>
                 </div>
               </div>
 
               <div className="flex gap-2">
                 <button 
                   onClick={() => handleAprovar(reserva.id)}
-                  className="flex-1 bg-green-600 text-white font-bold py-2.5 rounded-xl hover:bg-green-700 transition flex items-center justify-center gap-2"
+                  className="flex-1 bg-ds-success text-ds-bg font-bold py-3 rounded-[9px] hover:brightness-110 transition flex items-center justify-center gap-2 text-[13.5px] shadow-sm"
                 >
                   <CheckCircle className="w-4 h-4" /> Aprovar
                 </button>
                 <button 
                   onClick={() => handleRejeitar(reserva.id)}
-                  className="flex-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-bold py-2.5 rounded-xl hover:bg-gray-200 transition flex items-center justify-center gap-2"
+                  className="flex-1 bg-ds-bg border border-ds-border text-ds-text font-bold py-3 rounded-[9px] hover:bg-ds-danger-dim hover:text-ds-danger hover:border-ds-danger/30 transition flex items-center justify-center gap-2 text-[13.5px]"
                 >
                   <XCircle className="w-4 h-4" /> Rejeitar
                 </button>

@@ -41,58 +41,62 @@ export function OuvidoriaAdminPanel() {
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <Loader2 className="w-8 h-8 text-red-600 animate-spin" />
+      <div className="flex h-full items-center justify-center bg-ds-bg">
+        <Loader2 className="w-8 h-8 text-ds-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="h-full overflow-y-auto no-scrollbar">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center text-red-600">
-          <MessageSquareWarning className="w-5 h-5" />
+    <div className="h-full overflow-y-auto no-scrollbar space-y-6">
+      <div className="flex justify-between items-end mb-2">
+        <div>
+          <p className="text-ds-dim text-xs font-bold uppercase tracking-wider mb-1">Ouvidoria</p>
+          <h2 className="text-ds-text text-2xl font-extrabold tracking-tight flex items-center gap-2">
+            Escalonados
+          </h2>
         </div>
-        <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">Ouvidoria (Escalonados)</h2>
-      </div>
-
-      <div className="flex gap-2 mb-4">
-        <button onClick={fetchChamados} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-lg shadow-sm">
+        <button onClick={fetchChamados} className="flex items-center gap-2 text-xs font-bold text-ds-dim bg-ds-bg border border-ds-border px-3 py-2 rounded-xl hover:bg-ds-card transition-all shadow-sm">
            <RefreshCcw className="w-4 h-4" /> Atualizar
         </button>
       </div>
 
       {chamados.length === 0 ? (
-        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 text-center">
-          <MessageSquareWarning className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum chamado escalado para a administração no momento.</p>
+        <div className="bg-ds-card p-8 rounded-[16px] text-center shadow-sm border border-ds-border">
+          <div className="w-16 h-16 bg-ds-bg border border-ds-border rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <MessageSquareWarning className="w-8 h-8 text-ds-dim" />
+          </div>
+          <p className="text-ds-text font-bold mb-1">Tudo tranquilo!</p>
+          <p className="text-ds-dim text-sm">Nenhum chamado escalado para a administração no momento.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {chamados.map(chamado => (
-            <div key={chamado.id} className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div key={chamado.id} className="bg-ds-card p-5 rounded-[16px] shadow-sm border border-ds-border relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-ds-danger"></div>
+              
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <span className="inline-block bg-red-100 text-red-700 text-xs font-bold px-2.5 py-0.5 rounded-full mb-2">
+                  <span className="inline-flex items-center gap-1.5 font-mono text-[10.5px] font-semibold px-[9px] py-[4px] rounded-full uppercase tracking-wider bg-ds-danger-dim text-ds-danger mb-2">
                     ESCALADO
                   </span>
-                  <h3 className="font-bold text-gray-800 dark:text-gray-100">{chamado.assunto}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{chamado.categoria} • {new Date(chamado.dataAbertura).toLocaleDateString('pt-BR')}</p>
+                  <h3 className="font-bold text-ds-text text-[15px]">{chamado.assunto}</h3>
+                  <p className="text-[12.5px] text-ds-dim font-semibold mt-0.5">{chamado.categoria} — {new Date(chamado.dataAbertura).toLocaleDateString('pt-BR')}</p>
                 </div>
               </div>
               
-              <div className="text-sm text-gray-600 dark:text-gray-300 mb-4 bg-red-50 p-3 rounded-lg border border-red-100">
+              <div className="text-[13.5px] text-ds-text leading-relaxed mb-5 bg-ds-danger-dim border border-ds-danger/20 p-4 rounded-xl">
                 <p>{chamado.descricao}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-2 gap-2 text-[13px] bg-ds-bg p-3 rounded-xl border border-ds-border">
                 <div>
-                  <p className="text-xs text-gray-400">Morador</p>
-                  <p className="font-medium text-gray-800 dark:text-gray-100">{chamado.moradorSolicitante}</p>
+                  <p className="text-[11px] text-ds-faint font-bold uppercase tracking-wider mb-0.5">Morador</p>
+                  <p className="font-bold text-ds-text">{chamado.moradorSolicitante}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">Unidade</p>
-                  <p className="font-medium text-gray-800 dark:text-gray-100">{chamado.unidadeTexto}</p>
+                  <p className="text-[11px] text-ds-faint font-bold uppercase tracking-wider mb-0.5">Unidade</p>
+                  <p className="font-bold text-ds-text">{chamado.unidadeTexto}</p>
                 </div>
               </div>
 
