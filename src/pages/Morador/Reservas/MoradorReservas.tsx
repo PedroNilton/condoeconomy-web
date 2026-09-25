@@ -1,71 +1,66 @@
 import { useState, useEffect } from 'react';
-import { CalendarDays, Loader2, Plus, ArrowLeft, Users, ChevronRight } from 'lucide-react';
+import { CalendarDays, Loader2, Plus, Users, ArrowLeft } from 'lucide-react';
 import api from '../../../services/api';
+
+interface Area {
+  id: string;
+  nome: string;
+  tipo: string;
+  valorReserva: number;
+}
 
 interface Reserva {
   id: string;
-  titulo: string;
+  nomeArea: string;
   dataReserva: string;
   horaInicio: string;
   horaFim: string;
   status: string;
-  motivoRejeicao?: string;
-  areaComumId: string;
-  nomeArea: string;
-}
-
-interface AreaComum {
-  id: string;
-  nome: string;
-  descricao: string;
-  capacidade: number;
-  valorReserva: number;
 }
 
 export function MoradorReservas() {
   const [minhasReservas, setMinhasReservas] = useState<Reserva[]>([]);
-  const [areasComuns, setAreasComuns] = useState<AreaComum[]>([]);
+  const [areas, setAreas] = useState<Area[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // States do Form
+
+  // Form State
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [titulo, setTitulo] = useState('');
-  const [areaId, setAreaId] = useState('');
+  const [selectedAreaId, setSelectedAreaId] = useState('');
   const [data, setData] = useState('');
   const [inicio, setInicio] = useState('');
   const [fim, setFim] = useState('');
-  const [convidados, setConvidados] = useState<{nome: string, rg: string}[]>([]);
+  const [convidados, setConvidados] = useState<{ nome: string, rg: string }[]>([]);
   const [guestName, setGuestName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchDados();
+    carregarDados();
   }, []);
 
-  const fetchDados = async () => {
+  const carregarDados = async () => {
     try {
-      setLoading(true);
-      const [resReservas, resAreas] = await Promise.all([
-        api.get('/api/v1/reservas'),
+      const [reservasRes, areasRes] = await Promise.all([
+        api.get('/api/v1/reservas/minhas'),
         api.get('/api/v1/areas-comuns')
       ]);
       
-      const list = resReservas.data;
-      list.sort((a: Reserva, b: Reserva) => new Date(a.dataReserva).getTime() - new Date(b.dataReserva).getTime());
+      const reservasSort = reservasRes.data.sort((a: Reserva, b: Reserva) => 
+        new Date(a.dataReserva).getTime() - new Date(b.dataReserva).getTime()
+      );
       
-      setMinhasReservas(list);
-      setAreasComuns(resAreas.data);
-    } catch (err) {
-      console.error(err);
+      setMinhasReservas(reservasSort);
+      setAreas(areasRes.data);
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddGuest = (e: React.MouseEvent) => {
+  const handleAddGuest = (e: React.FormEvent) => {
     e.preventDefault();
     if (guestName.trim()) {
-      setConvidados([...convidados, { nome: guestName, rg: '' }]);
+      setConvidados([...convidados, { nome: guestName.trim(), rg: '' }]);
       setGuestName('');
     }
   };
@@ -76,80 +71,85 @@ export function MoradorReservas() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    if (!selectedAreaId || !data || !inicio || !fim) return;
 
+    setIsSubmitting(true);
     try {
       await api.post('/api/v1/reservas', {
-        areaComumId: areaId,
-        titulo: titulo,
+        areaComunId: selectedAreaId,
         dataReserva: data,
-        horaInicio: inicio,
-        horaFim: fim,
+        horaInicio: inicio + ':00',
+        horaFim: fim + ':00',
         convidados: convidados
       });
       
+      await carregarDados();
       setIsFormOpen(false);
-      fetchDados();
-      // Reset
-      setTitulo(''); setAreaId(''); setData(''); setInicio(''); setFim(''); setConvidados([]);
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Erro ao solicitar reserva. Verifique a disponibilidade.');
+      setSelectedAreaId('');
+      setData('');
+      setInicio('');
+      setFim('');
+      setConvidados([]);
+    } catch (error) {
+      console.error('Erro ao solicitar reserva', error);
+      alert('Erro ao solicitar reserva. Verifique conflitos de horários.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const getBadgeClass = (status: string) => {
+    const base = "inline-flex items-center gap-1.5 font-mono text-[10.5px] font-semibold px-[9px] py-[4px] rounded-full uppercase tracking-wider";
+    if (status === 'APROVADA') return `${base} bg-ds-success-dim text-ds-success`;
+    if (status === 'REJEITADA') return `${base} bg-ds-danger-dim text-ds-danger`;
+    return `${base} bg-ds-disabled-bg text-ds-dim`;
+  };
+
   if (isFormOpen) {
     return (
-      <div className="flex flex-col min-h-full bg-[#09090b] text-white">
-        <header className="pt-12 pb-6 px-6 sticky top-0 z-20 bg-[#09090b] flex items-center gap-4">
-          <button onClick={() => setIsFormOpen(false)} className="w-10 h-10 rounded-full bg-[#18181b] flex items-center justify-center text-white hover:bg-[#27272a] transition">
+      <div className="flex flex-col min-h-full bg-ds-bg text-ds-text font-sans pb-32">
+        <header className="px-6 pt-12 pb-4 flex items-center gap-4 bg-ds-bg sticky top-0 z-10 border-b border-ds-border">
+          <button 
+            onClick={() => setIsFormOpen(false)}
+            className="w-10 h-10 bg-ds-card border border-ds-border rounded-xl flex items-center justify-center hover:brightness-110 active:scale-95 transition-all text-ds-text"
+          >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-white">Nova Reserva</h2>
-            <p className="text-xs text-slate-400 font-medium mt-0.5">Agende um espaço</p>
+            <h2 className="text-ds-text text-xl font-bold tracking-tight">Nova Reserva</h2>
           </div>
         </header>
 
-        <form onSubmit={handleSubmit} className="p-6 pb-32">
-          
+        <form onSubmit={handleSubmit} className="px-6 pt-6 animate-in slide-in-from-right-4 duration-300">
           <div className="space-y-6">
             
-            {/* Título do Evento */}
+            {/* Escolha o Espaço */}
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Título do Evento</label>
-              <input 
-                type="text" 
-                placeholder="Ex: Aniversário da Maria"
-                value={titulo}
-                onChange={e => setTitulo(e.target.value)}
-                className="w-full px-4 py-3.5 bg-[#18181b] rounded-xl border border-white/5 text-white focus:ring-2 focus:ring-white/20 transition-all outline-none shadow-sm"
-                required
-              />
-            </div>
-
-            {/* Seleção de Espaço (Carrossel Horizontal) */}
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Qual espaço?</label>
-              <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar -mx-6 px-6">
-                {areasComuns.map(area => (
-                  <label key={area.id} className={`flex-none w-56 relative bg-[#18181b] rounded-2xl p-4 border transition-all shadow-sm cursor-pointer ${areaId === area.id ? 'border-white/40 ring-2 ring-white/10' : 'border-white/5 hover:border-white/20'}`}>
+              <label className="block text-xs font-bold text-ds-faint uppercase tracking-wider mb-3">Qual espaço deseja reservar?</label>
+              <div className="flex overflow-x-auto gap-3 pb-2 no-scrollbar">
+                {areas.map(area => (
+                  <label 
+                    key={area.id}
+                    className={`flex-none w-[140px] p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-2 ${
+                      selectedAreaId === area.id 
+                        ? 'border-ds-primary bg-ds-primary-dim' 
+                        : 'border-transparent bg-ds-card'
+                    }`}
+                  >
                     <input 
                       type="radio" 
                       name="area" 
                       value={area.id}
-                      checked={areaId === area.id}
-                      onChange={(e) => setAreaId(e.target.value)}
+                      checked={selectedAreaId === area.id}
+                      onChange={(e) => setSelectedAreaId(e.target.value)}
                       className="hidden"
-                      required
                     />
-                    <div className="w-10 h-10 bg-[#27272a] rounded-xl flex items-center justify-center text-slate-300 mb-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${selectedAreaId === area.id ? 'bg-ds-primary text-ds-primary-ink' : 'bg-ds-disabled-bg text-ds-dim'}`}>
                       <CalendarDays className="w-5 h-5" />
                     </div>
-                    <h4 className="font-bold text-white text-sm">{area.nome}</h4>
-                    <p className="text-xs text-slate-400 mt-1">Capacidade: {area.capacidade}</p>
-                    {area.valorReserva > 0 && <p className="text-xs font-bold text-white mt-2">R$ {area.valorReserva.toFixed(2)}</p>}
+                    <div>
+                      <h4 className={`text-xs font-bold leading-tight ${selectedAreaId === area.id ? 'text-ds-primary' : 'text-ds-text'}`}>{area.nome}</h4>
+                    </div>
                   </label>
                 ))}
               </div>
@@ -158,61 +158,61 @@ export function MoradorReservas() {
             {/* Data e Horário */}
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Data</label>
+                <label className="block text-xs font-bold text-ds-faint uppercase tracking-wider mb-2">Data</label>
                 <input 
                   type="date" 
                   value={data}
                   onChange={e => setData(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-[#18181b] rounded-xl border border-white/5 text-white focus:ring-2 focus:ring-white/20 transition-all outline-none"
+                  className="w-full px-4 py-3.5 bg-ds-card rounded-xl border border-ds-border text-ds-text focus:ring-2 focus:ring-ds-primary focus:border-transparent transition-all outline-none"
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Início</label>
+                <label className="block text-xs font-bold text-ds-faint uppercase tracking-wider mb-2">Início</label>
                 <input 
                   type="time" 
                   value={inicio}
                   onChange={e => setInicio(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-[#18181b] rounded-xl border border-white/5 text-white focus:ring-2 focus:ring-white/20 transition-all outline-none"
+                  className="w-full px-4 py-3.5 bg-ds-card rounded-xl border border-ds-border text-ds-text focus:ring-2 focus:ring-ds-primary focus:border-transparent transition-all outline-none"
                   required
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Fim</label>
+                <label className="block text-xs font-bold text-ds-faint uppercase tracking-wider mb-2">Fim</label>
                 <input 
                   type="time" 
                   value={fim}
                   onChange={e => setFim(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-[#18181b] rounded-xl border border-white/5 text-white focus:ring-2 focus:ring-white/20 transition-all outline-none"
+                  className="w-full px-4 py-3.5 bg-ds-card rounded-xl border border-ds-border text-ds-text focus:ring-2 focus:ring-ds-primary focus:border-transparent transition-all outline-none"
                   required
                 />
               </div>
             </div>
 
             {/* Lista de Convidados */}
-            <div className="pt-4 border-t border-white/5">
-              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Lista de Convidados (Opcional)</label>
+            <div className="pt-4 border-t border-ds-border">
+              <label className="block text-xs font-bold text-ds-faint uppercase tracking-wider mb-3">Lista de Convidados (Opcional)</label>
               <div className="flex gap-2">
                 <input 
                   type="text" 
                   placeholder="Nome do convidado"
                   value={guestName}
                   onChange={e => setGuestName(e.target.value)}
-                  className="flex-1 px-4 py-3.5 bg-[#18181b] rounded-xl border border-white/5 text-white focus:ring-2 focus:ring-white/20 transition-all outline-none text-sm"
+                  className="flex-1 px-4 py-3.5 bg-ds-card rounded-xl border border-ds-border text-ds-text focus:ring-2 focus:ring-ds-primary focus:border-transparent transition-all outline-none text-sm"
                 />
-                <button onClick={handleAddGuest} className="bg-slate-200 text-slate-900 px-5 rounded-xl font-bold hover:bg-white active:scale-95 transition-all shadow-sm">
+                <button onClick={handleAddGuest} type="button" className="bg-ds-primary text-ds-primary-ink px-5 rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all shadow-sm">
                   Add
                 </button>
               </div>
               {convidados.length > 0 && (
                 <div className="flex flex-col gap-2 mt-4">
                   {convidados.map((c, i) => (
-                    <div key={i} className="flex items-center justify-between bg-[#18181b] border border-white/5 p-3.5 rounded-xl">
+                    <div key={i} className="flex items-center justify-between bg-ds-card border border-ds-border p-3.5 rounded-xl">
                       <div className="flex items-center gap-3">
-                        <Users className="w-4 h-4 text-slate-400" />
-                        <span className="text-sm text-slate-200 font-bold">{c.nome}</span>
+                        <Users className="w-4 h-4 text-ds-dim" />
+                        <span className="text-sm text-ds-text font-bold">{c.nome}</span>
                       </div>
-                      <button onClick={() => handleRemoveGuest(i)} type="button" className="text-rose-500 w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/5 transition-colors">✕</button>
+                      <button onClick={() => handleRemoveGuest(i)} type="button" className="text-ds-danger w-7 h-7 rounded-full flex items-center justify-center hover:bg-ds-danger-dim transition-colors">×</button>
                     </div>
                   ))}
                 </div>
@@ -220,8 +220,8 @@ export function MoradorReservas() {
             </div>
 
             {/* Dica */}
-            <div className="bg-[#18181b] p-4 rounded-2xl border border-white/5">
-              <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+            <div className="bg-ds-card p-4 rounded-xl border border-ds-border">
+              <p className="text-[11px] text-ds-dim font-medium leading-relaxed">
                 Reservas estão sujeitas à aprovação do síndico. Valores serão incluídos automaticamente no seu próximo boleto após aprovação.
               </p>
             </div>
@@ -232,7 +232,7 @@ export function MoradorReservas() {
             <button 
               type="submit" 
               disabled={isSubmitting}
-              className="w-full bg-slate-100 text-slate-900 font-bold py-4 rounded-2xl flex items-center justify-center gap-2 hover:bg-white active:scale-[0.98] transition-all disabled:opacity-70"
+              className="w-full bg-ds-primary text-ds-primary-ink font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-70"
             >
               {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirmar Reserva'}
             </button>
@@ -243,71 +243,67 @@ export function MoradorReservas() {
   }
 
   return (
-    <div className="flex flex-col min-h-full bg-[#09090b] text-white">
+    <div className="flex flex-col min-h-full bg-ds-bg text-ds-text font-sans">
       
       {/* Header */}
       <header className="px-6 pt-12 pb-4 flex items-center justify-between">
         <div>
-          <p className="text-slate-400 text-xs font-medium">Espaços comuns</p>
-          <h2 className="text-white text-2xl font-bold tracking-tight">Reservas</h2>
+          <p className="text-ds-dim text-xs font-bold uppercase tracking-wider mb-1">Espaços comuns</p>
+          <h2 className="text-ds-text text-2xl font-extrabold tracking-tight">Reservas</h2>
         </div>
         <button 
           onClick={() => setIsFormOpen(true)}
-          className="w-12 h-12 bg-slate-100 text-slate-900 rounded-[1.2rem] flex items-center justify-center shadow-lg hover:bg-white active:scale-95 transition-all"
+          className="w-12 h-12 bg-ds-primary text-ds-primary-ink rounded-xl flex items-center justify-center shadow-lg hover:brightness-110 active:scale-95 transition-all"
         >
           <Plus className="w-6 h-6 stroke-[2.5px]" />
         </button>
       </header>
 
       <div className="px-6 pb-32 pt-4">
-        <h3 className="text-sm font-bold text-white mb-4">Minhas reservas atuais</h3>
+        <h3 className="text-sm font-bold text-ds-text mb-4">Minhas reservas atuais</h3>
         
         {loading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-white/50" />
+            <Loader2 className="w-8 h-8 animate-spin text-ds-dim" />
           </div>
         ) : minhasReservas.length === 0 ? (
-          <div className="bg-[#18181b] rounded-3xl p-8 border border-white/5 text-center shadow-sm">
-            <div className="w-16 h-16 bg-[#27272a] rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <CalendarDays className="w-8 h-8 text-slate-400" />
+          <div className="bg-ds-card rounded-[16px] p-8 border border-ds-border text-center shadow-sm">
+            <div className="w-16 h-16 bg-ds-bg border border-ds-border rounded-[12px] flex items-center justify-center mx-auto mb-4">
+              <CalendarDays className="w-8 h-8 text-ds-dim" />
             </div>
-            <h3 className="text-white font-bold mb-1">Nenhum evento</h3>
-            <p className="text-slate-400 text-sm">Você ainda não agendou nenhum espaço.</p>
+            <h3 className="text-ds-text font-bold mb-1">Nenhum evento</h3>
+            <p className="text-ds-dim text-sm">Você ainda não agendou nenhum espaço.</p>
           </div>
         ) : (
           <div className="space-y-4">
             {minhasReservas.map(res => {
-              let statusColor = "text-orange-500";
               let statusLabel = res.status;
               
               if (res.status === 'APROVADA') {
-                statusColor = "text-emerald-500";
                 statusLabel = "APROVADO";
               } else if (res.status === 'PENDENTE_APROVACAO') {
-                statusColor = "text-orange-500";
                 statusLabel = "EM ANÁLISE";
               } else if (res.status === 'REJEITADA') {
-                statusColor = "text-rose-500";
                 statusLabel = "REJEITADO";
               }
 
               return (
-              <div key={res.id} className="bg-[#18181b] rounded-[1.5rem] p-4 shadow-sm border border-white/5 relative overflow-hidden transition-all hover:bg-[#1f1f22] cursor-pointer flex items-center justify-between">
+              <div key={res.id} className="bg-ds-card rounded-[16px] p-4 shadow-sm border border-ds-border relative overflow-hidden transition-all hover:border-ds-border-strong cursor-pointer flex items-center justify-between">
                 
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-[#27272a] rounded-2xl flex items-center justify-center text-slate-300">
+                  <div className="w-12 h-12 bg-ds-bg border border-ds-border rounded-xl flex items-center justify-center text-ds-primary">
                     <CalendarDays className="w-6 h-6" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-white text-[15px]">{res.nomeArea}</h4>
-                    <p className="text-[11px] text-slate-400 mt-1 font-medium">
-                      {new Date(res.dataReserva).toLocaleDateString('pt-BR')} • {res.horaInicio.substring(0,5)} às {res.horaFim.substring(0,5)}
+                    <h4 className="font-bold text-ds-text text-[14.5px]">{res.nomeArea}</h4>
+                    <p className="text-[11px] text-ds-dim mt-1 font-semibold">
+                      {new Date(res.dataReserva).toLocaleDateString('pt-BR')} — {res.horaInicio.substring(0,5)} às {res.horaFim.substring(0,5)}
                     </p>
                   </div>
                 </div>
 
                 <div className="text-right">
-                   <span className={`text-[10px] font-black uppercase tracking-wider ${statusColor}`}>
+                   <span className={getBadgeClass(res.status)}>
                      {statusLabel}
                    </span>
                 </div>
