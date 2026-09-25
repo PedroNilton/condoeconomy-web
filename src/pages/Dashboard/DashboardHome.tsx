@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Package, Users, AlertCircle, Loader2, LayoutDashboard } from 'lucide-react';
+import { Package, Users, AlertCircle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
@@ -40,13 +40,10 @@ export function DashboardHome() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
         <div>
-          <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-            <LayoutDashboard className="w-6 h-6 text-blue-900" />
-            Visão Geral
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Bem-vindo ao painel da portaria do Condomínio Mar Egeu.</p>
+          <p className="text-ds-dim text-xs font-bold uppercase tracking-wider mb-1">Visão Geral</p>
+          <h2 className="text-ds-text text-2xl font-extrabold tracking-tight">Painel de Controle</h2>
         </div>
       </div>
 
@@ -55,15 +52,15 @@ export function DashboardHome() {
         {/* Card 1 */}
         <button 
           onClick={() => navigate('/portaria/encomendas')}
-          className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4 hover:border-blue-300 hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="bg-ds-card p-6 rounded-[16px] border border-ds-border shadow-sm flex items-center gap-4 hover:border-ds-border-strong hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-ds-primary"
         >
-          <div className="bg-blue-100 dark:bg-blue-900/40 p-3 rounded-lg text-blue-700 dark:text-blue-400">
-            <Package className="w-8 h-8" />
+          <div className="bg-ds-primary-dim border border-ds-primary/20 p-3.5 rounded-xl text-ds-primary">
+            <Package className="w-7 h-7" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Encomendas Aguardando</p>
-            {loading ? <Loader2 className="w-6 h-6 animate-spin text-blue-600 mt-1" /> : (
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{encomendas}</p>
+            <p className="text-[12.5px] font-bold text-ds-dim uppercase tracking-wider">Encomendas Aguardando</p>
+            {loading ? <Loader2 className="w-6 h-6 animate-spin text-ds-primary mt-1" /> : (
+              <p className="text-2xl font-extrabold text-ds-text mt-0.5">{encomendas}</p>
             )}
           </div>
         </button>
@@ -71,15 +68,15 @@ export function DashboardHome() {
         {/* Card 2 */}
         <button 
           onClick={() => navigate('/portaria/visitantes')}
-          className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4 hover:border-green-300 hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="bg-ds-card p-6 rounded-[16px] border border-ds-border shadow-sm flex items-center gap-4 hover:border-ds-border-strong hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-ds-success"
         >
-          <div className="bg-green-100 dark:bg-green-900/40 p-3 rounded-lg text-green-700 dark:text-green-400">
-            <Users className="w-8 h-8" />
+          <div className="bg-ds-success-dim border border-ds-success/20 p-3.5 rounded-xl text-ds-success">
+            <Users className="w-7 h-7" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Visitantes Hoje</p>
-            {loading ? <Loader2 className="w-6 h-6 animate-spin text-green-600 mt-1" /> : (
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{visitantes}</p>
+            <p className="text-[12.5px] font-bold text-ds-dim uppercase tracking-wider">Visitantes Hoje</p>
+            {loading ? <Loader2 className="w-6 h-6 animate-spin text-ds-success mt-1" /> : (
+              <p className="text-2xl font-extrabold text-ds-text mt-0.5">{visitantes}</p>
             )}
           </div>
         </button>
@@ -87,15 +84,15 @@ export function DashboardHome() {
         {/* Card 3 */}
         <button 
           onClick={() => navigate('/portaria/chamados')}
-          className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4 hover:border-orange-300 hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-orange-500"
+          className="bg-ds-card p-6 rounded-[16px] border border-ds-border shadow-sm flex items-center gap-4 hover:border-ds-border-strong hover:shadow-md transition-all text-left w-full focus:outline-none focus:ring-2 focus:ring-ds-warning"
         >
-          <div className="bg-orange-100 dark:bg-orange-900/40 p-3 rounded-lg text-orange-700 dark:text-orange-400">
-            <AlertCircle className="w-8 h-8" />
+          <div className="bg-ds-warning-dim border border-ds-warning/20 p-3.5 rounded-xl text-ds-warning">
+            <AlertCircle className="w-7 h-7" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Ouvidoria Pendente</p>
-            {loading ? <Loader2 className="w-6 h-6 animate-spin text-orange-600 mt-1" /> : (
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{avisos}</p>
+            <p className="text-[12.5px] font-bold text-ds-dim uppercase tracking-wider">Ouvidoria Pendente</p>
+            {loading ? <Loader2 className="w-6 h-6 animate-spin text-ds-warning mt-1" /> : (
+              <p className="text-2xl font-extrabold text-ds-text mt-0.5">{avisos}</p>
             )}
           </div>
         </button>

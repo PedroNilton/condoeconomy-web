@@ -1,61 +1,65 @@
 import { useState, useEffect } from 'react';
-import { Package, Search, Plus, Loader2 } from 'lucide-react';
-import api from '../../services/api';
+import { Package, Search, Plus, Loader2, CheckCircle2 } from 'lucide-react';
 import { Modal } from '../../components/UI/Modal';
 import { NovaEncomendaForm } from './components/NovaEncomendaForm';
+import api from '../../services/api';
 
 interface Encomenda {
   id: string;
   codigoRastreio: string;
   destinatario: string;
   unidade: string;
-  transportadora: string;
   status: string;
+  transportadora: string;
   dataRecebimento: string;
-  dataRetirada?: string;
+  dataRetirada: string | null;
 }
 
 export function EncomendasList() {
   const [encomendas, setEncomendas] = useState<Encomenda[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-
-  useEffect(() => {
-    fetchEncomendas();
-  }, []);
 
   const fetchEncomendas = async () => {
     try {
       setLoading(true);
-      // Rota definida no nosso back-end Java
-      const response = await api.get('/api/v1/encomendas');
-      setEncomendas(response.data);
+      setError(null);
+      const res = await api.get('/api/v1/encomendas');
+      setEncomendas(res.data);
     } catch (err) {
+      setError('Falha ao carregar encomendas. Verifique a conexão.');
       console.error(err);
-      setError('Não foi possível carregar as encomendas. Verifique a conexão com o servidor.');
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchEncomendas();
+  }, []);
+
   const handleRetirar = async (id: string) => {
+    if (!window.confirm('Confirmar a entrega deste pacote ao morador?')) return;
+    
     try {
       await api.put(`/api/v1/encomendas/${id}/retirar`);
       fetchEncomendas();
     } catch (err) {
-      alert('Erro ao confirmar entrega.');
-      console.error(err);
+      console.error('Erro ao registrar retirada', err);
+      alert('Erro ao confirmar entrega. Tente novamente.');
     }
   };
 
-  const getStatusStyle = (status: string) => {
-    if (status === 'AGUARDANDO_RETIRADA') return 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-400';
-    if (status === 'RETIRADA') return 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400';
-    if (status === 'ENTREGUE') return 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400';
-    return 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100';
+  const getStatusClass = (status: string) => {
+    const base = "inline-flex items-center gap-1.5 font-mono text-[10.5px] font-semibold px-[9px] py-[4px] rounded-full uppercase tracking-wider";
+    if (status === 'AGUARDANDO_RETIRADA') return `${base} bg-ds-warning-dim text-ds-warning`;
+    if (status === 'RETIRADA' || status === 'ENTREGUE') return `${base} bg-ds-success-dim text-ds-success`;
+    return `${base} bg-ds-disabled-bg text-ds-dim`;
   };
 
   const formatStatus = (status: string) => {
@@ -77,41 +81,40 @@ export function EncomendasList() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       {/* Cabeçalho da Página */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-            <Package className="w-6 h-6 text-blue-900" />
-            Encomendas
+          <p className="text-ds-dim text-xs font-bold uppercase tracking-wider mb-1">Recepção</p>
+          <h3 className="text-2xl font-extrabold text-ds-text flex items-center gap-2">
+            Gestão de Encomendas
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Registre e acompanhe as entregas dos moradores.</p>
         </div>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium shadow-sm"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-ds-primary hover:brightness-110 active:scale-[0.98] text-ds-primary-ink rounded-xl transition-all font-bold shadow-sm"
         >
-          <Plus className="w-5 h-5" />
-          Registrar Nova Encomenda
+          <Plus className="w-5 h-5 stroke-[2.5px]" />
+          Registrar Pacote
         </button>
       </div>
 
       {/* Área de Filtros / Busca */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col sm:flex-row gap-4">
+      <div className="bg-ds-card p-4 rounded-[16px] border border-ds-border shadow-sm flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-ds-dim" />
           <input 
             type="text" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar por código, destinatário ou unidade..." 
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all"
+            className="w-full pl-11 pr-4 py-2.5 bg-ds-bg border border-ds-border text-ds-text rounded-xl focus:ring-2 focus:ring-ds-primary focus:border-transparent outline-none transition-all placeholder:text-ds-dim text-[14px]"
           />
         </div>
         <select 
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 outline-none focus:ring-2 focus:ring-blue-600"
+          className="px-4 py-2.5 bg-ds-bg border border-ds-border text-ds-text rounded-xl outline-none focus:ring-2 focus:ring-ds-primary text-[14px]"
         >
           <option value="">Todos os Status</option>
           <option value="AGUARDANDO_RETIRADA">Aguardando Retirada</option>
@@ -120,61 +123,63 @@ export function EncomendasList() {
       </div>
 
       {/* Tabela de Dados */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+      <div className="bg-ds-card rounded-[16px] border border-ds-border shadow-sm overflow-hidden min-h-[400px]">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-blue-900">
+          <div className="flex flex-col items-center justify-center py-32 text-ds-primary">
             <Loader2 className="w-8 h-8 animate-spin mb-4" />
-            <p className="text-gray-500 dark:text-gray-400 font-medium">Carregando pacotes...</p>
+            <p className="text-ds-dim font-medium">Carregando pacotes...</p>
           </div>
         ) : error ? (
-          <div className="text-center py-12 px-4">
-            <p className="text-red-500 font-medium mb-4">{error}</p>
-            <button onClick={fetchEncomendas} className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 text-gray-700 dark:text-gray-200 rounded-lg transition-colors">
+          <div className="text-center py-20 px-4">
+            <p className="text-ds-danger font-medium mb-4">{error}</p>
+            <button onClick={fetchEncomendas} className="px-5 py-2.5 bg-ds-bg hover:bg-ds-border border border-ds-border text-ds-text rounded-xl transition-colors font-bold">
               Tentar Novamente
             </button>
           </div>
         ) : filteredEncomendas.length === 0 ? (
-          <div className="text-center py-16 px-4">
-            <div className="bg-gray-50 dark:bg-gray-900 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100 dark:border-gray-700">
-              <Package className="w-8 h-8 text-gray-400" />
+          <div className="text-center py-20 px-4">
+            <div className="bg-ds-bg w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-ds-border">
+              <Package className="w-8 h-8 text-ds-dim" />
             </div>
-            <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">Nenhuma encomenda encontrada</h4>
-            <p className="text-gray-500 dark:text-gray-400 mt-1 max-w-sm mx-auto">Não há pacotes registrados no momento ou eles não correspondem aos filtros aplicados.</p>
+            <h4 className="text-lg font-bold text-ds-text">Nenhum pacote encontrado</h4>
+            <p className="text-ds-dim text-[14px] mt-1 max-w-sm mx-auto">Não há encomendas registradas ou elas não correspondem aos filtros aplicados.</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-xl">
+          <div className="flex flex-col p-4 bg-ds-card">
             {filteredEncomendas.map((enc) => (
-              <div key={enc.id} className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col gap-3 transition-colors">
+              <div key={enc.id} className="bg-ds-card p-5 rounded-[16px] border border-ds-border flex flex-col gap-3 transition-colors hover:border-ds-border-strong mb-4 last:mb-0">
                 
                 {/* Cabeçalho do Card */}
                 <div className="flex justify-between items-start">
                   <div>
-                    <h4 className="font-bold text-gray-900 dark:text-gray-100 text-sm">{enc.codigoRastreio}</h4>
-                    <span className={`inline-block mt-1 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${getStatusStyle(enc.status)}`}>
-                      {formatStatus(enc.status)}
-                    </span>
+                    <h4 className="font-bold text-ds-text text-[15px]">{enc.codigoRastreio}</h4>
+                    <div className="mt-1.5">
+                      <span className={getStatusClass(enc.status)}>
+                        {formatStatus(enc.status)}
+                      </span>
+                    </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Unidade</p>
-                    <p className="font-bold text-gray-800 dark:text-gray-100 text-sm">{enc.unidade}</p>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-ds-faint">Unidade</p>
+                    <p className="font-bold text-ds-primary text-[15px]">{enc.unidade}</p>
                   </div>
                 </div>
 
                 {/* Detalhes (Destinatário e Transp) */}
-                <div className="grid grid-cols-2 gap-2 bg-gray-50 dark:bg-gray-900 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                <div className="grid grid-cols-2 gap-2 bg-ds-bg p-3.5 rounded-xl border border-ds-border">
                   <div>
-                    <p className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Destinatário</p>
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{enc.destinatario}</p>
+                    <p className="text-[10px] text-ds-faint uppercase font-bold tracking-wider">Destinatário</p>
+                    <p className="text-[13.5px] font-bold text-ds-text mt-0.5">{enc.destinatario}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">Transportadora</p>
-                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200 line-clamp-1">{enc.transportadora}</p>
+                    <p className="text-[10px] text-ds-faint uppercase font-bold tracking-wider">Transportadora</p>
+                    <p className="text-[13.5px] font-bold text-ds-text mt-0.5 line-clamp-1">{enc.transportadora}</p>
                   </div>
                 </div>
 
                 {/* Datas e Ação */}
-                <div className="flex items-center justify-between mt-1">
-                  <div className="flex flex-col text-xs text-gray-500 dark:text-gray-400">
+                <div className="flex items-center justify-between mt-2">
+                  <div className="flex flex-col text-[12px] font-medium text-ds-dim">
                     <span>Chegada: {enc.dataRecebimento ? new Date(enc.dataRecebimento).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '-'}</span>
                     {enc.status !== 'AGUARDANDO_RETIRADA' && (
                       <span>Retirada: {enc.dataRetirada ? new Date(enc.dataRetirada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '-'}</span>
@@ -184,9 +189,9 @@ export function EncomendasList() {
                   {enc.status === 'AGUARDANDO_RETIRADA' && (
                     <button 
                       onClick={() => handleRetirar(enc.id)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-colors active:scale-95"
+                      className="bg-ds-success text-ds-bg px-4 py-2 rounded-[9px] text-[13px] font-bold shadow-sm transition-all hover:brightness-110 active:scale-95 flex items-center gap-1.5"
                     >
-                      Confirmar Entrega
+                      <CheckCircle2 className="w-4 h-4" /> Entregar
                     </button>
                   )}
                 </div>
@@ -203,6 +208,7 @@ export function EncomendasList() {
         onClose={() => setIsModalOpen(false)} 
         title="Registrar Nova Encomenda"
       >
+        <div className="p-1">
         <NovaEncomendaForm 
           onCancel={() => setIsModalOpen(false)}
           onSuccess={() => {
@@ -210,6 +216,7 @@ export function EncomendasList() {
             fetchEncomendas();
           }}
         />
+        </div>
       </Modal>
     </div>
   );
