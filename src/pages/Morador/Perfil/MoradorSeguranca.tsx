@@ -1,86 +1,228 @@
-import { useState } from 'react';
-import { ArrowLeft, ShieldCheck, Key, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { ChevronLeft, ShieldCheck, Key, EyeOff, Eye, Smartphone, Monitor, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useState, useMemo } from 'react';
 
 export function MoradorSeguranca() {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
+
+  const [atual, setAtual] = useState('');
+  const [nova, setNova] = useState('');
+  const [confirma, setConfirma] = useState('');
+
+  const [showAtual, setShowAtual] = useState(false);
+  const [showNova, setShowNova] = useState(false);
+  const [showConfirma, setShowConfirma] = useState(false);
+
+  const [showToast, setShowToast] = useState(false);
+
+  const strength = useMemo(() => {
+    let score = 0;
+    if (nova.length >= 8) score++;
+    if (/[A-Z]/.test(nova) && /[0-9]/.test(nova)) score++;
+    if (/[^A-Za-z0-9]/.test(nova) && nova.length >= 10) score++;
+    return score;
+  }, [nova]);
+
+  const strengthColors = ['bg-ds-border', 'bg-ds-danger', 'bg-ds-warning', 'bg-ds-success'];
+  const getBarColor = (index: number) => {
+    if (nova.length === 0) return 'bg-ds-border';
+    if (index < strength) {
+      return strengthColors[Math.max(strength, 1)]; // 1=danger, 2=warning, 3=success
+    }
+    return 'bg-ds-border';
+  };
+
+  const strengthText = useMemo(() => {
+    if (nova.length === 0) return 'Digite a nova senha';
+    if (strength <= 1) return 'Senha fraca';
+    if (strength === 2) return 'Senha média';
+    return 'Senha forte';
+  }, [strength, nova]);
+
+  const mismatch = confirma.length > 0 && confirma !== nova;
+
+  const handleUpdate = () => {
+    if (mismatch || nova.length === 0) return;
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2200);
+    setAtual('');
+    setNova('');
+    setConfirma('');
+  };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 pb-20">
+    <div className="bg-ds-bg min-h-screen flex flex-col text-ds-text animate-in slide-in-from-right-full duration-300 relative overflow-hidden">
       
-      <header className="bg-white dark:bg-gray-800 pt-10 pb-4 px-6 flex items-center gap-4 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 bg-gray-50 dark:bg-gray-700 rounded-full text-gray-600 dark:text-gray-300">
-          <ArrowLeft className="w-5 h-5" />
+      {/* Header */}
+      <header className="px-5 py-6 flex items-center gap-4">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="w-10 h-10 rounded-[12px] bg-ds-card border border-ds-border flex items-center justify-center text-ds-text active:scale-95 transition-transform shadow-sm flex-none"
+        >
+          <ChevronLeft className="w-5 h-5" />
         </button>
-        <div>
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-            Segurança e Senha
-          </h2>
-        </div>
+        <h1 className="text-[19px] font-bold tracking-tight text-ds-text">Segurança e senha</h1>
       </header>
 
-      <div className="p-6 space-y-6">
+      {/* Main Content */}
+      <main className="px-5 pb-24 flex-1 overflow-y-auto">
         
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/50 rounded-xl p-4 flex gap-3">
-          <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-500 shrink-0 mt-0.5" />
-          <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
-            Sua conta está protegida por criptografia de ponta a ponta. Nunca compartilhe sua senha com terceiros ou com a portaria.
-          </p>
+        {/* Info Banner */}
+        <div className="flex gap-2.5 bg-ds-primary-dim text-ds-primary rounded-[12px] p-3 text-[12px] leading-relaxed mb-6 border border-ds-primary/20">
+          <ShieldCheck className="w-5 h-5 flex-none mt-[1px]" />
+          <div>
+            Sua senha nunca é armazenada em texto puro (usamos hash) e toda a conexão com o servidor é criptografada via HTTPS. Nunca compartilhe sua senha com terceiros ou com a portaria.
+          </div>
         </div>
 
-        <div className="space-y-4">
-          <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-            <Key className="w-4 h-4 text-gray-500" /> Alterar Senha
-          </h3>
-          
-          <div className="space-y-3">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Senha Atual</label>
-              <input type="password" placeholder="Digite sua senha atual" className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all text-sm text-gray-800 dark:text-gray-200" />
-            </div>
+        {/* Alterar Senha Section */}
+        <section className="mb-8">
+          <h2 className="flex items-center gap-2 text-[14px] font-bold text-ds-text mb-4">
+            <Key className="w-4 h-4 text-ds-dim" />
+            Alterar senha
+          </h2>
 
-            <div className="space-y-1 relative">
-              <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Nova Senha</label>
+          <div className="space-y-4">
+            
+            {/* Senha Atual */}
+            <div>
+              <label className="block text-[11px] font-bold text-ds-dim uppercase tracking-wider mb-2">Senha atual</label>
               <div className="relative">
                 <input 
-                  type={showPassword ? 'text' : 'password'} 
-                  placeholder="Mínimo de 8 caracteres" 
-                  className="w-full px-4 py-3 pr-12 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all text-sm text-gray-800 dark:text-gray-200" 
+                  type={showAtual ? 'text' : 'password'}
+                  value={atual}
+                  onChange={(e) => setAtual(e.target.value)}
+                  placeholder="Digite sua senha atual"
+                  className="w-full bg-ds-bg border border-ds-border rounded-[12px] px-4 py-3.5 pr-12 text-[15px] text-ds-text focus:ring-2 focus:ring-ds-primary focus:border-transparent outline-none placeholder:text-ds-dim/40 transition-shadow"
                 />
                 <button 
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  type="button"
+                  onClick={() => setShowAtual(!showAtual)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-ds-dim hover:text-ds-text transition-colors"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showAtual ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
                 </button>
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Confirmar Nova Senha</label>
-              <input type="password" placeholder="Repita a nova senha" className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-all text-sm text-gray-800 dark:text-gray-200" />
+            {/* Nova Senha */}
+            <div>
+              <label className="block text-[11px] font-bold text-ds-dim uppercase tracking-wider mb-2">Nova senha</label>
+              <div className="relative">
+                <input 
+                  type={showNova ? 'text' : 'password'}
+                  value={nova}
+                  onChange={(e) => setNova(e.target.value)}
+                  placeholder="Mínimo de 8 caracteres"
+                  className="w-full bg-ds-bg border border-ds-border rounded-[12px] px-4 py-3.5 pr-12 text-[15px] text-ds-text focus:ring-2 focus:ring-ds-primary focus:border-transparent outline-none placeholder:text-ds-dim/40 transition-shadow"
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowNova(!showNova)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-ds-dim hover:text-ds-text transition-colors"
+                >
+                  {showNova ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
+                </button>
+              </div>
+              
+              {/* Strength Meter */}
+              <div className="flex gap-1 mt-2">
+                <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${getBarColor(0)}`}></div>
+                <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${getBarColor(1)}`}></div>
+                <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${getBarColor(2)}`}></div>
+              </div>
+              <div className="text-[11px] text-ds-dim mt-1.5">{strengthText}</div>
             </div>
+
+            {/* Confirmar Nova Senha */}
+            <div>
+              <label className="block text-[11px] font-bold text-ds-dim uppercase tracking-wider mb-2">Confirmar nova senha</label>
+              <div className="relative">
+                <input 
+                  type={showConfirma ? 'text' : 'password'}
+                  value={confirma}
+                  onChange={(e) => setConfirma(e.target.value)}
+                  placeholder="Repita a nova senha"
+                  className={`w-full bg-ds-bg border ${mismatch ? 'border-ds-danger focus:ring-ds-danger' : 'border-ds-border focus:ring-ds-primary'} rounded-[12px] px-4 py-3.5 pr-12 text-[15px] text-ds-text focus:ring-2 focus:border-transparent outline-none placeholder:text-ds-dim/40 transition-shadow`}
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowConfirma(!showConfirma)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-ds-dim hover:text-ds-text transition-colors"
+                >
+                  {showConfirma ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
+                </button>
+              </div>
+              {mismatch && (
+                <div className="text-[11px] text-ds-danger mt-1.5 animate-in fade-in slide-in-from-top-1">
+                  As senhas não coincidem.
+                </div>
+              )}
+            </div>
+
+            <button 
+              onClick={handleUpdate}
+              disabled={mismatch || nova.length === 0}
+              className="w-full bg-ds-primary text-ds-primary-ink font-bold py-3.5 rounded-[10px] active:scale-95 transition-transform text-[14.5px] shadow-md mt-2 disabled:opacity-50 disabled:active:scale-100"
+            >
+              Atualizar senha
+            </button>
+
           </div>
-          
-          <div className="pt-2">
-            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-md mt-4">
-              Atualizar Senha
+        </section>
+
+        {/* Sessões ativas Section */}
+        <section>
+          <h2 className="flex items-center gap-2 text-[14px] font-bold text-ds-danger mb-4">
+            <AlertTriangle className="w-4 h-4" />
+            Sessões ativas
+          </h2>
+
+          <div className="flex items-center gap-3 p-3.5 border border-ds-border rounded-[12px] mb-2.5 bg-ds-card shadow-sm">
+            <div className="w-[34px] h-[34px] rounded-lg bg-ds-bg border border-ds-border flex items-center justify-center text-ds-dim flex-none">
+              <Smartphone className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-bold text-ds-text truncate">iPhone de Carlos</div>
+              <div className="text-[11px] text-ds-dim mt-[1px]">Aracaju, SE • agora</div>
+            </div>
+            <span className="font-mono text-[9px] font-bold px-2 py-1 rounded-full bg-ds-success-dim text-ds-success whitespace-nowrap tracking-wider">
+              ESTE DISPOSITIVO
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3 p-3.5 border border-ds-border rounded-[12px] mb-4 bg-ds-card shadow-sm">
+            <div className="w-[34px] h-[34px] rounded-lg bg-ds-bg border border-ds-border flex items-center justify-center text-ds-dim flex-none">
+              <Monitor className="w-4 h-4" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-bold text-ds-text truncate">Chrome • Windows</div>
+              <div className="text-[11px] text-ds-dim mt-[1px]">Aracaju, SE • há 3 dias</div>
+            </div>
+            <button className="text-[11.5px] font-bold text-ds-danger active:opacity-70 transition-opacity whitespace-nowrap">
+              Encerrar
             </button>
           </div>
-        </div>
 
-        <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-           <h3 className="text-sm font-bold text-red-600 dark:text-red-400 flex items-center gap-2 mb-3">
-             <AlertCircle className="w-4 h-4" /> Zona de Risco
-           </h3>
-           <button className="w-full py-3.5 bg-white dark:bg-gray-800 border-2 border-red-100 dark:border-red-900/30 text-red-600 dark:text-red-400 font-bold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-all text-sm">
-             Encerrar todas as sessões ativas
-           </button>
-           <p className="text-xs text-gray-500 dark:text-gray-500 mt-2 text-center">Isso fará logoff em todos os seus outros dispositivos.</p>
-        </div>
+          <button className="w-full p-3 rounded-[10px] border border-ds-danger bg-ds-danger-dim text-ds-danger font-bold text-[13.5px] active:scale-95 transition-transform mt-1">
+            Encerrar todas as outras sessões
+          </button>
+          <p className="text-[11px] text-ds-dim mt-2 leading-relaxed text-center">
+            Isso desconecta qualquer dispositivo que não seja este, sem afetar sua sessão atual.
+          </p>
+        </section>
 
+      </main>
+
+      {/* Toast Notification */}
+      <div 
+        className={`absolute bottom-[24px] left-1/2 -translate-x-1/2 bg-ds-text text-ds-bg font-bold text-[13px] px-[18px] py-[11px] rounded-[10px] shadow-lg transition-all duration-300 z-50 whitespace-nowrap
+          ${showToast ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[80px] pointer-events-none'}
+        `}
+      >
+        Senha atualizada com sucesso
       </div>
+
     </div>
   );
 }
