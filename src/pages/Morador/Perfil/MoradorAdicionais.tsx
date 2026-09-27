@@ -236,7 +236,7 @@ export function MoradorAdicionais() {
       {/* Bottom Sheet Overlay */}
       {showSheet && (
         <div 
-          className={`absolute inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 ${isClosingSheet ? 'opacity-0' : 'opacity-100'}`}
+          className={`absolute inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 animate-in fade-in ${isClosingSheet ? 'opacity-0' : 'opacity-100'}`}
           onClick={closeSheet}
         ></div>
       )}
@@ -245,7 +245,7 @@ export function MoradorAdicionais() {
       {showSheet && (
         <div 
           className={`absolute bottom-0 left-0 right-0 bg-ds-card rounded-t-[28px] p-6 z-50 border-t border-ds-border transition-transform duration-300 ease-out shadow-[0_-10px_40px_rgba(0,0,0,0.3)]
-            ${isClosingSheet ? 'translate-y-full' : 'translate-y-0'}
+            ${isClosingSheet ? 'translate-y-full' : 'animate-in slide-in-from-bottom-full'}
           `}
         >
           {/* Handle */}
