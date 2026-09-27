@@ -19,8 +19,8 @@ export function MoradorAdicionais() {
   const [loading, setLoading] = useState(true);
   
   // Sheet States
-  const [showSheet, setShowSheet] = useState(false);
-  const [isClosingSheet, setIsClosingSheet] = useState(false);
+  const [sheetMounted, setSheetMounted] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   
   // Form States
   const [nome, setNome] = useState('');
@@ -66,17 +66,17 @@ export function MoradorAdicionais() {
   }, []);
 
   const openSheet = () => {
-    setShowSheet(true);
-    setIsClosingSheet(false);
+    setSheetMounted(true);
+    // Pequeno delay para garantir que o DOM renderizou o `translate-y-full` antes de aplicar `translate-y-0`
+    setTimeout(() => setSheetOpen(true), 10);
   };
 
   const closeSheet = () => {
-    setIsClosingSheet(true);
+    setSheetOpen(false);
     setTimeout(() => {
-      setShowSheet(false);
-      setIsClosingSheet(false);
+      setSheetMounted(false);
       resetForm();
-    }, 300); // Wait for slide-down animation
+    }, 300); // Tempo exato da transition duration-300
   };
 
   const resetForm = () => {
@@ -234,18 +234,18 @@ export function MoradorAdicionais() {
       </main>
 
       {/* Bottom Sheet Overlay */}
-      {showSheet && (
+      {sheetMounted && (
         <div 
-          className={`absolute inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 animate-in fade-in ${isClosingSheet ? 'opacity-0' : 'opacity-100'}`}
+          className={`absolute inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300 ${sheetOpen ? 'opacity-100' : 'opacity-0'}`}
           onClick={closeSheet}
         ></div>
       )}
 
       {/* Bottom Sheet */}
-      {showSheet && (
+      {sheetMounted && (
         <div 
-          className={`absolute bottom-0 left-0 right-0 bg-ds-card rounded-t-[28px] p-6 z-50 border-t border-ds-border transition-transform duration-300 ease-out shadow-[0_-10px_40px_rgba(0,0,0,0.3)]
-            ${isClosingSheet ? 'translate-y-full' : 'animate-in slide-in-from-bottom-full'}
+          className={`absolute bottom-0 left-0 right-0 bg-ds-card rounded-t-[28px] p-6 z-50 border-t border-ds-border transition-transform duration-300 ease-in-out shadow-[0_-10px_40px_rgba(0,0,0,0.3)]
+            ${sheetOpen ? 'translate-y-0' : 'translate-y-full'}
           `}
         >
           {/* Handle */}
