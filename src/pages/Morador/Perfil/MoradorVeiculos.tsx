@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Car, Plus, Loader2, ChevronLeft, Check } from 'lucide-react';
-import { api } from '../../../lib/api';
-import { useNotification } from '../../../contexts/NotificationContext';
-import { useNavigate } from 'react-router-dom';
+import api from '../../../services/api';
 
 interface Veiculo {
   id: number;
@@ -32,8 +30,6 @@ export function MoradorVeiculos() {
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const { showNotification } = useNotification();
-  const navigate = useNavigate();
 
   // Form states
   const [placa, setPlaca] = useState('');
@@ -52,7 +48,7 @@ export function MoradorVeiculos() {
   const loadVeiculos = async () => {
     try {
       setLoading(true);
-      const { data } = await api.get('/morador/veiculos');
+      const { data } = await api.get('/api/v1/perfil/veiculos');
       
       // Inject some mock values for UI demonstration if they don't exist
       const enrichedData = data.map((v: any) => ({
@@ -74,7 +70,7 @@ export function MoradorVeiculos() {
       }
     } catch (error) {
       console.error(error);
-      showNotification('Erro ao carregar veículos', 'error');
+      alert('Erro ao carregar veículos');
     } finally {
       setLoading(false);
     }
@@ -92,8 +88,8 @@ export function MoradorVeiculos() {
         vaga
       };
       
-      await api.post('/morador/veiculos', payload);
-      showNotification('Veículo cadastrado com sucesso!', 'success');
+      await api.post('/api/v1/perfil/veiculos', payload);
+      alert('Veículo cadastrado com sucesso!');
       
       // Reset form
       setPlaca('');
@@ -104,7 +100,7 @@ export function MoradorVeiculos() {
       setShowForm(false);
       
     } catch (error) {
-      showNotification('Erro ao cadastrar veículo', 'error');
+      alert('Erro ao cadastrar veículo');
     } finally {
       setSaving(false);
     }
