@@ -143,17 +143,17 @@ export function MoradorDadosPessoais() {
                 
                 <div className="flex items-center justify-between p-4 border-b border-ds-border/50">
                   <span className="text-[14px] text-ds-dim">E-mail</span>
-                  <span className="text-[14px] font-black tracking-tight text-ds-text">{email}</span>
+                  <span className="text-[13px] font-mono font-black text-slate-900 dark:text-white">{email}</span>
                 </div>
                 
                 <div className="flex items-center justify-between p-4 border-b border-ds-border/50">
                   <span className="text-[14px] text-ds-dim">Apartamento</span>
-                  <span className="text-[14px] font-black tracking-tight text-ds-text">{apartamento}</span>
+                  <span className="text-[14px] font-mono font-black text-slate-900 dark:text-white">{apartamento}</span>
                 </div>
                 
                 <div className="flex items-center justify-between p-4">
                   <span className="text-[14px] text-ds-dim">Bloco</span>
-                  <span className="text-[14px] font-black tracking-tight text-ds-text">{bloco}</span>
+                  <span className="text-[14px] font-mono font-black text-slate-900 dark:text-white">{bloco}</span>
                 </div>
 
               </div>
