@@ -313,14 +313,14 @@ export function MoradorAdicionais() {
                 </div>
                 
                 {/* Custom Toggle Switch */}
-                <label className="relative inline-flex items-center cursor-pointer mt-1 flex-shrink-0">
+                <label className="relative inline-flex items-center cursor-pointer mt-1 flex-shrink-0 active:scale-95 transition-transform duration-200">
                   <input 
                     type="checkbox" 
                     className="sr-only peer"
                     checked={hasAccess}
                     onChange={e => setHasAccess(e.target.checked)}
                   />
-                  <div className="w-12 h-[26px] bg-ds-bg border border-ds-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-ds-dim after:border-ds-border after:border after:rounded-full after:h-[22px] after:w-[22px] after:transition-all peer-checked:bg-ds-primary peer-checked:after:bg-white peer-checked:border-ds-primary"></div>
+                  <div className="w-12 h-[26px] bg-ds-bg border border-ds-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-ds-dim after:border-ds-border after:border after:rounded-full after:h-[22px] after:w-[22px] after:transition-all after:duration-300 after:ease-in-out transition-colors duration-300 ease-in-out peer-checked:bg-ds-primary peer-checked:after:bg-white peer-checked:border-ds-primary"></div>
                 </label>
               </div>
               
