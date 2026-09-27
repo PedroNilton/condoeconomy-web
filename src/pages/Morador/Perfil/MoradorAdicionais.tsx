@@ -320,7 +320,7 @@ export function MoradorAdicionais() {
                     checked={hasAccess}
                     onChange={e => setHasAccess(e.target.checked)}
                   />
-                  <div className="w-12 h-[26px] bg-ds-bg border border-ds-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-ds-dim after:border-ds-border after:border after:rounded-full after:h-[22px] after:w-[22px] after:transition-all after:duration-300 after:ease-in-out transition-colors duration-300 ease-in-out peer-checked:bg-ds-primary peer-checked:after:bg-white peer-checked:border-ds-primary"></div>
+                  <div className="w-12 h-[26px] bg-ds-bg border border-ds-border peer-focus:outline-none rounded-full peer transition-colors duration-300 peer-checked:bg-ds-primary peer-checked:border-ds-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-ds-dim after:border-ds-border after:border after:rounded-full after:h-[22px] after:w-[22px] after:transform after:translate-x-0 after:transition-transform after:duration-300 peer-checked:after:bg-white peer-checked:after:border-white peer-checked:after:translate-x-full"></div>
                 </label>
               </div>
               

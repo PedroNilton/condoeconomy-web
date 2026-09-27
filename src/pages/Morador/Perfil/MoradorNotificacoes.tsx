@@ -35,8 +35,8 @@ export function MoradorNotificacoes() {
         checked={checked}
         onChange={onChange}
       />
-      <div className="absolute inset-0 bg-ds-border rounded-full transition-colors duration-300 ease-in-out peer-checked:bg-ds-primary"></div>
-      <div className="absolute top-[2.5px] left-[2.5px] w-[16px] h-[16px] bg-white rounded-full transition-transform duration-300 ease-in-out shadow-[0_1px_2px_rgba(0,0,0,0.2)] peer-checked:translate-x-[15px]"></div>
+      <div className="absolute inset-0 bg-ds-border rounded-full transition-colors duration-300 peer-checked:bg-ds-primary"></div>
+      <div className="absolute top-[2.5px] left-[2.5px] w-[16px] h-[16px] bg-white rounded-full transform translate-x-0 transition-transform duration-300 peer-checked:translate-x-[15px] shadow-[0_1px_2px_rgba(0,0,0,0.2)]"></div>
     </label>
   );
 
