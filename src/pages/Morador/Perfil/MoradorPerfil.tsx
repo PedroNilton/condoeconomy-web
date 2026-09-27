@@ -113,18 +113,18 @@ export function MoradorPerfil() {
         {/* QR Card */}
         <div 
           onClick={() => navigate('/app/qr')}
-          className="bg-ds-card border border-ds-border rounded-[16px] p-4 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform shadow-sm"
+          className="bg-ds-primary/10 rounded-[16px] p-4 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-ds-bg flex items-center justify-center border border-ds-border">
-              <QrCode className="w-5 h-5 text-ds-text" strokeWidth={2.5} />
+            <div className="w-11 h-11 rounded-[14px] bg-black/40 dark:bg-black/60 flex items-center justify-center">
+              <QrCode className="w-5 h-5 text-ds-primary" strokeWidth={2.5} />
             </div>
             <div>
-              <div className="text-[14px] font-bold text-ds-text tracking-tight mb-0.5">Meu QR de acesso</div>
-              <div className="text-[11px] font-medium text-ds-dim">Mostrar na portaria</div>
+              <div className="text-[15px] font-bold text-ds-primary tracking-tight mb-0.5">Meu QR de acesso</div>
+              <div className="text-[12px] font-medium text-ds-primary/70">Mostrar na portaria</div>
             </div>
           </div>
-          <ChevronRight className="w-5 h-5 text-ds-dim" strokeWidth={2.5} />
+          <ChevronRight className="w-5 h-5 text-ds-primary/70" strokeWidth={2.5} />
         </div>
 
       </header>
