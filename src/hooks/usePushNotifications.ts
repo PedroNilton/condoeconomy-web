@@ -43,7 +43,7 @@ export function usePushNotifications() {
         }
 
         // Send to backend
-        const token = localStorage.getItem('@CondoEconomy:token');
+        const token = localStorage.getItem('@HabitOS:token');
         if (token && subscription) {
             await api.post('/api/v1/push/subscribe', subscription.toJSON());
         }

@@ -10,14 +10,14 @@ export function DashboardLayout() {
   const { counts } = useNotification();
 
   useEffect(() => {
-    const token = localStorage.getItem('@CondoEconomy:token');
+    const token = localStorage.getItem('@HabitOS:token');
     if (!token) {
       navigate('/login', { replace: true });
     }
   }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem('@CondoEconomy:token');
+    localStorage.removeItem('@HabitOS:token');
     navigate('/login');
   };
 

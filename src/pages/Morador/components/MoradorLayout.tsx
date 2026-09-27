@@ -10,7 +10,7 @@ export function MoradorLayout() {
   usePushNotifications();
 
   useEffect(() => {
-    const token = localStorage.getItem('@CondoEconomy:token');
+    const token = localStorage.getItem('@HabitOS:token');
     if (!token) {
       navigate('/login', { replace: true });
     }

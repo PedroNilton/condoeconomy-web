@@ -41,8 +41,8 @@ export function Login() {
       const response = await api.post('/api/v1/auth/login', { email, senha });
       const { token, papel, nome } = response.data;
       
-      localStorage.setItem('@CondoEconomy:token', token);
-      if (nome) localStorage.setItem('@CondoEconomy:nome', nome);
+      localStorage.setItem('@HabitOS:token', token);
+      if (nome) localStorage.setItem('@HabitOS:nome', nome);
       
       if (papel === 'ROLE_PORTEIRO') {
         navigate('/portaria');
@@ -78,7 +78,7 @@ export function Login() {
               <rect x="11.4" y="4" width="3.6" height="11" fill="white" fillOpacity=".7"/>
             </svg>
           </div>
-          <span className="font-extrabold text-[16px] tracking-tight text-ds-text">CondoEconomy</span>
+          <span className="font-extrabold text-[16px] tracking-tight text-ds-text">HabitOS</span>
         </div>
 
         {/* Card */}

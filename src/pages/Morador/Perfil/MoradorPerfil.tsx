@@ -43,7 +43,7 @@ export function MoradorPerfil() {
 
   const handleLogout = () => {
     // Limpar auth tokens
-    localStorage.removeItem('@CondoEconomy:token');
+    localStorage.removeItem('@HabitOS:token');
     navigate('/login');
   };
 

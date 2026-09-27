@@ -87,7 +87,7 @@ export function MoradorAjuda() {
           <div className="relative z-10">
             <h4 className="font-bold text-lg mb-2">Problemas com o App?</h4>
             <p className="text-blue-100 text-sm mb-4">Caso encontre algum bug no aplicativo, reporte ao suporte técnico.</p>
-            <a href="mailto:suporte@condoeconomy.com" className="inline-block bg-white text-blue-600 font-bold px-6 py-2.5 rounded-xl text-sm shadow-sm active:scale-95 transition-transform">
+            <a href="mailto:suporte@HabitOS.com" className="inline-block bg-white text-blue-600 font-bold px-6 py-2.5 rounded-xl text-sm shadow-sm active:scale-95 transition-transform">
               Enviar E-mail
             </a>
           </div>

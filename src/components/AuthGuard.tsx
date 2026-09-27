@@ -12,7 +12,7 @@ interface DecodedToken {
 }
 
 export function AuthGuard({ allowedRoles }: AuthGuardProps) {
-  const token = localStorage.getItem('@CondoEconomy:token');
+  const token = localStorage.getItem('@HabitOS:token');
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -23,8 +23,8 @@ export function AuthGuard({ allowedRoles }: AuthGuardProps) {
     
     // Verifica se o token expirou
     if (decoded.exp * 1000 < Date.now()) {
-      localStorage.removeItem('@CondoEconomy:token');
-      localStorage.removeItem('@CondoEconomy:user');
+      localStorage.removeItem('@HabitOS:token');
+      localStorage.removeItem('@HabitOS:user');
       return <Navigate to="/login" replace />;
     }
 
@@ -48,8 +48,8 @@ export function AuthGuard({ allowedRoles }: AuthGuardProps) {
 
     return <Outlet />;
   } catch (error) {
-    localStorage.removeItem('@CondoEconomy:token');
-    localStorage.removeItem('@CondoEconomy:user');
+    localStorage.removeItem('@HabitOS:token');
+    localStorage.removeItem('@HabitOS:user');
     return <Navigate to="/login" replace />;
   }
 }

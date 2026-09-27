@@ -60,7 +60,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const loadAll = () => {
-    const token = localStorage.getItem('@CondoEconomy:token');
+    const token = localStorage.getItem('@HabitOS:token');
     if (token) {
       fetchVisitantes();
       fetchChamados();

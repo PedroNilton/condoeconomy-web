@@ -10,7 +10,7 @@ export function MoradorHome() {
   const [loadingAvisos, setLoadingAvisos] = useState(false);
 
   useEffect(() => {
-    const nome = localStorage.getItem('@CondoEconomy:nome') || 'Usuário';
+    const nome = localStorage.getItem('@HabitOS:nome') || 'Usuário';
     setUsuarioNome(nome);
     
     // Pegar iniciais para o Avatar

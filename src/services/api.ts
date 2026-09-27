@@ -8,7 +8,7 @@ const api = axios.create({
 
 // Interceptor para adicionar o token JWT nas requisições, caso ele exista
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('@CondoEconomy:token');
+  const token = localStorage.getItem('@HabitOS:token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -22,7 +22,7 @@ api.interceptors.response.use(
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
       // Evitar loop de redirecionamento se já estiver na tela de login
       if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
-        localStorage.removeItem('@CondoEconomy:token');
+        localStorage.removeItem('@HabitOS:token');
         window.location.href = '/login';
       }
     }
