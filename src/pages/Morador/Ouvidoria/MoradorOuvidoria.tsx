@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
-import { MessageSquare, Plus, Loader2, Send } from 'lucide-react';
+import { MessageSquare, Plus, ChevronLeft, Send, Loader2 } from 'lucide-react';
 import api from '../../../services/api';
 
 interface Chamado {
-  id: string;
-  unidadeTexto: string;
-  moradorSolicitante: string;
-  categoria: string;
+  id: number;
   assunto: string;
   descricao: string;
+  categoria: string;
   status: string;
   dataAbertura: string;
 }
@@ -16,13 +14,15 @@ interface Chamado {
 export function MoradorOuvidoria() {
   const [chamados, setChamados] = useState<Chamado[]>([]);
   const [loading, setLoading] = useState(true);
+  
   const [isFormOpen, setIsFormOpen] = useState(false);
-
-  // Form states
-  const [categoria, setCategoria] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [categoriaVisual, setCategoriaVisual] = useState('Reclamação');
   const [assunto, setAssunto] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     fetchChamados();
@@ -31,11 +31,9 @@ export function MoradorOuvidoria() {
   const fetchChamados = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/v1/chamados');
-      // Filtra apenas os chamados desse morador (Apt 101 - Bloco B)
-      const meusChamados = response.data.filter((c: Chamado) => c.unidadeTexto === 'Apto 101 - Bloco B');
+      const res = await api.get('/api/v1/chamados');
+      const meusChamados = res.data.filter((c: any) => c.moradorSolicitante === 'Carlos Silva');
       
-      // Ordena pelos mais recentes
       meusChamados.sort((a: Chamado, b: Chamado) => 
         new Date(b.dataAbertura).getTime() - new Date(a.dataAbertura).getTime()
       );
@@ -48,27 +46,38 @@ export function MoradorOuvidoria() {
     }
   };
 
+  const mapCategoriaToEnum = (cat: string) => {
+    switch(cat) {
+      case 'Reclamação': return 'RECLAMACAO';
+      case 'Manutenção': return 'MANUTENCAO';
+      case 'Dúvida': return 'DUVIDA';
+      case 'Sugestão': return 'SUGESTAO';
+      default: return 'OUTROS';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!categoria || !assunto || !descricao) return;
+    if (!categoriaVisual || !assunto.trim() || !descricao.trim()) return;
 
     try {
       setIsSubmitting(true);
       await api.post('/api/v1/chamados', {
         unidadeTexto: 'Apto 101 - Bloco B',
         moradorSolicitante: 'Carlos Silva',
-        categoria,
-        assunto,
-        descricao
+        categoria: mapCategoriaToEnum(categoriaVisual),
+        assunto: assunto.trim(),
+        descricao: descricao.trim()
       });
       
-      // Limpa formulário e fecha
-      setCategoria('');
+      setCategoriaVisual('Reclamação');
       setAssunto('');
       setDescricao('');
       setIsFormOpen(false);
       
-      // Atualiza lista
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2200);
+
       fetchChamados();
     } catch (err) {
       console.error(err);
@@ -78,83 +87,97 @@ export function MoradorOuvidoria() {
     }
   };
 
-  const getStatusStyle = (status: string) => {
-    if (status === 'ABERTO') return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    if (status === 'EM_ANDAMENTO') return 'bg-blue-100 text-blue-800 border-blue-200';
-    if (status === 'RESOLVIDO') return 'bg-green-100 text-green-800 border-green-200';
-    return 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100 border-gray-200 dark:border-gray-700';
+  const getBadgeStyle = (status: string) => {
+    if (status === 'ABERTO') return 'bg-ds-warning-dim text-ds-warning border-ds-warning/20';
+    if (status === 'EM_ANDAMENTO') return 'bg-ds-primary-dim text-ds-primary border-ds-primary/20';
+    if (status === 'RESOLVIDO') return 'bg-ds-success-dim text-ds-success border-ds-success/20';
+    return 'bg-ds-bg text-ds-dim border-ds-border';
   };
 
   const getStatusLabel = (status: string) => {
-    if (status === 'ABERTO') return 'Enviado';
-    if (status === 'EM_ANDAMENTO') return 'Em Andamento';
-    if (status === 'RESOLVIDO') return 'Resolvido';
+    if (status === 'ABERTO') return 'ABERTO';
+    if (status === 'EM_ANDAMENTO') return 'EM ANDAMENTO';
+    if (status === 'RESOLVIDO') return 'RESOLVIDO';
     return status;
   };
 
   if (isFormOpen) {
     return (
-      <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900">
-        <header className="bg-white dark:bg-gray-800 p-4 flex items-center gap-3 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10 shadow-sm">
-          <button onClick={() => setIsFormOpen(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:text-gray-100 p-2 -ml-2">
-            Voltar
-          </button>
-          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Nova Mensagem</h2>
+      <div className="bg-ds-bg min-h-screen flex flex-col text-ds-text animate-in slide-in-from-right-full duration-300 relative">
+        <header className="px-5 py-6">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setIsFormOpen(false)} 
+              className="w-10 h-10 rounded-[12px] bg-ds-card border border-ds-border flex items-center justify-center text-ds-text active:scale-95 transition-transform shadow-sm flex-none"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-[19px] font-bold tracking-tight text-ds-text">Nova mensagem</h1>
+          </div>
         </header>
 
-        <form onSubmit={handleSubmit} className="p-6 flex-1 flex flex-col">
-          <div className="space-y-5 flex-1">
+        <form onSubmit={handleSubmit} className="px-5 pb-24 flex-1 overflow-y-auto flex flex-col">
+          <div className="space-y-6 flex-1">
             
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Categoria</label>
-              <select 
-                value={categoria}
-                onChange={e => setCategoria(e.target.value)}
-                className="w-full p-3 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
-                required
-              >
-                <option value="">Selecione...</option>
-                <option value="RECLAMACAO">Reclamação</option>
-                <option value="MANUTENCAO">Manutenção</option>
-                <option value="DUVIDA">Dúvida / Informação</option>
-                <option value="SUGESTAO">Sugestão</option>
-                <option value="OUTROS">Outros</option>
-              </select>
+            {/* Categoria Chips */}
+            <div>
+              <label className="block text-[11px] font-bold text-ds-dim uppercase tracking-wider mb-2.5">Categoria</label>
+              <div className="flex flex-wrap gap-2">
+                {['Reclamação', 'Manutenção', 'Dúvida', 'Sugestão', 'Outro'].map(cat => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategoriaVisual(cat)}
+                    className={`px-4 py-2 rounded-full border text-[13px] font-bold transition-colors whitespace-nowrap
+                      ${categoriaVisual === cat 
+                        ? 'border-ds-primary bg-ds-primary-dim text-ds-primary' 
+                        : 'border-ds-border bg-ds-card text-ds-dim'
+                      }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Assunto</label>
+            {/* Assunto */}
+            <div>
+              <label className="block text-[11px] font-bold text-ds-dim uppercase tracking-wider mb-2.5">Assunto</label>
               <input 
                 type="text" 
                 value={assunto}
                 onChange={e => setAssunto(e.target.value)}
                 placeholder="Ex: Lâmpada queimada no corredor"
-                className="w-full p-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+                className="w-full p-[13px] rounded-[10px] border border-ds-border bg-ds-card text-ds-text font-sans text-[14px] outline-none focus:border-ds-primary focus:ring-1 focus:ring-ds-primary transition-all placeholder:text-ds-dim/40"
                 required
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-gray-700 dark:text-gray-200">Mensagem</label>
+            {/* Mensagem */}
+            <div>
+              <label className="block text-[11px] font-bold text-ds-dim uppercase tracking-wider mb-2.5">Mensagem</label>
               <textarea 
-                rows={5}
                 value={descricao}
                 onChange={e => setDescricao(e.target.value)}
+                maxLength={500}
                 placeholder="Descreva com detalhes o que aconteceu..."
-                className="w-full p-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600 resize-none"
+                className="w-full p-[13px] rounded-[10px] border border-ds-border bg-ds-card text-ds-text font-sans text-[14px] outline-none focus:border-ds-primary focus:ring-1 focus:ring-ds-primary transition-all resize-none min-h-[120px] placeholder:text-ds-dim/40"
                 required
               />
+              <div className="text-right text-[10.5px] text-ds-faint mt-1.5 font-bold">
+                {descricao.length}/500
+              </div>
             </div>
             
           </div>
 
           <button 
             type="submit" 
-            disabled={isSubmitting}
-            className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-md flex items-center justify-center gap-2 disabled:opacity-70 mt-6"
+            disabled={isSubmitting || !assunto.trim() || !descricao.trim()}
+            className="w-full bg-ds-primary text-ds-primary-ink font-bold py-3.5 rounded-[10px] flex items-center justify-center gap-2 active:scale-95 transition-transform mt-6 shadow-md disabled:opacity-50 disabled:active:scale-100"
           >
-            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-            {isSubmitting ? 'Enviando...' : 'Enviar para Síndico'}
+            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-[18px] h-[18px] ml-1" />}
+            {isSubmitting ? 'Enviando...' : 'Enviar para o síndico'}
           </button>
         </form>
       </div>
@@ -162,57 +185,61 @@ export function MoradorOuvidoria() {
   }
 
   return (
-    <div className="space-y-6 p-4 pb-24">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-            <MessageSquare className="w-6 h-6 text-blue-900 dark:text-blue-400" />
-            Ouvidoria
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Fale direto com a administração.</p>
+    <div className="bg-ds-bg min-h-screen flex flex-col text-ds-text animate-in fade-in duration-300 relative overflow-hidden">
+      
+      {/* Header */}
+      <header className="px-5 py-6 pt-10">
+        <div className="flex justify-between items-center">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <MessageSquare className="w-[22px] h-[22px] text-ds-text" />
+              <h1 className="text-[22px] font-[800] tracking-tight text-ds-text">Ouvidoria</h1>
+            </div>
+            <p className="text-[13px] text-ds-dim font-medium">Fale direto com a administração.</p>
+          </div>
+          <button 
+            onClick={() => setIsFormOpen(true)}
+            className="w-11 h-11 bg-ds-primary text-ds-primary-ink rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-transform flex-none"
+            aria-label="Novo chamado"
+          >
+            <Plus className="w-[22px] h-[22px]" strokeWidth={2.5} />
+          </button>
         </div>
-        
-        <button 
-          onClick={() => setIsFormOpen(true)}
-          className="w-10 h-10 bg-blue-600 text-white rounded-full shadow-md flex items-center justify-center hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-        </button>
-      </div>
+      </header>
 
-      {/* Lista de Chamados */}
-      <div>
+      {/* Main Content */}
+      <main className="px-5 pb-28 flex-1 overflow-y-auto">
         {loading ? (
           <div className="flex justify-center py-10">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+            <Loader2 className="w-6 h-6 animate-spin text-ds-primary" />
           </div>
         ) : chamados.length === 0 ? (
-          <div className="text-center py-10">
-            <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3">
-              <MessageSquare className="w-8 h-8 text-gray-400" />
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-ds-card border border-ds-border rounded-full flex items-center justify-center mx-auto mb-4">
+              <MessageSquare className="w-7 h-7 text-ds-dim opacity-50" />
             </div>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Você ainda não enviou nenhuma mensagem.</p>
+            <p className="text-ds-dim text-[14px]">Nenhum chamado aberto.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {chamados.map(chamado => (
-              <div key={chamado.id} className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col gap-3">
+              <div key={chamado.id} className="bg-ds-card border border-ds-border rounded-[16px] p-4 shadow-sm">
                 
-                <div className="flex justify-between items-start gap-2">
-                  <h4 className="font-bold text-gray-800 dark:text-gray-100 text-sm leading-tight">{chamado.assunto}</h4>
-                  <span className={`text-[10px] font-bold px-2 py-1 rounded-md border whitespace-nowrap ${getStatusStyle(chamado.status)}`}>
+                <div className="flex justify-between items-start gap-2 mb-1.5">
+                  <h4 className="font-bold text-[14px] text-ds-text leading-tight line-clamp-1">{chamado.assunto}</h4>
+                  <span className={`text-[9px] font-bold px-2 py-1 rounded-full border whitespace-nowrap tracking-wide ${getBadgeStyle(chamado.status)}`}>
                     {getStatusLabel(chamado.status)}
                   </span>
                 </div>
                 
-                <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
+                <p className="text-[13px] text-ds-dim line-clamp-2 leading-relaxed mb-3 pr-2">
                   {chamado.descricao}
                 </p>
 
-                <div className="flex justify-between items-center mt-1 pt-3 border-t border-gray-50">
-                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{chamado.categoria}</span>
-                  <span className="text-[11px] text-gray-400 font-medium">
-                    {new Date(chamado.dataAbertura).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                <div className="flex justify-between items-center text-[10.5px] font-bold text-ds-faint tracking-wider">
+                  <span className="uppercase">{chamado.categoria}</span>
+                  <span>
+                    {new Date(chamado.dataAbertura).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '')}
                   </span>
                 </div>
 
@@ -220,6 +247,15 @@ export function MoradorOuvidoria() {
             ))}
           </div>
         )}
+      </main>
+
+      {/* Toast Notification */}
+      <div 
+        className={`absolute bottom-[90px] left-1/2 -translate-x-1/2 bg-ds-text text-ds-bg font-bold text-[13px] px-[18px] py-[11px] rounded-[10px] shadow-lg transition-all duration-300 z-50 whitespace-nowrap
+          ${showToast ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[80px] pointer-events-none'}
+        `}
+      >
+        Mensagem enviada
       </div>
 
     </div>
