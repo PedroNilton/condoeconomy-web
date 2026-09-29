@@ -1,4 +1,4 @@
-# CondoEconomy Web
+# HabitOS Web
 
 Uma plataforma web moderna e mobile-first para a gestão inteligente de condomínios, conectando Síndicos, Porteiros e Moradores em um ecossistema digital centralizado.
 
@@ -6,7 +6,7 @@ Uma plataforma web moderna e mobile-first para a gestão inteligente de condomí
 
 - **React 18** com **TypeScript**
 - **Vite** para build super-rápido
-- **Tailwind CSS v4** para estilização utilitária e Dark Mode
+- **Tailwind CSS v4** (Design System v0) para estilização utilitária e Dark Mode
 - **React Router Dom** para roteamento
 - **Lucide React** para ícones limpos e responsivos
 - **Axios** para consumo de API REST
@@ -14,35 +14,33 @@ Uma plataforma web moderna e mobile-first para a gestão inteligente de condomí
 
 ## Funcionalidades e Telas
 
-O sistema é dividido em três "perfis" principais de acesso, cada um com suas próprias ferramentas:
+O sistema é dividido em três perfis principais de acesso, cada um com suas próprias ferramentas:
 
-### 1. Painel do Síndico (Admin)
-- Dashboard Financeiro (Resumo de Arrecadação, Despesas e Inadimplência).
-- Gestão de Boletos (Filtro por status: Pago, Pendente, Atrasado).
-- Aprovação de Reservas de Áreas Comuns.
-- Painel de Ouvidoria (Gerenciamento de chamados abertos pelos moradores).
-- Gestão de Avisos e Comunicados Oficiais.
+### 1. Aplicativo do Morador (Mobile-First)
+- **Home**: Feed interativo com QR Code dinâmico com cor de status inteligente.
+- **Perfil Completo**: Gestão de Dados Pessoais, Moradores Adicionais (com convite de acesso), Meus Pets e Veículos.
+- **Configurações e Segurança**: Ajuste fino de Notificações, Central de Ajuda, Alteração de Senha com força de segurança e Gerenciamento de Sessões ativas.
+- **Ouvidoria**: Formulário intuitivo para abertura de chamados, sugestões e reclamações.
+- **Reservas e Boletos**: Integração visual para pagamentos e uso de áreas comuns.
 
 ### 2. Painel da Portaria
 - Gestão de Encomendas (Chegada e Retirada).
 - Controle de Visitantes e Prestadores de Serviço (Check-in rápido).
+- Módulo de Consulta de Veículos.
 
-### 3. Aplicativo do Morador
-- Visualização de Boletos e Pagamentos.
-- Solicitação de Reservas de Espaços Comuns (Churrasqueira, Salão de Festas).
-- Abertura de Chamados e Tickets na Ouvidoria.
-- Histórico de Visitantes e Encomendas.
-- Geração de QR Code de Acesso.
-
-### Interface
-- **Mobile-First:** Layout baseado em "Cards", 100% otimizado para celulares.
-- **Dark Mode:** Botão de alternância com suporte nativo em todas as telas, garantindo alto contraste e conforto visual.
+### 3. Painel do Síndico (Admin)
+- Dashboard Financeiro (Resumo de Arrecadação, Despesas e Inadimplência).
+- Gestão de Boletos (Filtro por status).
+- Aprovação de Reservas de Áreas Comuns.
+- Painel de Ouvidoria para acompanhamento e resposta a chamados.
+- Gestão de Avisos e Comunicados Oficiais.
 
 ## Como Executar o Projeto
 
 ### Pré-requisitos
 - Node.js (v18 ou superior)
 - npm ou yarn
+- Backend rodando em Spring Boot (Porta 8080)
 
 ### Passo a Passo
 
@@ -61,8 +59,9 @@ npm run dev
 http://localhost:5173
 ```
 
-## Acesso de Teste (Mock)
-Utilize as credenciais abaixo para testar os diferentes perfis (a senha padrão para todos é `admin`):
+## Acesso de Teste
+
+Utilize as credenciais de homologação abaixo (a senha padrão para todos é `123456`):
 
 - **Morador:** `carlos.silva@email.com`
 - **Portaria:** `porteiro@condominio.com`
@@ -70,7 +69,3 @@ Utilize as credenciais abaixo para testar os diferentes perfis (a senha padrão 
 
 ---
 *Desenvolvido para revolucionar a administração condominial.*
-
-## Atualizações recentes
-- **Veículos**: Novo módulo de consulta de veículos para a portaria.
-
