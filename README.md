@@ -69,3 +69,10 @@ Utilize as credenciais de homologação abaixo (a senha padrão para todos é `1
 
 ---
 *Desenvolvido para revolucionar a administração condominial.*
+
+## Atualizações Recentes (Refatoração v0)
+- **Perfil do Morador**: Telas de Dados Pessoais, Moradores Adicionais, Pets e Veículos totalmente redesenhadas.
+- **Segurança e Senha**: Novo medidor de força de senha e painel de sessões ativas.
+- **Central de Ajuda**: Adicionado sistema de busca e FAQ dinâmico (Accordion).
+- **Ouvidoria**: Nova interface de chamados com chips de categorias e contador de caracteres.
+- **Notificações**: Novo layout de switches (toggles) fluidos para configurações.
