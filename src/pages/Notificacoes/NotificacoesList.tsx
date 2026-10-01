@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Bell, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, BellOff, Package, FileText, CalendarCheck, Wrench, AlertTriangle, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
@@ -14,6 +14,7 @@ interface Notificacao {
 export function NotificacoesList() {
   const navigate = useNavigate();
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchNotificacoes = async () => {
     try {
@@ -21,13 +22,25 @@ export function NotificacoesList() {
       setNotificacoes(res.data);
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
   const markAsRead = async (id: string) => {
     try {
       await api.put('/api/v1/notificacoes/' + id + '/lida');
-      fetchNotificacoes();
+      setNotificacoes(prev => prev.map(n => n.id === id ? { ...n, lida: true } : n));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      const unreadIds = notificacoes.filter(n => !n.lida).map(n => n.id);
+      await Promise.all(unreadIds.map(id => api.put('/api/v1/notificacoes/' + id + '/lida')));
+      setNotificacoes(prev => prev.map(n => ({ ...n, lida: true })));
     } catch (err) {
       console.error(err);
     }
@@ -37,53 +50,108 @@ export function NotificacoesList() {
     fetchNotificacoes();
   }, []);
 
+  const unreadCount = notificacoes.filter(n => !n.lida).length;
+
+  const getIconData = (titulo: string) => {
+    const t = titulo.toLowerCase();
+    if (t.includes('encomenda')) return { icon: Package, isEmergency: false };
+    if (t.includes('boleto')) return { icon: FileText, isEmergency: false };
+    if (t.includes('reserva')) return { icon: CalendarCheck, isEmergency: false };
+    if (t.includes('manuten')) return { icon: Wrench, isEmergency: false };
+    if (t.includes('acesso') || t.includes('alerta') || t.includes('emerg')) return { icon: AlertTriangle, isEmergency: true };
+    return { icon: Info, isEmergency: false };
+  };
+
+  const formatTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHrs = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHrs / 24);
+
+    if (diffMins < 60) return diffMins <= 1 ? 'AGORA' : `HÁ ${diffMins} MIN`;
+    if (diffHrs < 24) return `HÁ ${diffHrs} H`;
+    if (diffDays === 1) return 'ONTEM';
+    if (diffDays < 7) return `HÁ ${diffDays} DIAS`;
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '').toUpperCase();
+  };
+
   return (
-    <div className="flex flex-col h-full pb-20 animate-fade-in-up">
-      <header className="bg-blue-600 p-6 flex items-center gap-4 text-white shadow-md rounded-b-[40px] relative z-10">
-        <button onClick={() => navigate(-1)} className="p-2 hover:bg-white/20 rounded-full transition-colors">
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-        <h1 className="text-xl font-bold">Notificações</h1>
+    <div className="bg-ds-bg min-h-screen flex flex-col text-ds-text animate-in slide-in-from-right-full duration-300 relative overflow-hidden">
+      
+      <header className="px-5 py-6 pt-10 flex items-center justify-between border-b border-ds-border bg-ds-bg relative z-10">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="w-10 h-10 rounded-[12px] bg-ds-card border border-ds-border flex items-center justify-center text-ds-text active:scale-95 transition-transform shadow-sm flex-none"
+            aria-label="Voltar"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <h1 className="text-[19px] font-bold tracking-tight text-ds-text">
+            {unreadCount > 0 ? `Notificações (${unreadCount})` : 'Notificações'}
+          </h1>
+        </div>
+        {unreadCount > 0 && (
+          <button 
+            onClick={markAllAsRead}
+            className="text-[13px] font-bold text-ds-primary active:scale-95 transition-transform bg-transparent"
+          >
+            Marcar lidas
+          </button>
+        )}
       </header>
 
-      <div className="flex-1 p-6 overflow-y-auto space-y-4">
-        {notificacoes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500 animate-fade-in-up" style={{ animationDelay: '100ms', opacity: 0 }}>
-            <Bell className="w-16 h-16 mb-4 opacity-50" />
-            <p className="font-medium">Nenhuma notificação por enquanto</p>
+      <main className="px-5 py-5 pb-24 flex-1 overflow-y-auto">
+        {loading ? (
+          <div className="flex justify-center py-10">
+            <div className="w-6 h-6 border-2 border-ds-primary border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : notificacoes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center text-ds-faint">
+            <BellOff className="w-[44px] h-[44px] mb-[14px]" strokeWidth={1.6} />
+            <p className="text-[13.5px] text-ds-dim font-medium m-0">Nenhuma notificação por enquanto</p>
           </div>
         ) : (
-          notificacoes.map((n, idx) => (
-            <div 
-              key={n.id} 
-              className={`p-5 rounded-3xl shadow-sm border animate-fade-in-up relative overflow-hidden ${
-                n.lida 
-                  ? 'bg-white/50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700/50' 
-                  : 'bg-white dark:bg-slate-800 border-cyan-200 dark:border-cyan-800/50 shadow-[0_4px_20px_rgb(0,0,0,0.05)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.2)]'
-              }`}
-              style={{ animationDelay: `${(idx + 1) * 100}ms`, opacity: 0 }}
-            >
-              {!n.lida && <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500"></div>}
-              <div className="flex justify-between items-start mb-3">
-                <h3 className={`font-bold ${n.lida ? 'text-slate-600 dark:text-slate-400' : 'text-slate-800 dark:text-white'}`}>
-                  {n.titulo}
-                </h3>
-                {!n.lida && (
-                  <button onClick={() => markAsRead(n.id)} className="text-cyan-600 hover:text-cyan-500 dark:text-cyan-400 p-1 bg-cyan-50 dark:bg-cyan-500/10 rounded-full transition-colors active:scale-95" title="Marcar como lida">
-                    <CheckCircle2 className="w-5 h-5" />
-                  </button>
-                )}
-              </div>
-              <p className="text-sm mb-3 leading-relaxed text-slate-600 dark:text-slate-300">
-                {n.mensagem}
-              </p>
-              <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                {new Date(n.dataCriacao).toLocaleString('pt-BR')}
-              </span>
-            </div>
-          ))
+          <div className="flex flex-col gap-3">
+            {notificacoes.map((n) => {
+              const { icon: Icon, isEmergency } = getIconData(n.titulo);
+              return (
+                <div 
+                  key={n.id}
+                  onClick={() => !n.lida && markAsRead(n.id)}
+                  className={`p-4 rounded-[16px] flex gap-[14px] transition-colors cursor-pointer border border-transparent
+                    ${!n.lida ? 'bg-ds-primary-dim' : 'bg-transparent active:bg-ds-card'}
+                  `}
+                >
+                  <div className={`w-[38px] h-[38px] rounded-[11px] flex items-center justify-center flex-none 
+                    ${isEmergency 
+                      ? 'bg-ds-danger-dim text-ds-danger' 
+                      : 'bg-ds-card border border-ds-border text-ds-dim'
+                    }`}
+                  >
+                    <Icon className="w-[17px] h-[17px]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-[13.5px] text-ds-text flex items-center gap-[7px]">
+                      <span className="truncate">{n.titulo}</span>
+                      {!n.lida && <span className="w-[7px] h-[7px] rounded-full bg-ds-primary flex-none"></span>}
+                    </div>
+                    <div className="text-[12px] text-ds-dim mt-[3px] leading-[1.5]">
+                      {n.mensagem}
+                    </div>
+                    <div className="text-[10.5px] text-ds-faint mt-[5px] font-mono font-bold tracking-wider">
+                      {formatTime(n.dataCriacao)}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
-      </div>
+      </main>
+
     </div>
   );
 }
