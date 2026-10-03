@@ -75,4 +75,4 @@ Utilize as credenciais de homologação abaixo (a senha padrão para todos é `1
 - **Segurança e Senha**: Novo medidor de força de senha e painel de sessões ativas.
 - **Central de Ajuda**: Adicionado sistema de busca e FAQ dinâmico (Accordion).
 - **Ouvidoria**: Nova interface de chamados com chips de categorias e contador de caracteres.
-- **Notificações**: Novo layout de switches (toggles) fluidos para configurações.
+- **Notificações**: Novo layout de switches (toggles) fluidos para configurações e Feed inteligente de notificações com ícones dinâmicos.
