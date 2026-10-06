@@ -208,7 +208,7 @@ export function MoradorVeiculos() {
   }
 
   return (
-    <div className="bg-ds-bg min-h-screen text-ds-text p-6">
+    <div className="bg-ds-bg min-h-full text-ds-text p-6">
       <div className="flex justify-between items-center mb-8 pt-4">
         <div>
           <p className="text-[10px] font-bold text-ds-dim uppercase tracking-widest mb-1.5">Garagem</p>
