@@ -65,9 +65,9 @@ export function MoradorLayout() {
 
             <NavLink 
               to="/app/perfil" 
-              className={({ isActive }) => `flex flex-col items-center justify-center w-full gap-1 transition-all ${isActive ? 'text-ds-primary' : 'text-ds-dim hover:text-ds-text'}`}
+              className={() => `flex flex-col items-center justify-center w-full gap-1 transition-all ${(location.pathname.includes('/perfil') && !location.pathname.includes('/veiculos')) ? 'text-ds-primary' : 'text-ds-dim hover:text-ds-text'}`}
             >
-              <User className={`w-6 h-6 ${location.pathname.includes('/perfil') && !location.pathname.includes('/veiculos') ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+              <User className={`w-6 h-6 ${(location.pathname.includes('/perfil') && !location.pathname.includes('/veiculos')) ? 'stroke-[2.5px]' : 'stroke-2'}`} />
               <span className="text-[10px] font-bold tracking-wide">Perfil</span>
             </NavLink>
 
