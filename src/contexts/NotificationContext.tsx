@@ -62,10 +62,19 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const loadAll = () => {
     const token = localStorage.getItem('@HabitOS:token');
     if (token) {
-      fetchVisitantes();
-      fetchChamados();
-      fetchReservas();
-      fetchEncomendas();
+      try {
+        const userStr = localStorage.getItem('@HabitOS:user');
+        const user = userStr ? JSON.parse(userStr) : null;
+        const isStaff = user && ['ROLE_PORTEIRO', 'ROLE_SINDICO', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'].includes(user.papel);
+        if (isStaff) {
+          fetchVisitantes();
+          fetchChamados();
+          fetchReservas();
+          fetchEncomendas();
+        }
+      } catch {
+        // Ignora erros ao parsear dados do storage
+      }
     }
   };
 

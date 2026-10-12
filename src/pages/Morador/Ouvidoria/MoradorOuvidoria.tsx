@@ -31,8 +31,8 @@ export function MoradorOuvidoria() {
   const fetchChamados = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/api/v1/chamados');
-      const meusChamados = res.data.filter((c: any) => c.moradorSolicitante === 'Carlos Silva');
+      const res = await api.get('/api/v1/chamados/meus');
+      const meusChamados = res.data || [];
       
       meusChamados.sort((a: Chamado, b: Chamado) => 
         new Date(b.dataAbertura).getTime() - new Date(a.dataAbertura).getTime()
@@ -63,8 +63,6 @@ export function MoradorOuvidoria() {
     try {
       setIsSubmitting(true);
       await api.post('/api/v1/chamados', {
-        unidadeTexto: 'Apto 101 - Bloco B',
-        moradorSolicitante: 'Carlos Silva',
         categoria: mapCategoriaToEnum(categoriaVisual),
         assunto: assunto.trim(),
         descricao: descricao.trim()
