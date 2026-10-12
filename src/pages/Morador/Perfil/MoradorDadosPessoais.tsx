@@ -42,6 +42,15 @@ export function MoradorDadosPessoais() {
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Formato de imagem inválido. Escolha um arquivo JPG, PNG ou WebP.');
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        alert('A imagem é muito grande. O tamanho máximo permitido é 2MB.');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setFoto(reader.result as string);

@@ -15,14 +15,15 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor para tratar token expirado (401/403)
+// Interceptor para tratar token expirado (401)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+    if (error.response && error.response.status === 401) {
       // Evitar loop de redirecionamento se já estiver na tela de login
       if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
         localStorage.removeItem('@HabitOS:token');
+        localStorage.removeItem('@HabitOS:user');
         window.location.href = '/login';
       }
     }
