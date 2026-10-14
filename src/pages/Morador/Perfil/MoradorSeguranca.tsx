@@ -1,6 +1,8 @@
-import { ChevronLeft, ShieldCheck, Key, EyeOff, Eye, Smartphone, Monitor, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, ShieldCheck, Key, EyeOff, Eye, Smartphone, Monitor, AlertTriangle, Loader2, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useMemo } from 'react';
+import api from '../../../services/api';
+import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
 export function MoradorSeguranca() {
   const navigate = useNavigate();
@@ -13,7 +15,12 @@ export function MoradorSeguranca() {
   const [showNova, setShowNova] = useState(false);
   const [showConfirma, setShowConfirma] = useState(false);
 
+  const [loading, setLoading] = useState(false);
+  const [loadingEncerrar, setLoadingEncerrar] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('Senha atualizada com sucesso');
+  const [outrasSessoesEncerradas, setOutrasSessoesEncerradas] = useState(false);
 
   const strength = useMemo(() => {
     let score = 0;
@@ -41,13 +48,73 @@ export function MoradorSeguranca() {
 
   const mismatch = confirma.length > 0 && confirma !== nova;
 
-  const handleUpdate = () => {
-    if (mismatch || nova.length === 0) return;
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2200);
-    setAtual('');
-    setNova('');
-    setConfirma('');
+  const handleUpdate = async () => {
+    setErrorMsg(null);
+    if (!atual.trim()) {
+      setErrorMsg('Informe sua senha atual para re-autenticação.');
+      return;
+    }
+    if (nova.length < 8) {
+      setErrorMsg('A nova senha deve possuir no mínimo 8 caracteres.');
+      return;
+    }
+    if (mismatch) {
+      setErrorMsg('A confirmação não coincide com a nova senha.');
+      return;
+    }
+    if (atual === nova) {
+      setErrorMsg('A nova senha deve ser diferente da senha atual.');
+      return;
+    }
+    if (contemAmeacas(atual) || contemAmeacas(nova)) {
+      setErrorMsg('Entrada com formato ou caracteres potencialmente perigosos.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await api.put('/api/v1/perfil/seguranca/alterar-senha', {
+        senhaAtual: sanitizarEntrada(atual),
+        novaSenha: sanitizarEntrada(nova),
+      });
+
+      if (res.data?.token) {
+        localStorage.setItem('@HabitOS:token', res.data.token);
+      }
+
+      setToastMessage(res.data?.message || 'Senha atualizada com sucesso!');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3500);
+      setAtual('');
+      setNova('');
+      setConfirma('');
+      setOutrasSessoesEncerradas(true);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Erro ao atualizar senha. Verifique sua senha atual.';
+      setErrorMsg(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEncerrarSessoes = async () => {
+    setErrorMsg(null);
+    setLoadingEncerrar(true);
+    try {
+      const res = await api.post('/api/v1/perfil/seguranca/encerrar-sessoes');
+      if (res.data?.token) {
+        localStorage.setItem('@HabitOS:token', res.data.token);
+      }
+      setToastMessage(res.data?.message || 'Todas as outras sessões foram encerradas com sucesso.');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3500);
+      setOutrasSessoesEncerradas(true);
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Erro ao encerrar outras sessões.';
+      setErrorMsg(msg);
+    } finally {
+      setLoadingEncerrar(false);
+    }
   };
 
   return (
@@ -84,6 +151,13 @@ export function MoradorSeguranca() {
 
           <div className="space-y-4">
             
+            {errorMsg && (
+              <div className="flex items-center gap-2.5 p-3 rounded-[12px] bg-ds-danger-dim border border-ds-danger/30 text-ds-danger text-[12.5px] animate-in fade-in">
+                <AlertTriangle className="w-4 h-4 flex-none" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
             {/* Senha Atual */}
             <div>
               <label className="block text-[11px] font-bold text-ds-dim uppercase tracking-wider mb-2">Senha atual</label>
@@ -162,10 +236,14 @@ export function MoradorSeguranca() {
 
             <button 
               onClick={handleUpdate}
-              disabled={mismatch || nova.length === 0}
-              className="w-full bg-ds-primary text-ds-primary-ink font-bold py-3.5 rounded-[10px] active:scale-95 transition-transform text-[14.5px] shadow-md mt-2 disabled:opacity-50 disabled:active:scale-100"
+              disabled={loading || mismatch || !atual || nova.length < 8}
+              className="w-full bg-ds-primary text-ds-primary-ink font-bold py-3.5 rounded-[10px] active:scale-95 transition-transform text-[14.5px] shadow-md mt-2 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
             >
-              Atualizar senha
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                'Atualizar senha'
+              )}
             </button>
 
           </div>
@@ -183,32 +261,51 @@ export function MoradorSeguranca() {
               <Smartphone className="w-4 h-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[13px] font-bold text-ds-text truncate">iPhone de Carlos</div>
-              <div className="text-[11px] text-ds-dim mt-[1px]">Aracaju, SE • agora</div>
+              <div className="text-[13px] font-bold text-ds-text truncate">Dispositivo Atual</div>
+              <div className="text-[11px] text-ds-dim mt-[1px]">Sessão ativa agora</div>
             </div>
             <span className="font-mono text-[9px] font-bold px-2 py-1 rounded-full bg-ds-success-dim text-ds-success whitespace-nowrap tracking-wider">
               ESTE DISPOSITIVO
             </span>
           </div>
 
-          <div className="flex items-center gap-3 p-3.5 border border-ds-border rounded-[12px] mb-4 bg-ds-card shadow-sm">
-            <div className="w-[34px] h-[34px] rounded-lg bg-ds-bg border border-ds-border flex items-center justify-center text-ds-dim flex-none">
-              <Monitor className="w-4 h-4" />
+          {outrasSessoesEncerradas ? (
+            <div className="p-3.5 rounded-[12px] bg-ds-success-dim/40 border border-ds-success/30 text-ds-success text-[12.5px] flex items-center gap-2.5 mb-3">
+              <CheckCircle2 className="w-4 h-4 flex-none" />
+              <span>Nenhuma outra sessão ativa. Apenas este dispositivo está autenticado.</span>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[13px] font-bold text-ds-text truncate">Chrome • Windows</div>
-              <div className="text-[11px] text-ds-dim mt-[1px]">Aracaju, SE • há 3 dias</div>
+          ) : (
+            <div className="flex items-center gap-3 p-3.5 border border-ds-border rounded-[12px] mb-4 bg-ds-card shadow-sm">
+              <div className="w-[34px] h-[34px] rounded-lg bg-ds-bg border border-ds-border flex items-center justify-center text-ds-dim flex-none">
+                <Monitor className="w-4 h-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-bold text-ds-text truncate">Outros navegadores ou apps</div>
+                <div className="text-[11px] text-ds-dim mt-[1px]">Possíveis sessões abertas</div>
+              </div>
+              <button 
+                onClick={handleEncerrarSessoes}
+                disabled={loadingEncerrar}
+                className="text-[11.5px] font-bold text-ds-danger active:opacity-70 transition-opacity whitespace-nowrap"
+              >
+                Encerrar
+              </button>
             </div>
-            <button className="text-[11.5px] font-bold text-ds-danger active:opacity-70 transition-opacity whitespace-nowrap">
-              Encerrar
-            </button>
-          </div>
+          )}
 
-          <button className="w-full p-3 rounded-[10px] border border-ds-danger bg-ds-danger-dim text-ds-danger font-bold text-[13.5px] active:scale-95 transition-transform mt-1">
-            Encerrar todas as outras sessões
+          <button 
+            onClick={handleEncerrarSessoes}
+            disabled={loadingEncerrar || outrasSessoesEncerradas}
+            className="w-full p-3 rounded-[10px] border border-ds-danger bg-ds-danger-dim text-ds-danger font-bold text-[13.5px] active:scale-95 transition-transform mt-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:active:scale-100"
+          >
+            {loadingEncerrar ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              'Encerrar todas as outras sessões'
+            )}
           </button>
           <p className="text-[11px] text-ds-dim mt-2 leading-relaxed text-center">
-            Isso desconecta qualquer dispositivo que não seja este, sem afetar sua sessão atual.
+            Ao encerrar outras sessões, o token de autenticação de todos os outros dispositivos é invalidado instantaneamente pelo servidor.
           </p>
         </section>
 
@@ -216,11 +313,11 @@ export function MoradorSeguranca() {
 
       {/* Toast Notification */}
       <div 
-        className={`absolute bottom-[24px] left-1/2 -translate-x-1/2 bg-ds-text text-ds-bg font-bold text-[13px] px-[18px] py-[11px] rounded-[10px] shadow-lg transition-all duration-300 z-50 whitespace-nowrap
+        className={`fixed bottom-[24px] left-1/2 -translate-x-1/2 bg-ds-text text-ds-bg font-bold text-[13px] px-[18px] py-[11px] rounded-[10px] shadow-lg transition-all duration-300 z-50 whitespace-nowrap
           ${showToast ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[80px] pointer-events-none'}
         `}
       >
-        Senha atualizada com sucesso
+        {toastMessage}
       </div>
 
     </div>
