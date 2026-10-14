@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
@@ -17,15 +17,35 @@ const demoCredentials = {
   morador: 'carlos.silva@email.com'
 };
 
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 export function Login() {
   const [activeRole, setActiveRole] = useState<Role>('sindico');
   const [email, setEmail] = useState(demoCredentials.sindico);
   const [senha, setSenha] = useState('123456');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [tentativasFalhas, setTentativasFalhas] = useState(0);
+  const [lockoutTimer, setLockoutTimer] = useState(0);
   const navigate = useNavigate();
 
-  // Auto-fill demo credentials when changing tabs (for testing convenience)
+  // Temporizador regressivo de segurança após tentativas falhas sucessivas
+  useEffect(() => {
+    if (lockoutTimer <= 0) return;
+    const interval = setInterval(() => {
+      setLockoutTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockoutTimer]);
+
+  // Preenchimento de conveniência em desenvolvimento
   useEffect(() => {
     setEmail(demoCredentials[activeRole]);
     setSenha('123456');
@@ -34,26 +54,77 @@ export function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading || lockoutTimer > 0) return;
+
+    const emailSanitizado = email.trim().toLowerCase();
+
+    // 1. Sanitização e validação de formato de e-mail (Prevenção contra injeção e requisições inúteis)
+    if (!emailSanitizado || !EMAIL_REGEX.test(emailSanitizado)) {
+      setError('Por favor, informe um endereço de e-mail válido.');
+      return;
+    }
+
+    // 2. Validação de tamanho mínimo de senha
+    if (!senha || senha.length < 6) {
+      setError('A senha deve conter no mínimo 6 caracteres.');
+      return;
+    }
+
+    // 3. Validação de tamanho máximo (Proteção contra payload excessivo/DoS)
+    if (senha.length > 128) {
+      setError('A senha excede o limite máximo permitido.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const response = await api.post('/api/v1/auth/login', { email, senha });
+      const response = await api.post('/api/v1/auth/login', { 
+        email: emailSanitizado, 
+        senha 
+      });
       const { token, papel, nome } = response.data;
       
+      // Limpeza de tokens ou perfis anteriores para prevenir contaminação de sessão
+      localStorage.removeItem('@HabitOS:token');
+      localStorage.removeItem('@HabitOS:user');
+      localStorage.removeItem('@HabitOS:nome');
+
+      // Persistência segura e consistente do estado de autenticação
       localStorage.setItem('@HabitOS:token', token);
       if (nome) localStorage.setItem('@HabitOS:nome', nome);
+      localStorage.setItem('@HabitOS:user', JSON.stringify({ nome, papel, email: emailSanitizado }));
       
+      setTentativasFalhas(0);
+
+      // Redirecionamento por privilégio verificado
       if (papel === 'ROLE_PORTEIRO') {
         navigate('/portaria');
-      } else if (papel === 'ROLE_ADMIN' || papel === 'ROLE_SINDICO') {
+      } else if (papel === 'ROLE_ADMIN' || papel === 'ROLE_SINDICO' || papel === 'ROLE_SUPER_ADMIN') {
         navigate('/admin');
       } else {
         navigate('/app');
       }
       
-    } catch (err) {
-      setError('Credenciais inválidas.');
+    } catch (err: any) {
+      const novasTentativas = tentativasFalhas + 1;
+      setTentativasFalhas(novasTentativas);
+
+      if (err.response?.status === 429) {
+        setLockoutTimer(60);
+        setError('Muitas tentativas sem sucesso. Por segurança, aguarde 60 segundos antes de tentar novamente.');
+      } else if (err.response?.status === 401 || err.response?.status === 400) {
+        if (novasTentativas >= 4) {
+          setLockoutTimer(30);
+          setError('Múltiplas tentativas incorretas. Bloqueio temporário de 30 segundos ativado.');
+        } else {
+          setError(err.response?.data?.message || 'E-mail ou senha inválidos.');
+        }
+      } else {
+        setError('Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.');
+      }
+    } finally {
       setLoading(false);
     }
   };
@@ -109,8 +180,9 @@ export function Login() {
             </div>
 
             {error && (
-              <div className="bg-ds-danger-dim border border-ds-danger/20 text-ds-danger p-3 rounded-lg text-xs font-semibold mb-4 text-center">
-                {error}
+              <div className="bg-ds-danger-dim border border-ds-danger/20 text-ds-danger p-3 rounded-lg text-xs font-semibold mb-4 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 flex-none mt-0.5" />
+                <span>{error}</span>
               </div>
             )}
 
@@ -122,19 +194,46 @@ export function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                className="w-full px-3 py-2.5 rounded-lg border border-ds-border bg-ds-bg text-ds-text text-[14px] focus:outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim transition-shadow"
+                autoComplete="username"
+                maxLength={255}
+                spellCheck="false"
+                disabled={loading || lockoutTimer > 0}
+                className="w-full px-3 py-2.5 rounded-lg border border-ds-border bg-ds-bg text-ds-text text-[14px] focus:outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim transition-shadow disabled:opacity-60"
                 required
               />
             </div>
 
             <div className="mb-5">
-              <label className="block text-[12.5px] font-semibold mb-1.5 text-ds-text">Senha</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-[12.5px] font-semibold text-ds-text">Senha</label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-ds-dim hover:text-ds-text text-[11px] font-medium flex items-center gap-1 focus:outline-none cursor-pointer"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <>
+                      <EyeOff className="w-3.5 h-3.5" />
+                      <span>Ocultar</span>
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Exibir</span>
+                    </>
+                  )}
+                </button>
+              </div>
               <input 
-                type="password" 
+                type={showPassword ? "text" : "password"} 
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-3 py-2.5 rounded-lg border border-ds-border bg-ds-bg text-ds-text text-[14px] focus:outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim transition-shadow"
+                autoComplete="current-password"
+                maxLength={128}
+                disabled={loading || lockoutTimer > 0}
+                className="w-full px-3 py-2.5 rounded-lg border border-ds-border bg-ds-bg text-ds-text text-[14px] focus:outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim transition-shadow disabled:opacity-60"
                 required
               />
             </div>
@@ -151,17 +250,23 @@ export function Login() {
             {/* Submit */}
             <button 
               type="submit" 
-              disabled={loading}
-              className="w-full p-3 border-none rounded-lg bg-ds-primary text-ds-primary-ink font-bold text-[14.5px] cursor-pointer hover:brightness-110 active:translate-y-[1px] transition-all flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
+              disabled={loading || lockoutTimer > 0}
+              className="w-full p-3 border-none rounded-lg bg-ds-primary text-ds-primary-ink font-bold text-[14.5px] cursor-pointer hover:brightness-110 active:translate-y-[1px] transition-all flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Entrar'}
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : lockoutTimer > 0 ? (
+                `Aguarde ${lockoutTimer}s para tentar novamente`
+              ) : (
+                'Entrar'
+              )}
             </button>
 
             {/* Footer Status */}
             <div className="mt-5 pt-4 border-t border-ds-border flex items-center justify-between font-mono text-[11px] text-ds-dim">
               <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-ds-success animate-pulse"></span>
-                <span>Sincronização em tempo real ativa</span>
+                <ShieldCheck className="w-3.5 h-3.5 text-ds-success" />
+                <span>Ambiente Seguro HabitOS</span>
               </div>
               <a href="#" className="hover:text-ds-text transition-colors">Precisa de ajuda?</a>
             </div>
