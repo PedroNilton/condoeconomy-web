@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Loader2, Eye, EyeOff, ShieldCheck, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
+import { sanitizarEntrada, contemAmeacas, EMAIL_SECURITY_REGEX } from '../../utils/security';
 
 type Role = 'sindico' | 'portaria' | 'morador';
 
@@ -16,8 +17,6 @@ const demoCredentials = {
   portaria: 'porteiro@condominio.com',
   morador: 'carlos.silva@email.com'
 };
-
-const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 export function Login() {
   const [activeRole, setActiveRole] = useState<Role>('sindico');
@@ -56,22 +55,30 @@ export function Login() {
     e.preventDefault();
     if (loading || lockoutTimer > 0) return;
 
-    const emailSanitizado = email.trim().toLowerCase();
+    // 1. Sanitização e remoção de caracteres de controle e bytes nulos
+    const emailSanitizado = sanitizarEntrada(email).toLowerCase();
+    const senhaSanitizada = sanitizarEntrada(senha);
 
-    // 1. Sanitização e validação de formato de e-mail (Prevenção contra injeção e requisições inúteis)
-    if (!emailSanitizado || !EMAIL_REGEX.test(emailSanitizado)) {
+    // 2. Detecção ativa de injeções (SQLi, XSS, scripts ou caracteres maliciosos)
+    if (contemAmeacas(email) || contemAmeacas(senha)) {
+      setError('Entrada inválida. Caracteres ou comandos proibidos detectados.');
+      return;
+    }
+
+    // 3. Validação de formato de e-mail (Prevenção contra requisições malformadas)
+    if (!emailSanitizado || !EMAIL_SECURITY_REGEX.test(emailSanitizado)) {
       setError('Por favor, informe um endereço de e-mail válido.');
       return;
     }
 
-    // 2. Validação de tamanho mínimo de senha
-    if (!senha || senha.length < 6) {
+    // 4. Validação de tamanho mínimo de senha
+    if (!senhaSanitizada || senhaSanitizada.length < 6) {
       setError('A senha deve conter no mínimo 6 caracteres.');
       return;
     }
 
-    // 3. Validação de tamanho máximo (Proteção contra payload excessivo/DoS)
-    if (senha.length > 128) {
+    // 5. Validação de tamanho máximo (Proteção contra payload excessivo/DoS)
+    if (senhaSanitizada.length > 128) {
       setError('A senha excede o limite máximo permitido.');
       return;
     }
@@ -82,7 +89,7 @@ export function Login() {
     try {
       const response = await api.post('/api/v1/auth/login', { 
         email: emailSanitizado, 
-        senha 
+        senha: senhaSanitizada 
       });
       const { token, papel, nome } = response.data;
       
