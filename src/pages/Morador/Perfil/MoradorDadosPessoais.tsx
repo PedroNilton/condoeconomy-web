@@ -2,6 +2,7 @@ import { ChevronLeft, Loader2, Pencil, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from '../../../services/api';
+import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
 export function MoradorDadosPessoais() {
   const navigate = useNavigate();
@@ -59,11 +60,32 @@ export function MoradorDadosPessoais() {
     }
   };
 
+  const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let v = e.target.value.replace(/\D/g, '');
+    if (v.length > 11) v = v.substring(0, 11);
+    if (v.length > 10) {
+      v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+    } else if (v.length > 5) {
+      v = v.replace(/^(\d{2})(\d{4})(\d{0,4})$/, '($1) $2-$3');
+    } else if (v.length > 2) {
+      v = v.replace(/^(\d{2})(\d{0,5})$/, '($1) $2');
+    }
+    setTelefone(v);
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (contemAmeacas(nome) || contemAmeacas(telefone)) {
+      alert('Entrada contém caracteres ou padrões não permitidos.');
+      return;
+    }
     setLoading(true);
     try {
-      await api.put('/api/v1/perfil/dados', { nome, telefone, foto });
+      await api.put('/api/v1/perfil/dados', {
+        nome: sanitizarEntrada(nome),
+        telefone: sanitizarEntrada(telefone),
+        foto
+      });
       alert('Dados salvos com sucesso!');
       navigate(-1);
     } catch (err) {
@@ -138,7 +160,7 @@ export function MoradorDadosPessoais() {
                 type="text" 
                 required
                 value={telefone}
-                onChange={e => setTelefone(e.target.value)}
+                onChange={handleTelefoneChange}
                 className="w-full bg-ds-card border border-ds-border rounded-[12px] px-4 py-3.5 text-[15px] font-medium text-ds-text focus:ring-2 focus:ring-ds-primary focus:border-transparent focus:outline-none placeholder:text-ds-dim/40 transition-shadow shadow-sm"
                 placeholder="(00) 00000-0000"
               />

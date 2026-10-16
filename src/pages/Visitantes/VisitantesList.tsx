@@ -70,7 +70,7 @@ export function VisitantesList() {
 
   const filteredVisitantes = visitantes.filter(v => {
     const matchSearch = v.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        v.documento.includes(searchTerm) ||
+                        (v.documento?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
                         v.unidadeDestino.toLowerCase().includes(searchTerm.toLowerCase());
     const matchStatus = statusFilter === 'TODOS' || v.status === statusFilter;
     return matchSearch && matchStatus;

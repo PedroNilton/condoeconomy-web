@@ -7,6 +7,7 @@ import { MoradorAdicionais } from './pages/Morador/Perfil/MoradorAdicionais';
 import { MoradorNotificacoes } from './pages/Morador/Perfil/MoradorNotificacoes';
 import { MoradorSeguranca } from './pages/Morador/Perfil/MoradorSeguranca';
 import { MoradorAjuda } from './pages/Morador/Perfil/MoradorAjuda';
+import { MoradorPrivacidade } from './pages/Morador/Perfil/MoradorPrivacidade';
 import { DashboardLayout } from './components/Layout';
 import { DashboardHome } from './pages/Dashboard';
 import { EncomendasList } from './pages/Encomendas/EncomendasList';
@@ -87,6 +88,7 @@ export default function App() {
               <Route path="perfil/notificacoes" element={<MoradorNotificacoes />} />
               <Route path="perfil/seguranca" element={<MoradorSeguranca />} />
               <Route path="perfil/ajuda" element={<MoradorAjuda />} />
+              <Route path="perfil/privacidade" element={<MoradorPrivacidade />} />
             </Route>
           </Route>
         </Routes>

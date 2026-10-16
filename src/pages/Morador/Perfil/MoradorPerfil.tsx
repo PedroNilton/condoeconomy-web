@@ -12,7 +12,8 @@ import {
   ChevronRight,
   PawPrint,
   Moon,
-  QrCode
+  QrCode,
+  FileText
 } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 
@@ -80,9 +81,10 @@ export function MoradorPerfil() {
       ]
     },
     {
-      title: 'Suporte',
+      title: 'Suporte e Privacidade',
       items: [
         { icon: <HelpCircle className="w-[18px] h-[18px]" strokeWidth={2.5} />, label: 'Central de ajuda', route: '/app/perfil/ajuda' },
+        { icon: <FileText className="w-[18px] h-[18px]" strokeWidth={2.5} />, label: 'Termos e Privacidade (LGPD)', route: '/app/perfil/privacidade' },
       ]
     }
   ];
