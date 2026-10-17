@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CheckCircle2, Building, User, Car } from 'lucide-react';
 import api from '../../services/api';
+import { sanitizarEntrada, contemAmeacas } from '../../utils/security';
 
 export function AutoCheckin() {
   const [formData, setFormData] = useState({
@@ -11,16 +12,37 @@ export function AutoCheckin() {
     placaVeiculo: ''
   });
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('Ocorreu um erro ao enviar. Tente novamente.');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validação preventiva contra injeções (XSS / SQLi)
+    if (contemAmeacas(formData.nome) || 
+        contemAmeacas(formData.sobrenome) || 
+        contemAmeacas(formData.blocoDestino) || 
+        contemAmeacas(formData.unidadeDestino) || 
+        contemAmeacas(formData.placaVeiculo)) {
+      setErrorMessage('Entrada contém caracteres ou padrões não permitidos.');
+      setStatus('error');
+      return;
+    }
+
     setStatus('loading');
     
     try {
-      await api.post('/api/v1/visitantes', formData);
+      const payload = {
+        nome: sanitizarEntrada(formData.nome),
+        sobrenome: sanitizarEntrada(formData.sobrenome),
+        blocoDestino: sanitizarEntrada(formData.blocoDestino),
+        unidadeDestino: sanitizarEntrada(formData.unidadeDestino),
+        placaVeiculo: formData.placaVeiculo ? sanitizarEntrada(formData.placaVeiculo.toUpperCase()) : ''
+      };
+      await api.post('/api/v1/visitantes', payload);
       setStatus('success');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setErrorMessage(err.response?.data?.detail || err.response?.data?.message || 'Ocorreu um erro ao enviar. Tente novamente.');
       setStatus('error');
     }
   };
@@ -123,7 +145,7 @@ export function AutoCheckin() {
 
           {status === 'error' && (
             <div className="p-3 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-sm text-center">
-              Ocorreu um erro ao enviar. Tente novamente.
+              {errorMessage}
             </div>
           )}
 
