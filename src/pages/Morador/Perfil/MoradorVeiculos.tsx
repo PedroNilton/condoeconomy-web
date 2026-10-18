@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Car, Plus, Loader2, ChevronLeft, Check } from 'lucide-react';
 import api from '../../../services/api';
+import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
 interface Veiculo {
   id: number;
@@ -78,14 +79,19 @@ export function MoradorVeiculos() {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (contemAmeacas(placa) || contemAmeacas(marca) || contemAmeacas(modelo) || contemAmeacas(vaga)) {
+      alert('Entrada inválida: caracteres ou padrões não permitidos detectados.');
+      return;
+    }
+
     try {
       setSaving(true);
       // Backend expects modelo and cor, we combine marca + modelo for compatibility
       const payload = {
-        placa: placa.toUpperCase(),
-        modelo: `${marca} ${modelo}`.trim(),
-        cor: selectedColor,
-        vaga
+        placa: sanitizarEntrada(placa).toUpperCase(),
+        modelo: sanitizarEntrada(`${marca} ${modelo}`),
+        cor: sanitizarEntrada(selectedColor),
+        vaga: sanitizarEntrada(vaga)
       };
       
       await api.post('/api/v1/perfil/veiculos', payload);

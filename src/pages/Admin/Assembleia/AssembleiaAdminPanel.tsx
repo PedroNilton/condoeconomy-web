@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Vote, BarChart3, X } from 'lucide-react';
 import api from '../../../services/api';
+import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
 interface OpcaoVoto {
   opcaoId: string;
@@ -48,12 +49,17 @@ export function AssembleiaAdminPanel() {
 
   const handleCriar = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (contemAmeacas(titulo) || contemAmeacas(descricao) || opcoes.some(op => contemAmeacas(op))) {
+      alert('Entrada inválida: caracteres ou comandos não permitidos detectados.');
+      return;
+    }
+
     try {
       await api.post('/api/v1/votacoes', {
-        titulo,
-        descricao,
+        titulo: sanitizarEntrada(titulo),
+        descricao: sanitizarEntrada(descricao),
         dataEncerramento: dataEncerramento + ':00',
-        opcoes
+        opcoes: opcoes.map(op => sanitizarEntrada(op)).filter(Boolean)
       });
       setShowNovaModal(false);
       setTitulo('');

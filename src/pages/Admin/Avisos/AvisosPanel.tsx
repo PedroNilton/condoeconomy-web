@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Megaphone, Plus, Loader2, X } from 'lucide-react';
 import api from '../../../services/api';
+import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
 interface Aviso {
   id: string;
@@ -36,10 +37,15 @@ export function AvisosPanel() {
 
   const handlePostAviso = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (contemAmeacas(novoTitulo) || contemAmeacas(novaMensagem)) {
+      alert('Entrada inválida: caracteres ou comandos não permitidos detectados.');
+      return;
+    }
+
     try {
       await api.post('/api/v1/avisos', {
-        titulo: novoTitulo,
-        mensagem: novaMensagem,
+        titulo: sanitizarEntrada(novoTitulo),
+        mensagem: sanitizarEntrada(novaMensagem),
         autor: 'Síndico'
       });
       setNovoTitulo('');

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { MessageSquare, Plus, ChevronLeft, Send, Loader2 } from 'lucide-react';
 import api from '../../../services/api';
+import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
 interface Chamado {
   id: number;
@@ -60,12 +61,17 @@ export function MoradorOuvidoria() {
     e.preventDefault();
     if (!categoriaVisual || !assunto.trim() || !descricao.trim()) return;
 
+    if (contemAmeacas(assunto) || contemAmeacas(descricao)) {
+      alert('Entrada inválida: caracteres ou comandos não permitidos detectados.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       await api.post('/api/v1/chamados', {
         categoria: mapCategoriaToEnum(categoriaVisual),
-        assunto: assunto.trim(),
-        descricao: descricao.trim()
+        assunto: sanitizarEntrada(assunto),
+        descricao: sanitizarEntrada(descricao)
       });
       
       setCategoriaVisual('Reclamação');

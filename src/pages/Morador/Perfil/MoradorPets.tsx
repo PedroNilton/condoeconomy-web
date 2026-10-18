@@ -2,6 +2,7 @@ import { ChevronLeft, Loader2, Plus, Trash2, PawPrint, Camera } from 'lucide-rea
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from '../../../services/api';
+import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
 interface Pet {
   id: string;
@@ -97,6 +98,15 @@ export function MoradorPets() {
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Formato de imagem inválido. Utilize apenas JPG, PNG ou WEBP.');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert('A imagem deve ter no máximo 5MB.');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setFoto(reader.result as string);
@@ -107,14 +117,23 @@ export function MoradorPets() {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     const especFinal = selectedSpec === 'Outro' ? customSpec || 'Outro' : selectedSpec;
+
+    if (contemAmeacas(nome) || contemAmeacas(especFinal) || contemAmeacas(raca)) {
+      alert('Entrada inválida: caracteres ou padrões não permitidos detectados.');
+      return;
+    }
+
+    setSaving(true);
+    const nomeSanitizado = sanitizarEntrada(nome);
+    const especSanitizada = sanitizarEntrada(especFinal);
+    const racaSanitizada = sanitizarEntrada(raca);
     
     try {
       await api.post('/api/v1/perfil/pets', { 
-        nome, 
-        especie: especFinal,
-        raca,
+        nome: nomeSanitizado, 
+        especie: especSanitizada,
+        raca: racaSanitizada,
         cor: selectedColor.name,
         foto
       });
@@ -127,9 +146,9 @@ export function MoradorPets() {
       console.error(err);
       setPets(prev => [...prev, {
         id: Math.random().toString(),
-        nome: nome || 'Novo Pet',
-        especie: especFinal,
-        raca,
+        nome: nomeSanitizado || 'Novo Pet',
+        especie: especSanitizada,
+        raca: racaSanitizada,
         cor: selectedColor.name,
         foto
       }]);

@@ -2,6 +2,7 @@ import { ChevronLeft, Loader2, Plus, Trash2, UserCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from '../../../services/api';
+import { sanitizarEntrada, contemAmeacas, EMAIL_SECURITY_REGEX } from '../../../utils/security';
 
 interface Morador {
   id: string;
@@ -89,15 +90,29 @@ export function MoradorAdicionais() {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     const parentescoFinal = selectedRel === 'Outro' ? customRel || 'Outro' : selectedRel;
+
+    if (contemAmeacas(nome) || contemAmeacas(parentescoFinal) || (hasAccess && contemAmeacas(email))) {
+      alert('Entrada inválida: caracteres ou padrões não permitidos detectados.');
+      return;
+    }
+
+    const emailSanitizado = hasAccess ? sanitizarEntrada(email).toLowerCase() : undefined;
+    if (hasAccess && (!emailSanitizado || !EMAIL_SECURITY_REGEX.test(emailSanitizado))) {
+      alert('Por favor, informe um endereço de e-mail válido.');
+      return;
+    }
+
+    setSaving(true);
+    const nomeSanitizado = sanitizarEntrada(nome);
+    const parentescoSanitizado = sanitizarEntrada(parentescoFinal);
     
     try {
       await api.post('/api/v1/perfil/moradores', { 
-        nome, 
-        parentesco: parentescoFinal,
+        nome: nomeSanitizado, 
+        parentesco: parentescoSanitizado,
         acessoApp: hasAccess,
-        email: hasAccess ? email : undefined
+        email: emailSanitizado
       });
       closeSheet();
       fetchMoradores();
@@ -110,10 +125,10 @@ export function MoradorAdicionais() {
       // Allow adding locally if API fails during demo
       setMoradores(prev => [...prev, {
         id: Math.random().toString(),
-        nome: nome || 'Novo Morador',
-        parentesco: parentescoFinal,
+        nome: nomeSanitizado || 'Novo Morador',
+        parentesco: parentescoSanitizado,
         acessoApp: hasAccess,
-        email
+        email: emailSanitizado
       }]);
       closeSheet();
       setShowToast(true);

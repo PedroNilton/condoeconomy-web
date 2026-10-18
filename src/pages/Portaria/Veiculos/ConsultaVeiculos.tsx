@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, Car, User, MapPin, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
+import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
 interface VeiculoConsulta {
   id: string;
@@ -23,12 +24,18 @@ export function ConsultaVeiculos() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (placaBusca.length < 3) return;
+    const placaLimpa = sanitizarEntrada(placaBusca);
+    if (placaLimpa.length < 3) return;
+    if (contemAmeacas(placaBusca)) {
+      setError(true);
+      setResultado(null);
+      return;
+    }
 
     setLoading(true);
     setError(false);
     try {
-      const response = await api.get(`/api/v1/portaria/veiculos/consulta?placa=${placaBusca}`);
+      const response = await api.get(`/api/v1/portaria/veiculos/consulta?placa=${encodeURIComponent(placaLimpa)}`);
       setResultado(response.data);
     } catch (err) {
       console.error(err);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Package, User, MapPin, Truck } from 'lucide-react';
 import api from '../../../services/api';
+import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
 interface NovaEncomendaFormProps {
   onSuccess: () => void;
@@ -25,21 +26,30 @@ export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (contemAmeacas(formData.codigoRastreio) ||
+        contemAmeacas(formData.destinatario) ||
+        contemAmeacas(formData.bloco) ||
+        contemAmeacas(formData.apartamento) ||
+        contemAmeacas(formData.transportadora)) {
+      setError('Entrada contém caracteres ou padrões não permitidos.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
       // Por padrão, a API deve iniciar a encomenda como AGUARDANDO_RETIRADA
       await api.post('/api/v1/encomendas', {
-        codigoRastreio: formData.codigoRastreio,
-        transportadora: formData.transportadora,
-        destinatario: formData.destinatario,
-        unidade: `${formData.bloco} - ${formData.apartamento}`,
+        codigoRastreio: sanitizarEntrada(formData.codigoRastreio),
+        transportadora: sanitizarEntrada(formData.transportadora),
+        destinatario: sanitizarEntrada(formData.destinatario),
+        unidade: `${sanitizarEntrada(formData.bloco)} - ${sanitizarEntrada(formData.apartamento)}`,
         status: 'AGUARDANDO_RETIRADA'
       });
       onSuccess();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao registrar encomenda. Verifique os dados.');
+      setError(err.response?.data?.detail || err.response?.data?.message || 'Erro ao registrar encomenda. Verifique os dados.');
     } finally {
       setLoading(false);
     }
