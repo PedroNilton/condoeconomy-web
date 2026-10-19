@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { CalendarDays, MapPin, Users, CheckCircle, Clock, Check, X, CalendarClock, CheckSquare } from 'lucide-react';
 import api from '../../services/api';
 import { useWebSocket } from '../../hooks/useWebSocket';
+import { sanitizarEntrada, contemAmeacas } from '../../utils/security';
 
 interface Convidado {
   id: string;
@@ -85,8 +86,13 @@ export function ReservasList() {
       alert('Motivo da recusa é obrigatório.');
       return;
     }
+    if (contemAmeacas(motivo)) {
+      alert('O motivo informado contém caracteres ou comandos bloqueados por segurança.');
+      return;
+    }
+    const motivoLimpo = sanitizarEntrada(motivo, 300);
     try {
-      await api.put(`/api/v1/reservas/${reservaId}/rejeitar`, { motivo });
+      await api.put(`/api/v1/reservas/${reservaId}/rejeitar`, { motivo: motivoLimpo });
       fetchReservas();
     } catch (err) {
       alert('Erro ao rejeitar reserva.');
@@ -172,7 +178,7 @@ export function ReservasList() {
 
       {loading ? (
         <div className="text-center py-20 text-gray-500 dark:text-gray-400">Carregando reservas...</div>
-      ) : reservas.length === 0 ? (
+      ) : filteredReservas.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-12 text-center shadow-sm">
           <div className="bg-blue-50 dark:bg-blue-900/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
             <CalendarDays className="w-8 h-8 text-blue-500 dark:text-blue-400" />
@@ -182,7 +188,7 @@ export function ReservasList() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6">
-          {reservas.map(reserva => (
+          {filteredReservas.map(reserva => (
             <div key={reserva.id} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
               
               <div className="p-5 border-b border-gray-100 dark:border-gray-700 flex flex-col md:flex-row justify-between gap-4">

@@ -31,11 +31,12 @@ const SQLI_PATTERNS = [
 const CONTROL_CHARS_REGEX = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
 
 /**
- * Remove espaços em branco nas extremidades e caracteres de controle invisíveis.
+ * Remove espaços em branco nas extremidades, caracteres de controle invisíveis e aplica truncamento opcional.
  */
-export function sanitizarEntrada(texto: string): string {
+export function sanitizarEntrada(texto: string, maxLength?: number): string {
   if (!texto) return '';
-  return texto.replace(CONTROL_CHARS_REGEX, '').trim();
+  const limpo = texto.replace(new RegExp(CONTROL_CHARS_REGEX, 'g'), '').trim();
+  return typeof maxLength === 'number' && maxLength > 0 ? limpo.slice(0, maxLength) : limpo;
 }
 
 /**

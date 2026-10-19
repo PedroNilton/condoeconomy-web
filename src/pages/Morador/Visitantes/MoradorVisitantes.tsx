@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { UserCheck, UserPlus, ArrowLeft, Clock, Loader2, QrCode, X } from 'lucide-react';
 import api from '../../../services/api';
 import { QRCodeSVG } from 'qrcode.react';
+import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
 interface Visitante {
   id: string;
   nome: string;
+  sobrenome?: string;
   dataVisita: string;
   tipo: string;
   status: string;
@@ -30,8 +32,8 @@ export function MoradorVisitantes() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      // Pega todos autorizados pela unidade, independente da data
-      const res = await api.get('/api/v1/visitantes?unidadeDestino=Apto 101 - Bloco B');
+      // O backend filtra automaticamente pela unidade do morador autenticado via JWT
+      const res = await api.get('/api/v1/visitantes');
       setVisitantes(res.data);
     } catch (err) {
       console.error(err);
@@ -44,15 +46,28 @@ export function MoradorVisitantes() {
     e.preventDefault();
     if (!nome || !dataVisita) return;
 
+    if (contemAmeacas(nome)) {
+      alert('O nome informado contém caracteres ou comandos bloqueados por segurança.');
+      return;
+    }
+
+    const nomeLimpo = sanitizarEntrada(nome, 100);
+    if (nomeLimpo.length < 2) {
+      alert('Informe um nome válido com pelo menos 2 caracteres.');
+      return;
+    }
+
+    const partes = nomeLimpo.split(/\s+/);
+    const primeiroNome = partes[0];
+    const sobrenome = partes.length > 1 ? partes.slice(1).join(' ') : 'Convidado';
+
     try {
       setIsSubmitting(true);
       await api.post('/api/v1/visitantes', {
-        nome,
-        documento: 'N/A', // Oculto da UI, preenchimento padrão
-        dataVisita,
-        unidadeDestino: 'Apto 101 - Bloco B',
-        moradorResponsavel: 'Carlos Silva',
-        tipo
+        nome: primeiroNome,
+        sobrenome: sobrenome,
+        blocoDestino: 'A',
+        unidadeDestino: '101'
       });
       
       setIsFormOpen(false);

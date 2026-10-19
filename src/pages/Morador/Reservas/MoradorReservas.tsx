@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CalendarDays, Plus, Users, Loader2, ArrowLeft, X, Check } from 'lucide-react';
 import api from '../../../services/api';
+import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
 interface Reserva {
   id: string;
@@ -46,7 +47,7 @@ export function MoradorReservas() {
     try {
       const res = await api.get('/api/v1/reservas/minhas');
       setMinhasReservas(res.data);
-      const resAreas = await api.get('/api/v1/areas-comuns');
+      const resAreas = await api.get('/api/v1/reservas/areas-comuns');
       setAreas(resAreas.data);
       if (resAreas.data.length > 0 && !selectedArea) {
         setSelectedArea(resAreas.data[0].id);
@@ -60,7 +61,13 @@ export function MoradorReservas() {
 
   const handleAddGuest = () => {
     if (guestName.trim()) {
-      setConvidados([...convidados, { nome: guestName.trim() }]);
+      if (contemAmeacas(guestName)) {
+        alert('Nome de convidado bloqueado por conter caracteres ou comandos inválidos.');
+        return;
+      }
+      const nomeLimpo = sanitizarEntrada(guestName, 100);
+      if (!nomeLimpo) return;
+      setConvidados([...convidados, { nome: nomeLimpo }]);
       setGuestName('');
     }
   };
@@ -74,15 +81,19 @@ export function MoradorReservas() {
     if (!selectedArea || !data || !inicio || !fim) return;
     setIsSubmitting(true);
     try {
+      const areaName = areas.find(a => a.id === selectedArea)?.nome || 'Área Comum';
       await api.post('/api/v1/reservas', {
         areaComumId: selectedArea,
-        dataReserva: data,
-        horaInicio: inicio + ':00',
-        horaFim: fim + ':00',
-        convidados: convidados
+        titulo: sanitizarEntrada(`Reserva - ${areaName}`, 120),
+        data: data,
+        inicio: inicio.length === 5 ? inicio + ':00' : inicio,
+        fim: fim.length === 5 ? fim + ':00' : fim,
+        convidados: convidados.map(c => ({
+          nome: sanitizarEntrada(c.nome, 100),
+          documento: 'N/A'
+        }))
       });
       
-      const areaName = areas.find(a => a.id === selectedArea)?.nome || 'Área Comum';
       const formattedDate = new Date(data + 'T00:00').toLocaleDateString('pt-BR');
       setSummaryData({ area: areaName, data: formattedDate, hora: `${inicio} - ${fim}` });
       
