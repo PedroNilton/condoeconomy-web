@@ -1,9 +1,11 @@
 import axios from 'axios';
 
 // Instância base do Axios apontando para a nossa API Java local
+// withCredentials: true garante o envio e recebimento automático do Cookie HttpOnly (HABITOS_SESSION)
 const api = axios.create({
   baseURL: `http://${window.location.hostname}:8080`,
   timeout: 10000,
+  withCredentials: true,
 });
 
 // Interceptor para adicionar o token JWT nas requisições, caso ele exista

@@ -44,8 +44,14 @@ export function MoradorPerfil() {
     fetchUser();
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await api.post('/api/v1/auth/logout');
+    } catch {
+      // Ignora erro de rede no logout
+    }
     localStorage.removeItem('@HabitOS:token');
+    localStorage.removeItem('@HabitOS:user');
     navigate('/login');
   };
 

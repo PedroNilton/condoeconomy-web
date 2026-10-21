@@ -3,6 +3,7 @@ import { Home, Megaphone, LogOut, Calendar, MessageSquareWarning, Vote } from 'l
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { ThemeToggle } from '../../../components/ThemeToggle';
+import api from '../../../services/api';
 
 export function AdminLayout() {
   const navigate = useNavigate();
@@ -16,8 +17,14 @@ export function AdminLayout() {
     }
   }, [navigate]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await api.post('/api/v1/auth/logout');
+    } catch {
+      // Ignora erro de rede no logout
+    }
     localStorage.removeItem('@HabitOS:token');
+    localStorage.removeItem('@HabitOS:user');
     navigate('/login');
   };
 

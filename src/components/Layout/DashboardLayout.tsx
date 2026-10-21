@@ -3,6 +3,7 @@ import { Home, UserCheck, Package, CalendarDays, MessageSquare, LogOut, Car } fr
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useNotification } from '../../contexts/NotificationContext';
 import { ThemeToggle } from '../ThemeToggle';
+import api from '../../services/api';
 
 export function DashboardLayout() {
   const navigate = useNavigate();
@@ -16,8 +17,14 @@ export function DashboardLayout() {
     }
   }, [navigate]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await api.post('/api/v1/auth/logout');
+    } catch {
+      // Ignora erro de rede no logout
+    }
     localStorage.removeItem('@HabitOS:token');
+    localStorage.removeItem('@HabitOS:user');
     navigate('/login');
   };
 
