@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, TrendingUp, TrendingDown, AlertCircle, FileText, Search, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertCircle, FileText, Search, Loader2, ShieldCheck, CheckCircle2, X, Lock } from 'lucide-react';
 import api from '../../../services/api';
+import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
 interface DashboardMetrics {
   receitaPrevista: number;
@@ -18,28 +19,86 @@ interface BoletoInfo {
   data: string;
 }
 
+interface EventoAuditoria {
+  id: string;
+  usuarioEmail: string;
+  papel: string;
+  evento: string;
+  severidade: string;
+  ipOrigem: string;
+  detalhes: string;
+  criadoEm: string;
+}
+
 export function FinancasAdminPanel() {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [todosBoletos, setTodosBoletos] = useState<BoletoInfo[]>([]);
+  const [auditoria, setAuditoria] = useState<EventoAuditoria[]>([]);
   const [loadingBoletos, setLoadingBoletos] = useState(true);
   
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
-  useEffect(() => {
-    // 1. Carregar metricas do dashboard
+  // Modal Step-Up Auth para baixa manual de boleto
+  const [boletoParaBaixa, setBoletoParaBaixa] = useState<BoletoInfo | null>(null);
+  const [senhaStepUp, setSenhaStepUp] = useState('');
+  const [erroStepUp, setErroStepUp] = useState<string | null>(null);
+  const [confirmandoBaixa, setConfirmandoBaixa] = useState(false);
+
+  const carregarDadosFinanceiros = () => {
     api.get('/api/v1/financas/dashboard').then(res => {
       setMetrics(res.data);
     }).catch(err => console.error(err));
 
-    // 2. Carregar lista completa de boletos gerados
     api.get('/api/v1/financas/boletos-gerados').then(res => {
       setTodosBoletos(res.data);
     }).catch(err => console.error(err)).finally(() => {
       setLoadingBoletos(false);
     });
+
+    api.get('/api/v1/financas/auditoria-seguranca').then(res => {
+      if (Array.isArray(res.data)) {
+        setAuditoria(res.data);
+      }
+    }).catch(() => {});
+  };
+
+  useEffect(() => {
+    carregarDadosFinanceiros();
   }, []);
+
+  const handleConfirmarBaixaManual = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!boletoParaBaixa) return;
+    setErroStepUp(null);
+
+    if (!senhaStepUp.trim()) {
+      setErroStepUp('Informe sua senha atual de Síndico/Admin para autorizar a baixa.');
+      return;
+    }
+    if (contemAmeacas(senhaStepUp)) {
+      setErroStepUp('Caracteres inválidos detectados.');
+      return;
+    }
+
+    setConfirmandoBaixa(true);
+    try {
+      const senhaLimpa = sanitizarEntrada(senhaStepUp, 128);
+      await api.put(
+        `/api/v1/boletos/${boletoParaBaixa.id}/baixar`,
+        { senhaConfirmacao: senhaLimpa },
+        { headers: { 'X-Step-Up-Password': senhaLimpa } }
+      );
+      setBoletoParaBaixa(null);
+      setSenhaStepUp('');
+      carregarDadosFinanceiros();
+    } catch (err: any) {
+      setErroStepUp(err.response?.data?.message || 'Senha incorreta ou falha ao registrar baixa manual.');
+    } finally {
+      setConfirmandoBaixa(false);
+    }
+  };
 
   if (!metrics) {
     return <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-ds-dim" /></div>;
@@ -50,8 +109,9 @@ export function FinancasAdminPanel() {
   // Evitar divisao por zero
   const progressoArrecadacao = receitaPrevista > 0 ? (receitaArrecadada / receitaPrevista) * 100 : 0;
 
+  const termoLimpo = sanitizarEntrada(searchTerm, 50).toLowerCase();
   const filteredBoletos = todosBoletos.filter(boleto => {
-    const matchSearch = boleto.unidade.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchSearch = boleto.unidade.toLowerCase().includes(termoLimpo);
     const matchStatus = statusFilter ? boleto.status === statusFilter : true;
     return matchSearch && matchStatus;
   });
@@ -64,7 +124,7 @@ export function FinancasAdminPanel() {
   };
 
   return (
-    <div className="space-y-6 h-full overflow-y-auto no-scrollbar">
+    <div className="space-y-6 h-full overflow-y-auto no-scrollbar pb-16">
       {/* Header */}
       <div>
         <p className="text-ds-dim text-xs font-bold uppercase tracking-wider mb-1">Tesouraria</p>
@@ -169,7 +229,7 @@ export function FinancasAdminPanel() {
              </div>
           ) : (
             filteredBoletos.map(boleto => (
-              <div key={boleto.id} className="p-4 flex items-center justify-between hover:bg-ds-bg transition-colors">
+              <div key={boleto.id} className="p-4 flex items-center justify-between hover:bg-ds-bg transition-colors gap-3">
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
                     boleto.status === 'PAGO' ? 'bg-ds-success-dim border-ds-success/20 text-ds-success' :
@@ -183,14 +243,28 @@ export function FinancasAdminPanel() {
                     <p className="text-[11px] text-ds-dim font-semibold">Vencimento: {boleto.data}</p>
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-right flex flex-col items-end gap-1.5">
                   <p className="text-[14.5px] font-bold text-ds-text">
                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(boleto.valor)}
                   </p>
-                  <div className="mt-1 flex justify-end">
+                  <div className="flex items-center gap-2">
                     <span className={getBadgeClass(boleto.status)}>
                       {boleto.status}
                     </span>
+                    {boleto.status !== 'PAGO' && (
+                      <button
+                        onClick={() => {
+                          setBoletoParaBaixa(boleto);
+                          setSenhaStepUp('');
+                          setErroStepUp(null);
+                        }}
+                        className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-ds-primary text-ds-primary-ink hover:brightness-110 transition flex items-center gap-1"
+                        title="Dar baixa manual com confirmação de senha"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Dar Baixa
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -198,6 +272,83 @@ export function FinancasAdminPanel() {
           )}
         </div>
       </div>
+
+      {/* Trilha de Auditoria Forense do Condomínio */}
+      {auditoria.length > 0 && (
+        <div className="mt-8 pt-6 border-t border-ds-border">
+          <h3 className="text-lg font-bold text-ds-text mb-3 flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-ds-primary" />
+            Trilha de Auditoria Forense (Segurança)
+          </h3>
+          <div className="bg-ds-card rounded-[16px] shadow-sm border border-ds-border divide-y divide-ds-border overflow-hidden">
+            {auditoria.slice(0, 8).map((ev) => (
+              <div key={ev.id} className="p-3.5 flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[12.5px] font-bold text-ds-text">{ev.evento}</span>
+                  <span className={`font-mono text-[9.5px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                    ev.severidade === 'CRITICO' ? 'bg-ds-danger-dim text-ds-danger' :
+                    ev.severidade === 'ALERTA' ? 'bg-ds-warning-dim text-ds-warning' :
+                    'bg-ds-success-dim text-ds-success'
+                  }`}>
+                    {ev.severidade}
+                  </span>
+                </div>
+                <p className="text-[12px] text-ds-dim">{ev.detalhes}</p>
+                <div className="flex items-center justify-between text-[10.5px] text-ds-dim font-mono mt-0.5">
+                  <span>{ev.usuarioEmail} ({ev.ipOrigem})</span>
+                  <span>{new Date(ev.criadoEm).toLocaleString('pt-BR')}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Modal Step-Up Authentication para Baixa Manual */}
+      {boletoParaBaixa && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-ds-card border border-ds-border rounded-[20px] w-full max-w-sm p-5 shadow-xl relative">
+            <button
+              onClick={() => setBoletoParaBaixa(null)}
+              className="absolute right-4 top-4 w-8 h-8 rounded-full bg-ds-bg border border-ds-border flex items-center justify-center text-ds-dim hover:text-ds-text"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2.5 text-ds-primary mb-2">
+              <Lock className="w-5 h-5" />
+              <h4 className="text-[16px] font-extrabold text-ds-text">Confirmação Step-Up Auth</h4>
+            </div>
+            <p className="text-[12.5px] text-ds-dim leading-relaxed mb-4">
+              Para registrar a baixa manual de <strong>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(boletoParaBaixa.valor)}</strong> da unidade <strong>{boletoParaBaixa.unidade}</strong>, confirme sua senha atual de Síndico:
+            </p>
+
+            <form onSubmit={handleConfirmarBaixaManual} className="space-y-3">
+              {erroStepUp && (
+                <div className="p-2.5 rounded-lg bg-ds-danger-dim text-ds-danger text-[12px] font-medium">
+                  {erroStepUp}
+                </div>
+              )}
+              <input
+                type="password"
+                value={senhaStepUp}
+                onChange={(e) => setSenhaStepUp(e.target.value)}
+                placeholder="Digite sua senha atual"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-ds-bg border border-ds-border text-ds-text text-[14px] outline-none focus:ring-2 focus:ring-ds-primary"
+                autoFocus
+                required
+              />
+              <button
+                type="submit"
+                disabled={confirmandoBaixa}
+                className="w-full py-3 rounded-xl bg-ds-success text-ds-bg font-bold text-[14px] flex items-center justify-center gap-2 hover:brightness-110 transition disabled:opacity-60"
+              >
+                {confirmandoBaixa ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirmar e Dar Baixa'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,8 +1,34 @@
-import { ChevronLeft, ShieldCheck, FileText, Lock, Eye, Database, CheckCircle } from 'lucide-react';
+import { ChevronLeft, ShieldCheck, FileText, Lock, Eye, Database, CheckCircle, Download, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import api from '../../../services/api';
 
 export function MoradorPrivacidade() {
   const navigate = useNavigate();
+  const [exportando, setExportando] = useState(false);
+  const [exportadoSucesso, setExportadoSucesso] = useState(false);
+
+  const handleExportarDados = async () => {
+    setExportando(true);
+    try {
+      const res = await api.get('/api/v1/perfil/lgpd/exportar-dados');
+      const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `relatorio-lgpd-habitos-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setExportadoSucesso(true);
+      setTimeout(() => setExportadoSucesso(false), 4000);
+    } catch {
+      alert('Não foi possível gerar o relatório de portabilidade no momento.');
+    } finally {
+      setExportando(false);
+    }
+  };
 
   return (
     <div className="bg-ds-bg min-h-screen flex flex-col text-ds-text animate-in slide-in-from-right-full duration-300 relative">
@@ -86,22 +112,47 @@ export function MoradorPrivacidade() {
               • <strong className="text-ds-text">Kill Switch de Sessões:</strong> Ao alterar sua senha, todos os dispositivos conectados anteriormente são invalidados instantaneamente no servidor.
             </p>
             <p>
+              • <strong className="text-ds-text">Confinamento Multi-Condomínio:</strong> Seu token criptográfico está vinculado exclusivamente ao seu condomínio e unidade, impedindo acessos cruzados.
+            </p>
+            <p>
               • <strong className="text-ds-text">Trilha de Auditoria Forense:</strong> Registros inalteráveis de acessos e modificações com carimbo de data, hora e IP de origem.
             </p>
           </div>
         </section>
 
-        {/* Seção 4: Direitos do Titular */}
+        {/* Seção 4: Direitos do Titular & Portabilidade */}
         <section className="bg-ds-card border border-ds-border rounded-[16px] p-5 shadow-sm space-y-3">
           <h2 className="flex items-center gap-2 text-[14px] font-bold text-ds-text">
             <Eye className="w-4 h-4 text-ds-primary" />
             Seus Direitos como Titular (Art. 18 LGPD)
           </h2>
           <p className="text-[12.5px] text-ds-dim leading-relaxed">
-            Você tem o direito de solicitar a qualquer momento a confirmação de existência de tratamento, correção de dados incompletos ou desatualizados, e esclarecimentos sobre o compartilhamento de registros junto à administração do seu condomínio.
+            Você tem o direito de solicitar a qualquer momento a confirmação de existência de tratamento, correção de dados incompletos e a exportação estruturada (portabilidade) de todos os dados vinculados ao seu perfil.
           </p>
+
+          <button
+            onClick={handleExportarDados}
+            disabled={exportando}
+            className="w-full py-3 px-4 rounded-[12px] bg-ds-primary text-ds-primary-ink font-bold text-[13.5px] flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-sm disabled:opacity-60"
+          >
+            {exportando ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                Baixar Relatório dos Meus Dados (JSON)
+              </>
+            )}
+          </button>
+
+          {exportadoSucesso && (
+            <div className="p-2.5 rounded-[10px] bg-ds-success-dim text-ds-success text-[12px] font-semibold text-center">
+              Relatório LGPD gerado e baixado com sucesso!
+            </div>
+          )}
+
           <div className="pt-2 border-t border-ds-border text-[11px] text-ds-dim">
-            Encarregado de Dados (DPO): dpo@condoeconomy.com • Versão do Termo: 2.1 (Outubro/2026)
+            Encarregado de Dados (DPO): dpo@condoeconomy.com • Versão do Termo: 2.2 (Outubro/2026)
           </div>
         </section>
 

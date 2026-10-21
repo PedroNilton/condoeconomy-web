@@ -1,8 +1,17 @@
-import { ChevronLeft, ShieldCheck, Key, EyeOff, Eye, Smartphone, Monitor, AlertTriangle, Loader2, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, ShieldCheck, Key, EyeOff, Eye, Smartphone, Monitor, AlertTriangle, Loader2, CheckCircle2, History } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import api from '../../../services/api';
 import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
+
+interface EventoAuditoria {
+  id: string;
+  evento: string;
+  severidade: 'INFO' | 'ALERTA' | 'CRITICO';
+  ipOrigem: string;
+  detalhes: string;
+  criadoEm: string;
+}
 
 export function MoradorSeguranca() {
   const navigate = useNavigate();
@@ -21,6 +30,22 @@ export function MoradorSeguranca() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('Senha atualizada com sucesso');
   const [outrasSessoesEncerradas, setOutrasSessoesEncerradas] = useState(false);
+  const [historico, setHistorico] = useState<EventoAuditoria[]>([]);
+
+  const carregarHistorico = async () => {
+    try {
+      const res = await api.get('/api/v1/perfil/seguranca/historico');
+      if (Array.isArray(res.data)) {
+        setHistorico(res.data);
+      }
+    } catch {
+      // Silencioso caso ainda não haja eventos
+    }
+  };
+
+  useEffect(() => {
+    carregarHistorico();
+  }, []);
 
   const strength = useMemo(() => {
     let score = 0;
@@ -89,9 +114,11 @@ export function MoradorSeguranca() {
       setNova('');
       setConfirma('');
       setOutrasSessoesEncerradas(true);
+      carregarHistorico();
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Erro ao atualizar senha. Verifique sua senha atual.';
       setErrorMsg(msg);
+      carregarHistorico();
     } finally {
       setLoading(false);
     }
@@ -109,12 +136,26 @@ export function MoradorSeguranca() {
       setShowToast(true);
       setTimeout(() => setShowToast(false), 3500);
       setOutrasSessoesEncerradas(true);
+      carregarHistorico();
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Erro ao encerrar outras sessões.';
       setErrorMsg(msg);
     } finally {
       setLoadingEncerrar(false);
     }
+  };
+
+  const formatarEvento = (evento: string) => {
+    const mapa: Record<string, string> = {
+      LOGIN_SUCESSO: 'Login autenticado',
+      LOGIN_FALHA: 'Tentativa de login negada',
+      SENHA_ALTERADA: 'Senha redefinida (Step-Up Auth)',
+      SESSOES_REVOGADAS_KILL_SWITCH: 'Kill Switch de sessões acionado',
+      FALHA_STEP_UP_AUTH: 'Falha na confirmação de senha',
+      DADOS_PESSOAIS_ATUALIZADOS: 'Dados pessoais atualizados',
+      EXPORTACAO_DADOS_LGPD: 'Relatório LGPD exportado',
+    };
+    return mapa[evento] || evento;
   };
 
   return (
@@ -250,7 +291,7 @@ export function MoradorSeguranca() {
         </section>
 
         {/* Sessões ativas Section */}
-        <section>
+        <section className="mb-8">
           <h2 className="flex items-center gap-2 text-[14px] font-bold text-ds-danger mb-4">
             <AlertTriangle className="w-4 h-4" />
             Sessões ativas
@@ -307,6 +348,41 @@ export function MoradorSeguranca() {
           <p className="text-[11px] text-ds-dim mt-2 leading-relaxed text-center">
             Ao encerrar outras sessões, o token de autenticação de todos os outros dispositivos é invalidado instantaneamente pelo servidor.
           </p>
+        </section>
+
+        {/* Trilha de Auditoria Forense Section */}
+        <section>
+          <h2 className="flex items-center gap-2 text-[14px] font-bold text-ds-text mb-3">
+            <History className="w-4 h-4 text-ds-primary" />
+            Registro de atividades de segurança
+          </h2>
+          {historico.length === 0 ? (
+            <div className="p-4 border border-ds-border rounded-[12px] bg-ds-card text-[12px] text-ds-dim text-center">
+              Nenhuma atividade crítica registrada recentemente nesta conta.
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {historico.slice(0, 6).map((item) => (
+                <div key={item.id} className="p-3.5 border border-ds-border rounded-[12px] bg-ds-card shadow-sm flex flex-col gap-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[12.5px] font-bold text-ds-text">{formatarEvento(item.evento)}</span>
+                    <span className={`font-mono text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                      item.severidade === 'CRITICO' ? 'bg-ds-danger-dim text-ds-danger' :
+                      item.severidade === 'ALERTA' ? 'bg-ds-warning-dim text-ds-warning' :
+                      'bg-ds-success-dim text-ds-success'
+                    }`}>
+                      {item.severidade}
+                    </span>
+                  </div>
+                  <p className="text-[11.5px] text-ds-dim leading-snug">{item.detalhes}</p>
+                  <div className="flex items-center justify-between text-[10.5px] text-ds-dim/80 font-mono mt-1 pt-1 border-t border-ds-border/60">
+                    <span>IP: {item.ipOrigem}</span>
+                    <span>{new Date(item.criadoEm).toLocaleString('pt-BR')}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
 
       </main>
