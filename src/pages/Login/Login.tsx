@@ -29,11 +29,14 @@ export function Login() {
   const [lockoutTimer, setLockoutTimer] = useState(0);
   const navigate = useNavigate();
 
-  // Estados para modal de Recuperação de Senha / Primeiro Acesso
+  // Estados para modal de Recuperação e Redefinição de Senha (2 etapas reais)
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+  const [forgotStep, setForgotStep] = useState<'email' | 'reset' | 'done'>('email');
   const [forgotEmail, setForgotEmail] = useState('');
+  const [resetCodigo, setResetCodigo] = useState('');
+  const [resetNovaSenha, setResetNovaSenha] = useState('');
+  const [resetConfirmacao, setResetConfirmacao] = useState('');
   const [forgotLoading, setForgotLoading] = useState(false);
-  const [forgotSuccess, setForgotSuccess] = useState(false);
   const [forgotError, setForgotError] = useState('');
 
   // Estados para modal de Ajuda
@@ -146,8 +149,9 @@ export function Login() {
     }
   };
 
-  const handleForgotSubmit = (e: React.FormEvent) => {
+  const handleForgotSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (forgotLoading) return;
     setForgotError('');
     const emailLimpo = sanitizarEntrada(forgotEmail).trim().toLowerCase();
 
@@ -162,11 +166,67 @@ export function Login() {
     }
 
     setForgotLoading(true);
-    // Simula validação com delay para mitigar enumeração de contas / timing attack
-    setTimeout(() => {
+    try {
+      await api.post('/api/v1/auth/recuperar-senha', { email: emailLimpo });
+      setForgotEmail(emailLimpo);
+      setResetCodigo('');
+      setResetNovaSenha('');
+      setResetConfirmacao('');
+      setForgotStep('reset');
+    } catch (err: any) {
+      setForgotError(
+        err.response?.data?.message || 'Não foi possível enviar o código no momento. Tente novamente.'
+      );
+    } finally {
       setForgotLoading(false);
-      setForgotSuccess(true);
-    }, 800);
+    }
+  };
+
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (forgotLoading) return;
+    setForgotError('');
+
+    const emailLimpo = sanitizarEntrada(forgotEmail).trim().toLowerCase();
+    const codigoLimpo = resetCodigo.replace(/\D/g, '').slice(0, 6);
+
+    if (!/^\d{6}$/.test(codigoLimpo)) {
+      setForgotError('Informe o código numérico de 6 dígitos enviado ao seu e-mail.');
+      return;
+    }
+
+    if (!resetNovaSenha || resetNovaSenha.length < 8) {
+      setForgotError('A nova senha deve conter no mínimo 8 caracteres.');
+      return;
+    }
+
+    if (resetNovaSenha.length > 128 || contemAmeacas(resetNovaSenha)) {
+      setForgotError('A nova senha contém caracteres ou tamanho não permitidos.');
+      return;
+    }
+
+    if (resetNovaSenha !== resetConfirmacao) {
+      setForgotError('A confirmação da nova senha não confere.');
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      await api.post('/api/v1/auth/redefinir-senha', {
+        email: emailLimpo,
+        codigo: codigoLimpo,
+        novaSenha: resetNovaSenha
+      });
+      setEmail(emailLimpo);
+      setSenha('');
+      setForgotStep('done');
+    } catch (err: any) {
+      setForgotError(
+        err.response?.data?.message || 'Código inválido ou expirado. Verifique e tente novamente.'
+      );
+    } finally {
+      setForgotLoading(false);
+    }
   };
 
   return (
@@ -289,7 +349,10 @@ export function Login() {
                 onClick={() => {
                   setForgotEmail(email);
                   setForgotError('');
-                  setForgotSuccess(false);
+                  setForgotStep('email');
+                  setResetCodigo('');
+                  setResetNovaSenha('');
+                  setResetConfirmacao('');
                   setIsForgotModalOpen(true);
                 }}
                 className="text-ds-primary font-semibold hover:underline bg-transparent border-0 p-0 cursor-pointer"
@@ -354,34 +417,115 @@ export function Login() {
                 </div>
               </div>
 
-              {forgotSuccess ? (
+              {forgotStep === 'done' ? (
                 <div className="space-y-4 py-2">
                   <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 flex-none mt-0.5" />
                     <div className="text-xs leading-relaxed text-ds-text">
-                      <p className="font-semibold text-emerald-500 mb-1">Solicitação processada com sucesso!</p>
-                      Se o e-mail informado estiver vinculado a uma conta ativa no condomínio, você receberá em instantes as orientações para cadastrar uma nova senha.
+                      <p className="font-semibold text-emerald-500 mb-1">Senha redefinida com sucesso!</p>
+                      Sua credencial foi atualizada com criptografia BCrypt e todas as sessões anteriores foram encerradas automaticamente.
                     </div>
                   </div>
-                  <p className="text-[11.5px] text-ds-dim text-center">
-                    Verifique também a sua caixa de spam ou lixo eletrônico.
-                  </p>
                   <button
                     type="button"
                     onClick={() => {
                       setIsForgotModalOpen(false);
-                      setForgotSuccess(false);
-                      setForgotEmail('');
+                      setForgotStep('email');
+                      setResetCodigo('');
+                      setResetNovaSenha('');
+                      setResetConfirmacao('');
                     }}
                     className="w-full py-2.5 rounded-lg bg-ds-primary text-ds-primary-ink font-bold text-sm hover:brightness-110 transition-all cursor-pointer"
                   >
-                    Entendido
+                    Entrar com nova senha
                   </button>
                 </div>
+              ) : forgotStep === 'reset' ? (
+                <form onSubmit={handleResetPasswordSubmit} className="space-y-3.5">
+                  <div className="p-3 rounded-xl bg-ds-primary/10 border border-ds-primary/20 text-xs text-ds-text leading-relaxed">
+                    Enviamos um código de <strong>6 dígitos</strong> válido por 15 minutos para <strong>{forgotEmail}</strong> (se a conta estiver ativa).
+                  </div>
+
+                  {forgotError && (
+                    <div className="p-3 rounded-lg bg-ds-danger-dim border border-ds-danger/20 text-ds-danger text-xs flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 flex-none" />
+                      <span>{forgotError}</span>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-xs font-semibold mb-1 text-ds-text">Código de 6 dígitos</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={resetCodigo}
+                      onChange={(e) => setResetCodigo(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="000000"
+                      maxLength={6}
+                      required
+                      className="w-full px-3 py-2.5 rounded-lg border border-ds-border bg-ds-bg text-ds-text text-base font-mono tracking-[0.35em] text-center focus:outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold mb-1 text-ds-text">Nova Senha (mín. 8 caracteres)</label>
+                    <input
+                      type="password"
+                      value={resetNovaSenha}
+                      onChange={(e) => setResetNovaSenha(e.target.value)}
+                      placeholder="••••••••"
+                      minLength={8}
+                      maxLength={128}
+                      required
+                      className="w-full px-3 py-2.5 rounded-lg border border-ds-border bg-ds-bg text-ds-text text-sm focus:outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold mb-1 text-ds-text">Confirmar Nova Senha</label>
+                    <input
+                      type="password"
+                      value={resetConfirmacao}
+                      onChange={(e) => setResetConfirmacao(e.target.value)}
+                      placeholder="••••••••"
+                      minLength={8}
+                      maxLength={128}
+                      required
+                      className="w-full px-3 py-2.5 rounded-lg border border-ds-border bg-ds-bg text-ds-text text-sm focus:outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotError('');
+                        setForgotStep('email');
+                      }}
+                      className="flex-1 py-2.5 rounded-lg border border-ds-border text-ds-dim hover:text-ds-text font-semibold text-xs transition-colors cursor-pointer"
+                    >
+                      Voltar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={forgotLoading}
+                      className="flex-1 py-2.5 rounded-lg bg-ds-primary text-ds-primary-ink font-bold text-xs hover:brightness-110 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+                    >
+                      {forgotLoading ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Redefinindo...</span>
+                        </>
+                      ) : (
+                        'Confirmar Nova Senha'
+                      )}
+                    </button>
+                  </div>
+                </form>
               ) : (
                 <form onSubmit={handleForgotSubmit} className="space-y-4">
                   <p className="text-xs text-ds-dim leading-relaxed">
-                    Informe seu e-mail cadastrado na administração. Por políticas de segurança, enviaremos um link de uso único e temporário.
+                    Informe seu e-mail cadastrado na administração. Enviaremos um código temporário de 6 dígitos de uso único (expiração em 15 minutos).
                   </p>
 
                   {forgotError && (
@@ -404,7 +548,24 @@ export function Login() {
                     />
                   </div>
 
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (forgotEmail && EMAIL_SECURITY_REGEX.test(forgotEmail.trim())) {
+                          setForgotError('');
+                          setForgotStep('reset');
+                        } else {
+                          setForgotError('Preencha seu e-mail acima antes de informar o código.');
+                        }
+                      }}
+                      className="text-[11px] font-semibold text-ds-primary hover:underline bg-transparent border-0 p-0 cursor-pointer"
+                    >
+                      Já tenho um código de 6 dígitos
+                    </button>
+                  </div>
+
+                  <div className="flex gap-2 pt-1">
                     <button
                       type="button"
                       onClick={() => setIsForgotModalOpen(false)}
@@ -423,7 +584,7 @@ export function Login() {
                           <span>Enviando...</span>
                         </>
                       ) : (
-                        'Enviar Instruções'
+                        'Enviar Código'
                       )}
                     </button>
                   </div>
