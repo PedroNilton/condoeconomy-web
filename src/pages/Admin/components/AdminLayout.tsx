@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Home, Megaphone, LogOut, Calendar, MessageSquareWarning, Vote } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Home, Megaphone, LogOut, Calendar, MessageSquareWarning, Vote, ShieldCheck } from 'lucide-react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { ThemeToggle } from '../../../components/ThemeToggle';
@@ -9,11 +9,24 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { counts } = useNotification();
+  const [subtitulo, setSubtitulo] = useState('Gestão Condominial');
 
   useEffect(() => {
     const token = localStorage.getItem('@HabitOS:token');
     if (!token) {
       navigate('/login', { replace: true });
+      return;
+    }
+    try {
+      const rawUser = localStorage.getItem('@HabitOS:user');
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        if (parsed?.nome) {
+          setSubtitulo(parsed.nome);
+        }
+      }
+    } catch {
+      // mantém subtítulo padrão
     }
   }, [navigate]);
 
@@ -28,6 +41,8 @@ export function AdminLayout() {
     navigate('/login');
   };
 
+  const naAuditoria = location.pathname.includes('/admin/auditoria');
+
   return (
     <div className="min-h-screen bg-black flex justify-center font-sans selection:bg-ds-primary-dim">
       {/* Container Mobile/Tablet */}
@@ -35,14 +50,26 @@ export function AdminLayout() {
         
         {/* Header Administração */}
         <header className="bg-ds-bg/80 backdrop-blur-xl border-b border-ds-border flex justify-between items-center px-6 h-20 shrink-0 z-20 sticky top-0">
-          <div className="flex flex-col">
+          <div className="flex flex-col min-w-0">
             <h2 className="text-xl font-extrabold text-ds-text tracking-tight">SÍNDICO</h2>
-            <p className="text-[11px] font-bold text-ds-primary uppercase tracking-widest mt-0.5">Condomínio Mar Egeu</p>
+            <p className="text-[11px] font-bold text-ds-primary uppercase tracking-widest mt-0.5 truncate">{subtitulo}</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2.5">
+            <NavLink
+              to="/admin/auditoria"
+              title="Auditoria Forense de Segurança"
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border ${
+                naAuditoria
+                  ? 'bg-ds-primary text-white border-ds-primary shadow-sm'
+                  : 'bg-ds-card text-ds-dim hover:text-ds-primary border-ds-border'
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+            </NavLink>
             <ThemeToggle />
             <button 
               onClick={handleLogout}
+              title="Sair"
               className="w-10 h-10 rounded-full bg-ds-card flex items-center justify-center text-ds-dim hover:bg-ds-danger-dim hover:text-ds-danger transition-all border border-ds-border"
             >
               <LogOut className="w-4 h-4 ml-0.5" />

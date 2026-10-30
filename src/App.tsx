@@ -26,6 +26,7 @@ import { AvisosPanel } from './pages/Admin/Avisos/AvisosPanel';
 import { ReservasApprovalPanel } from './pages/Admin/Reservas/ReservasApprovalPanel';
 import { OuvidoriaAdminPanel } from './pages/Admin/Ouvidoria/OuvidoriaAdminPanel';
 import { FinancasAdminPanel } from './pages/Admin/Financas/FinancasAdminPanel';
+import { AuditoriaAdminPanel } from './pages/Admin/Auditoria/AuditoriaAdminPanel';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AutoCheckin } from './pages/Public/AutoCheckin';
@@ -42,56 +43,57 @@ export default function App() {
       <BrowserRouter>
         <NotificationProvider>
           <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/auto-checkin" element={<AutoCheckin />} />
-          
-          {/* Rotas protegidas da Portaria */}
-          <Route element={<AuthGuard allowedRoles={['ROLE_PORTEIRO', 'ROLE_SUPER_ADMIN']} />}>
-            <Route path="/portaria" element={<DashboardLayout />}>
-              <Route index element={<DashboardHome />} />
-              <Route path="encomendas" element={<EncomendasList />} />
-              <Route path="reservas" element={<ReservasList />} />
-              <Route path="chamados" element={<ChamadosList />} />
-              <Route path="visitantes" element={<VisitantesList />} />
-              <Route path="veiculos" element={<ConsultaVeiculos />} />
-            </Route>
-          </Route>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/auto-checkin" element={<AutoCheckin />} />
 
-          {/* Rotas do Admin */}
-          <Route element={<AuthGuard allowedRoles={['ROLE_ADMIN', 'ROLE_SINDICO', 'ROLE_SUPER_ADMIN']} />}>
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AvisosPanel />} />
-              <Route path="assembleia" element={<AssembleiaAdminPanel />} />
-              <Route path="reservas" element={<ReservasApprovalPanel />} />
-              <Route path="ouvidoria" element={<OuvidoriaAdminPanel />} />
-              <Route path="painel" element={<FinancasAdminPanel />} />
+            {/* Rotas protegidas da Portaria */}
+            <Route element={<AuthGuard allowedRoles={['ROLE_PORTEIRO', 'ROLE_SUPER_ADMIN']} />}>
+              <Route path="/portaria" element={<DashboardLayout />}>
+                <Route index element={<DashboardHome />} />
+                <Route path="encomendas" element={<EncomendasList />} />
+                <Route path="reservas" element={<ReservasList />} />
+                <Route path="chamados" element={<ChamadosList />} />
+                <Route path="visitantes" element={<VisitantesList />} />
+                <Route path="veiculos" element={<ConsultaVeiculos />} />
+              </Route>
             </Route>
-          </Route>
 
-          {/* Rotas do App do Morador */}
-          <Route element={<AuthGuard allowedRoles={['ROLE_MORADOR']} />}>
-            <Route path="/app" element={<MoradorLayout />}>
-              <Route index element={<MoradorHome />} />
-              <Route path="reservas" element={<MoradorReservas />} />
-              <Route path="boletos" element={<MoradorBoletos />} />
-              <Route path="ouvidoria" element={<MoradorOuvidoria />} />
-              <Route path="assembleia" element={<MoradorAssembleia />} />
-              <Route path="visitantes" element={<MoradorVisitantes />} />
-              <Route path="notificacoes" element={<NotificacoesList />} />
-              <Route path="encomendas" element={<MoradorEncomendas />} />
-              <Route path="perfil" element={<MoradorPerfil />} />
-              <Route path="perfil/dados" element={<MoradorDadosPessoais />} />
-              <Route path="perfil/veiculos" element={<MoradorVeiculos />} />
-              <Route path="perfil/pets" element={<MoradorPets />} />
-              <Route path="perfil/adicionais" element={<MoradorAdicionais />} />
-              <Route path="perfil/notificacoes" element={<MoradorNotificacoes />} />
-              <Route path="perfil/seguranca" element={<MoradorSeguranca />} />
-              <Route path="perfil/ajuda" element={<MoradorAjuda />} />
-              <Route path="perfil/privacidade" element={<MoradorPrivacidade />} />
+            {/* Rotas do Admin */}
+            <Route element={<AuthGuard allowedRoles={['ROLE_ADMIN', 'ROLE_SINDICO', 'ROLE_SUPER_ADMIN']} />}>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AvisosPanel />} />
+                <Route path="assembleia" element={<AssembleiaAdminPanel />} />
+                <Route path="reservas" element={<ReservasApprovalPanel />} />
+                <Route path="ouvidoria" element={<OuvidoriaAdminPanel />} />
+                <Route path="painel" element={<FinancasAdminPanel />} />
+                <Route path="auditoria" element={<AuditoriaAdminPanel />} />
+              </Route>
             </Route>
-          </Route>
-        </Routes>
+
+            {/* Rotas do App do Morador */}
+            <Route element={<AuthGuard allowedRoles={['ROLE_MORADOR']} />}>
+              <Route path="/app" element={<MoradorLayout />}>
+                <Route index element={<MoradorHome />} />
+                <Route path="reservas" element={<MoradorReservas />} />
+                <Route path="boletos" element={<MoradorBoletos />} />
+                <Route path="ouvidoria" element={<MoradorOuvidoria />} />
+                <Route path="assembleia" element={<MoradorAssembleia />} />
+                <Route path="visitantes" element={<MoradorVisitantes />} />
+                <Route path="notificacoes" element={<NotificacoesList />} />
+                <Route path="encomendas" element={<MoradorEncomendas />} />
+                <Route path="perfil" element={<MoradorPerfil />} />
+                <Route path="perfil/dados" element={<MoradorDadosPessoais />} />
+                <Route path="perfil/veiculos" element={<MoradorVeiculos />} />
+                <Route path="perfil/pets" element={<MoradorPets />} />
+                <Route path="perfil/adicionais" element={<MoradorAdicionais />} />
+                <Route path="perfil/notificacoes" element={<MoradorNotificacoes />} />
+                <Route path="perfil/seguranca" element={<MoradorSeguranca />} />
+                <Route path="perfil/ajuda" element={<MoradorAjuda />} />
+                <Route path="perfil/privacidade" element={<MoradorPrivacidade />} />
+              </Route>
+            </Route>
+          </Routes>
         </NotificationProvider>
       </BrowserRouter>
     </ThemeProvider>
