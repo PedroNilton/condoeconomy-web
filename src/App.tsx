@@ -27,6 +27,7 @@ import { ReservasApprovalPanel } from './pages/Admin/Reservas/ReservasApprovalPa
 import { OuvidoriaAdminPanel } from './pages/Admin/Ouvidoria/OuvidoriaAdminPanel';
 import { FinancasAdminPanel } from './pages/Admin/Financas/FinancasAdminPanel';
 import { AuditoriaAdminPanel } from './pages/Admin/Auditoria/AuditoriaAdminPanel';
+import { MoradoresAdminPanel } from './pages/Admin/Moradores/MoradoresAdminPanel';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AutoCheckin } from './pages/Public/AutoCheckin';
@@ -68,6 +69,7 @@ export default function App() {
                 <Route path="ouvidoria" element={<OuvidoriaAdminPanel />} />
                 <Route path="painel" element={<FinancasAdminPanel />} />
                 <Route path="auditoria" element={<AuditoriaAdminPanel />} />
+                <Route path="moradores" element={<MoradoresAdminPanel />} />
               </Route>
             </Route>
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Home, Megaphone, LogOut, Calendar, MessageSquareWarning, Vote, ShieldCheck } from 'lucide-react';
+import { Home, Megaphone, LogOut, Calendar, MessageSquareWarning, Vote, ShieldCheck, Users } from 'lucide-react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { ThemeToggle } from '../../../components/ThemeToggle';
@@ -42,6 +42,7 @@ export function AdminLayout() {
   };
 
   const naAuditoria = location.pathname.includes('/admin/auditoria');
+  const emMoradores = location.pathname.includes('/admin/moradores');
 
   return (
     <div className="min-h-screen bg-black flex justify-center font-sans selection:bg-ds-primary-dim">
@@ -54,7 +55,18 @@ export function AdminLayout() {
             <h2 className="text-xl font-extrabold text-ds-text tracking-tight">SÍNDICO</h2>
             <p className="text-[11px] font-bold text-ds-primary uppercase tracking-widest mt-0.5 truncate">{subtitulo}</p>
           </div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
+            <NavLink
+              to="/admin/moradores"
+              title="Gestão de Moradores e Portaria"
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all border ${
+                emMoradores
+                  ? 'bg-ds-primary text-white border-ds-primary shadow-sm'
+                  : 'bg-ds-card text-ds-dim hover:text-ds-primary border-ds-border'
+              }`}
+            >
+              <Users className="w-4 h-4" />
+            </NavLink>
             <NavLink
               to="/admin/auditoria"
               title="Auditoria Forense de Segurança"
