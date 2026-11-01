@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Car, Plus, Loader2, ChevronLeft, Check } from 'lucide-react';
+import { Car, Plus, Loader2, ChevronLeft, Check, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
 import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
 interface Veiculo {
-  id: number;
+  id: string;
   placa: string;
   modelo: string;
   cor: string;
@@ -28,6 +29,7 @@ const PRESET_COLORS = [
 ];
 
 export function MoradorVeiculos() {
+  const navigate = useNavigate();
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -51,29 +53,26 @@ export function MoradorVeiculos() {
       setLoading(true);
       const { data } = await api.get('/api/v1/perfil/veiculos');
       
-      // Inject some mock values for UI demonstration if they don't exist
-      const enrichedData = data.map((v: any) => ({
+      const enrichedData: Veiculo[] = (Array.isArray(data) ? data : []).map((v: any) => ({
         ...v,
-        marca: v.marca || (v.modelo.includes(' ') ? v.modelo.split(' ')[0] : 'Marca'),
-        modelo: v.modelo.includes(' ') ? v.modelo.substring(v.modelo.indexOf(' ') + 1) : v.modelo,
-        vaga: v.vaga || 'G-14'
+        marca: v.marca || (v.modelo?.includes(' ') ? v.modelo.split(' ')[0] : ''),
+        modelo: v.modelo?.includes(' ') ? v.modelo.substring(v.modelo.indexOf(' ') + 1) : v.modelo
       }));
 
-      // Se a API estiver vazia, adiciona os mockados do print para ficar igual
-      if (enrichedData.length === 0) {
-        setVeiculos([
-          { id: 1, placa: 'ABC-1D23', marca: 'Fiat', modelo: 'Argo', cor: 'Prata', vaga: 'G-14' },
-          { id: 2, placa: 'RDX-9F41', marca: 'Honda', modelo: 'Civic', cor: 'Preto', vaga: 'G-15' },
-          { id: 3, placa: 'JQP-4C21', marca: 'Jeep', modelo: 'Renegade', cor: 'Verde musgo', vaga: 'G-16' }
-        ]);
-      } else {
-        setVeiculos(enrichedData);
-      }
+      setVeiculos(enrichedData);
     } catch (error) {
       console.error(error);
-      alert('Erro ao carregar veículos');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await api.delete(`/api/v1/perfil/veiculos/${id}`);
+      await loadVeiculos();
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -216,13 +215,22 @@ export function MoradorVeiculos() {
   return (
     <div className="bg-ds-bg min-h-full text-ds-text p-6">
       <div className="flex justify-between items-center mb-8 pt-4">
-        <div>
-          <p className="text-[10px] font-bold text-ds-dim uppercase tracking-widest mb-1.5">Garagem</p>
-          <h1 className="text-2xl font-bold tracking-tight text-ds-text">Veículos</h1>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/app/perfil')}
+            className="w-10 h-10 rounded-[12px] bg-ds-card border border-ds-border flex items-center justify-center text-ds-text active:scale-95 transition-transform cursor-pointer"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <p className="text-[10px] font-bold text-ds-dim uppercase tracking-widest mb-0.5">Garagem</p>
+            <h1 className="text-2xl font-bold tracking-tight text-ds-text m-0">Veículos</h1>
+          </div>
         </div>
         <button 
           onClick={() => setShowForm(true)} 
-          className="w-11 h-11 rounded-[14px] bg-ds-primary flex items-center justify-center text-ds-primary-ink shadow-[0_4px_12px_rgba(108,99,245,0.3)] active:scale-95 transition-transform"
+          className="w-11 h-11 rounded-[14px] bg-ds-primary flex items-center justify-center text-ds-primary-ink shadow-[0_4px_12px_rgba(108,99,245,0.3)] active:scale-95 transition-transform cursor-pointer"
         >
           <Plus className="w-6 h-6" />
         </button>
@@ -232,6 +240,10 @@ export function MoradorVeiculos() {
       
       {loading ? (
         <div className="flex justify-center mt-12"><Loader2 className="w-8 h-8 animate-spin text-ds-primary" /></div>
+      ) : veiculos.length === 0 ? (
+        <div className="bg-ds-card border border-ds-border rounded-[16px] p-8 text-center text-xs text-ds-dim">
+          Nenhum veículo cadastrado na sua unidade. Toque em <strong>+</strong> para registrar.
+        </div>
       ) : (
         <div className="space-y-4 pb-24">
           {veiculos.map(v => (
@@ -245,11 +257,21 @@ export function MoradorVeiculos() {
                   <p className="text-[13px] text-ds-dim mt-0.5 capitalize">{v.marca ? `${v.marca} ${v.modelo}` : v.modelo} &bull; {v.cor}</p>
                 </div>
               </div>
-              {v.vaga && (
-                <div className="bg-ds-primary-dim text-ds-primary text-[10px] font-mono font-bold px-2.5 py-1 rounded-full uppercase tracking-widest border border-ds-primary/20">
-                  Vaga {v.vaga}
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                {v.vaga && (
+                  <div className="bg-ds-primary-dim text-ds-primary text-[10px] font-mono font-bold px-2.5 py-1 rounded-full uppercase tracking-widest border border-ds-primary/20">
+                    Vaga {v.vaga}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleDelete(v.id)}
+                  title="Remover veículo"
+                  className="w-9 h-9 rounded-xl bg-ds-bg border border-ds-border flex items-center justify-center text-ds-dim hover:text-ds-danger hover:border-ds-danger/40 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
