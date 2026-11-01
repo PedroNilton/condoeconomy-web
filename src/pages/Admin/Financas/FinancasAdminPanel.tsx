@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, AlertCircle, FileText, Search, Loader2, ShieldCheck, CheckCircle2, X, Lock } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertCircle, FileText, Search, Loader2, ShieldCheck, CheckCircle2, X, Lock, Plus } from 'lucide-react';
 import api from '../../../services/api';
 import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
@@ -45,6 +45,18 @@ export function FinancasAdminPanel() {
   const [senhaStepUp, setSenhaStepUp] = useState('');
   const [erroStepUp, setErroStepUp] = useState<string | null>(null);
   const [confirmandoBaixa, setConfirmandoBaixa] = useState(false);
+
+  // Modal Emissão de Novo Boleto
+  const [isEmissaoOpen, setIsEmissaoOpen] = useState(false);
+  const [novaUnidade, setNovaUnidade] = useState('');
+  const [novoMorador, setNovoMorador] = useState('');
+  const [novaCompetencia, setNovaCompetencia] = useState('11/2026');
+  const [novoValor, setNovoValor] = useState('650.00');
+  const [novoVencimento, setNovoVencimento] = useState(
+    new Date(Date.now() + 10 * 86400000).toISOString().split('T')[0]
+  );
+  const [emitindo, setEmitindo] = useState(false);
+  const [erroEmissao, setErroEmissao] = useState('');
 
   const carregarDadosFinanceiros = () => {
     api.get('/api/v1/financas/dashboard').then(res => {
@@ -100,6 +112,54 @@ export function FinancasAdminPanel() {
     }
   };
 
+  const handleEmitirBoleto = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (emitindo) return;
+    setErroEmissao('');
+
+    if (contemAmeacas(novaUnidade) || contemAmeacas(novoMorador) || contemAmeacas(novaCompetencia)) {
+      setErroEmissao('Caracteres inválidos detectados.');
+      return;
+    }
+
+    const unidadeLimpa = sanitizarEntrada(novaUnidade, 100).trim();
+    const moradorLimpo = sanitizarEntrada(novoMorador, 120).trim();
+    const compLimpa = sanitizarEntrada(novaCompetencia, 7).trim();
+    const valorNum = Number(novoValor.replace(',', '.'));
+
+    if (!unidadeLimpa || !moradorLimpo) {
+      setErroEmissao('Preencha a unidade e o morador responsável.');
+      return;
+    }
+    if (!/^\d{2}\/\d{4}$/.test(compLimpa)) {
+      setErroEmissao('A competência deve estar no formato MM/AAAA (ex: 11/2026).');
+      return;
+    }
+    if (isNaN(valorNum) || valorNum < 1) {
+      setErroEmissao('Informe um valor válido a partir de R$ 1,00.');
+      return;
+    }
+
+    setEmitindo(true);
+    try {
+      await api.post('/api/v1/financas/boletos', {
+        unidadeTexto: unidadeLimpa,
+        moradorResponsavel: moradorLimpo,
+        competencia: compLimpa,
+        valor: valorNum,
+        dataVencimento: novoVencimento
+      });
+      setIsEmissaoOpen(false);
+      setNovaUnidade('');
+      setNovoMorador('');
+      carregarDadosFinanceiros();
+    } catch (err: any) {
+      setErroEmissao(err.response?.data?.message || 'Erro ao emitir boleto.');
+    } finally {
+      setEmitindo(false);
+    }
+  };
+
   if (!metrics) {
     return <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-ds-dim" /></div>;
   }
@@ -126,11 +186,24 @@ export function FinancasAdminPanel() {
   return (
     <div className="space-y-6 h-full overflow-y-auto no-scrollbar pb-16">
       {/* Header */}
-      <div>
-        <p className="text-ds-dim text-xs font-bold uppercase tracking-wider mb-1">Tesouraria</p>
-        <h2 className="text-ds-text text-2xl font-extrabold tracking-tight flex items-center gap-2">
-          Painel Financeiro
-        </h2>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-ds-dim text-xs font-bold uppercase tracking-wider mb-1">Tesouraria</p>
+          <h2 className="text-ds-text text-2xl font-extrabold tracking-tight flex items-center gap-2 m-0">
+            Painel Financeiro
+          </h2>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setErroEmissao('');
+            setIsEmissaoOpen(true);
+          }}
+          className="px-3.5 py-2.5 rounded-xl bg-ds-primary text-ds-primary-ink text-xs font-bold flex items-center gap-1.5 hover:brightness-110 transition-all shrink-0 cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Emitir Boleto</span>
+        </button>
       </div>
 
       {/* Main Cards */}
@@ -345,6 +418,115 @@ export function FinancasAdminPanel() {
               >
                 {confirmandoBaixa ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirmar e Dar Baixa'}
               </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Emissão de Novo Boleto */}
+      {isEmissaoOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-ds-card border border-ds-border rounded-[20px] w-full max-w-md p-5 shadow-xl relative">
+            <button
+              type="button"
+              onClick={() => setIsEmissaoOpen(false)}
+              className="absolute right-4 top-4 w-8 h-8 rounded-full bg-ds-bg border border-ds-border flex items-center justify-center text-ds-dim hover:text-ds-text cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <h4 className="text-[16px] font-extrabold text-ds-text m-0 mb-1">Emitir Nova Cobrança</h4>
+            <p className="text-xs text-ds-dim m-0 mb-4">
+              Gera boleto registrado e disponibiliza automaticamente no app da unidade.
+            </p>
+
+            {erroEmissao && (
+              <div className="p-2.5 rounded-lg bg-ds-danger-dim text-ds-danger text-xs font-medium mb-3">
+                {erroEmissao}
+              </div>
+            )}
+
+            <form onSubmit={handleEmitirBoleto} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-ds-text">Unidade (mesmo padrão do cadastro)</label>
+                <input
+                  type="text"
+                  value={novaUnidade}
+                  onChange={(e) => setNovaUnidade(e.target.value)}
+                  placeholder="Ex: Apto 101 - Bloco B"
+                  maxLength={100}
+                  required
+                  className="w-full px-3 py-2 rounded-xl bg-ds-bg border border-ds-border text-sm text-ds-text outline-none focus:ring-2 focus:ring-ds-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-ds-text">Morador Responsável</label>
+                <input
+                  type="text"
+                  value={novoMorador}
+                  onChange={(e) => setNovoMorador(e.target.value)}
+                  placeholder="Ex: Carlos Silva"
+                  maxLength={120}
+                  required
+                  className="w-full px-3 py-2 rounded-xl bg-ds-bg border border-ds-border text-sm text-ds-text outline-none focus:ring-2 focus:ring-ds-primary"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-ds-text">Competência</label>
+                  <input
+                    type="text"
+                    value={novaCompetencia}
+                    onChange={(e) => setNovaCompetencia(e.target.value)}
+                    placeholder="11/2026"
+                    maxLength={7}
+                    required
+                    className="w-full px-3 py-2 rounded-xl bg-ds-bg border border-ds-border text-sm text-ds-text outline-none focus:ring-2 focus:ring-ds-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold mb-1 text-ds-text">Valor (R$)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="1"
+                    value={novoValor}
+                    onChange={(e) => setNovoValor(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 rounded-xl bg-ds-bg border border-ds-border text-sm text-ds-text outline-none focus:ring-2 focus:ring-ds-primary"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold mb-1 text-ds-text">Data de Vencimento</label>
+                <input
+                  type="date"
+                  value={novoVencimento}
+                  onChange={(e) => setNovoVencimento(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 rounded-xl bg-ds-bg border border-ds-border text-sm text-ds-text outline-none focus:ring-2 focus:ring-ds-primary"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEmissaoOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-ds-border text-xs font-bold text-ds-dim hover:text-ds-text cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={emitindo}
+                  className="flex-1 py-2.5 rounded-xl bg-ds-primary text-ds-primary-ink text-xs font-bold flex items-center justify-center gap-1.5 hover:brightness-110 disabled:opacity-60 cursor-pointer"
+                >
+                  {emitindo ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Emitir Cobrança'}
+                </button>
+              </div>
             </form>
           </div>
         </div>
