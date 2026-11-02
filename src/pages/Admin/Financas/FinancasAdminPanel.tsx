@@ -1,7 +1,28 @@
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, AlertCircle, FileText, Search, Loader2, ShieldCheck, CheckCircle2, X, Lock, Plus, DollarSign, Calendar } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertCircle, FileText, Search, Loader2, ShieldCheck, CheckCircle2, X, Lock, Plus, DollarSign, Calendar, Printer } from 'lucide-react';
 import api from '../../../services/api';
 import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
+
+interface ItemBalancete {
+  descricao: string;
+  valor: number;
+  data: string;
+  tipo: 'RECEITA' | 'DESPESA';
+}
+
+interface BalanceteData {
+  mes: number;
+  ano: number;
+  totalReceitas: number;
+  totalDespesas: number;
+  saldoOperacional: number;
+  totalBoletosEmitidos: number;
+  totalBoletosPagos: number;
+  totalBoletosInadimplentes: number;
+  taxaAdimplencia: number;
+  receitas: ItemBalancete[];
+  despesas: ItemBalancete[];
+}
 
 interface DashboardMetrics {
   receitaPrevista: number;
@@ -81,6 +102,25 @@ export function FinancasAdminPanel() {
   const [novoStatusDespesa, setNovoStatusDespesa] = useState<'PENDENTE' | 'PAGO'>('PENDENTE');
   const [salvandoDespesa, setSalvandoDespesa] = useState(false);
   const [erroDespesa, setErroDespesa] = useState('');
+
+  // Modal Balancete Mensal
+  const [isBalanceteOpen, setIsBalanceteOpen] = useState(false);
+  const [balanceteMes, setBalanceteMes] = useState<number>(new Date().getMonth() + 1);
+  const [balanceteAno, setBalanceteAno] = useState<number>(new Date().getFullYear());
+  const [balanceteData, setBalanceteData] = useState<BalanceteData | null>(null);
+  const [carregandoBalancete, setCarregandoBalancete] = useState(false);
+
+  const carregarBalancete = async (m = balanceteMes, a = balanceteAno) => {
+    setCarregandoBalancete(true);
+    try {
+      const res = await api.get(`/api/v1/financas/balancete?mes=${m}&ano=${a}`);
+      setBalanceteData(res.data);
+    } catch (err) {
+      console.error('Erro ao carregar balancete:', err);
+    } finally {
+      setCarregandoBalancete(false);
+    }
+  };
 
   const carregarDadosFinanceiros = () => {
     api.get('/api/v1/financas/dashboard').then(res => {
@@ -293,6 +333,17 @@ export function FinancasAdminPanel() {
           >
             <DollarSign className="w-4 h-4 text-ds-danger" />
             <span>Lançar Despesa</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsBalanceteOpen(true);
+              carregarBalancete(balanceteMes, balanceteAno);
+            }}
+            className="px-3.5 py-2.5 rounded-xl bg-ds-bg border border-ds-border text-ds-text text-xs font-bold flex items-center gap-1.5 hover:bg-ds-card transition-all shrink-0 cursor-pointer shadow-sm"
+          >
+            <FileText className="w-4 h-4 text-ds-primary" />
+            <span>Prestação de Contas</span>
           </button>
         </div>
       </div>
@@ -853,6 +904,214 @@ export function FinancasAdminPanel() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Balancete Mensal / Prestação de Contas */}
+      {isBalanceteOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-ds-card border border-ds-border rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Header Modal */}
+            <div className="p-5 border-b border-ds-border flex items-center justify-between shrink-0 bg-ds-bg/40">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-ds-primary/10 border border-ds-primary/20 flex items-center justify-center text-ds-primary">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-ds-text m-0">Prestação de Contas & Balancete Mensal</h3>
+                  <p className="text-xs text-ds-dim font-medium m-0">
+                    Demonstrativo financeiro consolidado de receitas e despesas da administração
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBalanceteOpen(false)}
+                className="w-8 h-8 rounded-lg border border-ds-border flex items-center justify-center text-ds-dim hover:text-ds-text hover:bg-ds-bg transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Barra de Filtro de Competência e Impressão */}
+            <div className="p-4 border-b border-ds-border bg-ds-bg flex flex-wrap items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-bold text-ds-dim uppercase tracking-wider">Competência:</label>
+                <select
+                  value={balanceteMes}
+                  onChange={(e) => {
+                    const m = Number(e.target.value);
+                    setBalanceteMes(m);
+                    carregarBalancete(m, balanceteAno);
+                  }}
+                  className="bg-ds-card text-ds-text border border-ds-border rounded-lg px-3 py-1.5 text-xs font-semibold focus:ring-2 focus:ring-ds-primary outline-none"
+                >
+                  <option value={1}>Janeiro</option>
+                  <option value={2}>Fevereiro</option>
+                  <option value={3}>Março</option>
+                  <option value={4}>Abril</option>
+                  <option value={5}>Maio</option>
+                  <option value={6}>Junho</option>
+                  <option value={7}>Julho</option>
+                  <option value={8}>Agosto</option>
+                  <option value={9}>Setembro</option>
+                  <option value={10}>Outubro</option>
+                  <option value={11}>Novembro</option>
+                  <option value={12}>Dezembro</option>
+                </select>
+
+                <select
+                  value={balanceteAno}
+                  onChange={(e) => {
+                    const a = Number(e.target.value);
+                    setBalanceteAno(a);
+                    carregarBalancete(balanceteMes, a);
+                  }}
+                  className="bg-ds-card text-ds-text border border-ds-border rounded-lg px-3 py-1.5 text-xs font-semibold focus:ring-2 focus:ring-ds-primary outline-none"
+                >
+                  <option value={2024}>2024</option>
+                  <option value={2025}>2025</option>
+                  <option value={2026}>2026</option>
+                  <option value={2027}>2027</option>
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-3 py-1.5 rounded-lg bg-ds-card border border-ds-border text-xs font-bold text-ds-text hover:bg-ds-bg transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+              >
+                <Printer className="w-4 h-4 text-ds-primary" />
+                <span>Imprimir / Exportar PDF</span>
+              </button>
+            </div>
+
+            {/* Conteúdo com Scroll */}
+            <div className="p-6 overflow-y-auto space-y-6 flex-1">
+              {carregandoBalancete ? (
+                <div className="py-20 flex flex-col items-center justify-center text-ds-dim">
+                  <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                  <p className="text-sm font-semibold">Consolidando lançamentos contábeis...</p>
+                </div>
+              ) : balanceteData ? (
+                <>
+                  {/* Cards Resumo Contábil */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-ds-bg p-4 rounded-xl border border-ds-border">
+                      <p className="text-[10.5px] font-bold text-ds-dim uppercase tracking-wider">Receitas Arrecadadas</p>
+                      <p className="text-lg font-bold text-ds-success mt-1">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balanceteData.totalReceitas)}
+                      </p>
+                      <p className="text-[11px] text-ds-dim mt-0.5">{balanceteData.totalBoletosPagos} cotas quitadas</p>
+                    </div>
+
+                    <div className="bg-ds-bg p-4 rounded-xl border border-ds-border">
+                      <p className="text-[10.5px] font-bold text-ds-dim uppercase tracking-wider">Despesas Realizadas</p>
+                      <p className="text-lg font-bold text-ds-danger mt-1">
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balanceteData.totalDespesas)}
+                      </p>
+                      <p className="text-[11px] text-ds-dim mt-0.5">{balanceteData.despesas.length} pagamentos efetuados</p>
+                    </div>
+
+                    <div className="bg-ds-bg p-4 rounded-xl border border-ds-border">
+                      <p className="text-[10.5px] font-bold text-ds-dim uppercase tracking-wider">Saldo Operacional</p>
+                      <p className={`text-lg font-bold mt-1 ${balanceteData.saldoOperacional >= 0 ? 'text-ds-success' : 'text-ds-danger'}`}>
+                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balanceteData.saldoOperacional)}
+                      </p>
+                      <p className="text-[11px] text-ds-dim mt-0.5">Resultado líquido do período</p>
+                    </div>
+
+                    <div className="bg-ds-bg p-4 rounded-xl border border-ds-border">
+                      <p className="text-[10.5px] font-bold text-ds-dim uppercase tracking-wider">Taxa de Adimplência</p>
+                      <p className="text-lg font-bold text-ds-primary mt-1">
+                        {balanceteData.taxaAdimplencia}%
+                      </p>
+                      <p className="text-[11px] text-ds-dim mt-0.5">{balanceteData.totalBoletosInadimplentes} cotas pendentes</p>
+                    </div>
+                  </div>
+
+                  {/* Tabelas de Receitas e Despesas */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Receitas */}
+                    <div className="border border-ds-border rounded-xl bg-ds-bg overflow-hidden flex flex-col">
+                      <div className="p-3 bg-ds-success-dim border-b border-ds-success/20 flex items-center justify-between">
+                        <span className="text-xs font-bold text-ds-success uppercase tracking-wider flex items-center gap-1.5">
+                          <TrendingUp className="w-4 h-4" /> Entradas / Receitas ({balanceteData.receitas.length})
+                        </span>
+                        <span className="text-xs font-bold text-ds-success">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balanceteData.totalReceitas)}
+                        </span>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto divide-y divide-ds-border">
+                        {balanceteData.receitas.length === 0 ? (
+                          <div className="p-6 text-center text-xs text-ds-dim">Nenhuma receita quitada nesta competência.</div>
+                        ) : (
+                          balanceteData.receitas.map((r, i) => (
+                            <div key={i} className="p-3 flex items-center justify-between text-xs hover:bg-ds-card transition-colors">
+                              <div className="pr-2">
+                                <p className="font-semibold text-ds-text m-0">{r.descricao}</p>
+                                <p className="text-[10.5px] text-ds-dim m-0 font-mono">Data: {r.data}</p>
+                              </div>
+                              <span className="font-bold text-ds-success whitespace-nowrap">
+                                + {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(r.valor)}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Despesas */}
+                    <div className="border border-ds-border rounded-xl bg-ds-bg overflow-hidden flex flex-col">
+                      <div className="p-3 bg-ds-danger-dim border-b border-ds-danger/20 flex items-center justify-between">
+                        <span className="text-xs font-bold text-ds-danger uppercase tracking-wider flex items-center gap-1.5">
+                          <TrendingDown className="w-4 h-4" /> Saídas / Despesas ({balanceteData.despesas.length})
+                        </span>
+                        <span className="text-xs font-bold text-ds-danger">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balanceteData.totalDespesas)}
+                        </span>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto divide-y divide-ds-border">
+                        {balanceteData.despesas.length === 0 ? (
+                          <div className="p-6 text-center text-xs text-ds-dim">Nenhuma despesa paga registrada nesta competência.</div>
+                        ) : (
+                          balanceteData.despesas.map((d, i) => (
+                            <div key={i} className="p-3 flex items-center justify-between text-xs hover:bg-ds-card transition-colors">
+                              <div className="pr-2">
+                                <p className="font-semibold text-ds-text m-0">{d.descricao}</p>
+                                <p className="text-[10.5px] text-ds-dim m-0 font-mono">Data Pagamento: {d.data}</p>
+                              </div>
+                              <span className="font-bold text-ds-danger whitespace-nowrap">
+                                - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(d.valor)}
+                              </span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="py-20 text-center text-ds-dim text-sm">
+                  Não foi possível obter dados para a competência selecionada.
+                </div>
+              )}
+            </div>
+
+            {/* Footer Modal */}
+            <div className="p-4 border-t border-ds-border bg-ds-bg/40 flex items-center justify-between shrink-0">
+              <span className="text-[11px] text-ds-dim font-medium">
+                Documento gerado automaticamente pelo sistema de gestão contábil HabitOS
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsBalanceteOpen(false)}
+                className="px-4 py-2 rounded-xl bg-ds-primary text-ds-primary-ink text-xs font-bold hover:brightness-110 transition-all cursor-pointer shadow-sm"
+              >
+                Fechar
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -52,11 +52,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const fetchEncomendas = async () => {
-    // try {
-    //   const res = await api.get('/api/v1/encomendas');
-    //   const pend = res.data.filter((e: any) => e.status === 'AGUARDANDO_RETIRADA').length;
-    //   setCounts(prev => ({ ...prev, encomendasPendentes: pend }));
-    // } catch (e) { /* ignore */ }
+    try {
+      const res = await api.get('/api/v1/encomendas');
+      const pend = res.data.filter((e: any) => e.status === 'AGUARDANDO_RETIRADA').length;
+      setCounts(prev => ({ ...prev, encomendasPendentes: pend }));
+    } catch (e) { /* ignore */ }
   };
 
   const loadAll = () => {
