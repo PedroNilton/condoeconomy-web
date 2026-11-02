@@ -1,5 +1,17 @@
 import { useState, useEffect } from 'react';
-import { MessageSquareWarning, Loader2, RefreshCcw, CheckCircle2, Clock, Wrench, AlertTriangle, MessageSquare } from 'lucide-react';
+import {
+  MessageSquareWarning,
+  Loader2,
+  RefreshCcw,
+  CheckCircle2,
+  Clock,
+  Wrench,
+  AlertTriangle,
+  MessageSquare,
+  Image as ImageIcon,
+  ExternalLink,
+  X
+} from 'lucide-react';
 import api from '../../../services/api';
 import { useWebSocket } from '../../../hooks/useWebSocket';
 
@@ -13,6 +25,7 @@ interface Chamado {
   status: 'ABERTO' | 'EM_ANDAMENTO' | 'RESOLVIDO';
   dataAbertura: string;
   escaladoSindico: boolean;
+  fotoAnexo?: string | null;
 }
 
 export function OuvidoriaAdminPanel() {
@@ -20,6 +33,7 @@ export function OuvidoriaAdminPanel() {
   const [loading, setLoading] = useState(true);
   const [atualizandoId, setAtualizandoId] = useState<string | null>(null);
   const [filtroStatus, setFiltroStatus] = useState<string>('TODOS');
+  const [fotoModal, setFotoModal] = useState<string | null>(null);
 
   useWebSocket('/topic/chamados', () => {
     fetchChamados();
@@ -98,35 +112,38 @@ export function OuvidoriaAdminPanel() {
         <div>
           <p className="text-ds-dim text-xs font-bold uppercase tracking-wider mb-1">Ouvidoria</p>
           <h2 className="text-ds-text text-2xl font-extrabold tracking-tight flex items-center gap-2">
-            Chamados Escalonados
+            <MessageSquareWarning className="w-6 h-6 text-ds-primary" />
+            Demandas dos Moradores
           </h2>
         </div>
+
         <div className="flex items-center gap-2">
+          {/* Filtro de Status */}
           <select
             value={filtroStatus}
             onChange={(e) => setFiltroStatus(e.target.value)}
-            className="text-xs font-bold text-ds-dim bg-ds-bg border border-ds-border px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-ds-primary"
+            className="px-3 py-1.5 rounded-xl bg-ds-card border border-ds-border text-xs text-ds-text font-bold focus:outline-none focus:ring-2 focus:ring-ds-primary"
           >
             <option value="TODOS">Todos os Status</option>
             <option value="ABERTO">Abertos</option>
             <option value="EM_ANDAMENTO">Em Atendimento</option>
             <option value="RESOLVIDO">Resolvidos</option>
           </select>
-          <button 
-            onClick={fetchChamados} 
-            className="flex items-center gap-2 text-xs font-bold text-ds-dim bg-ds-bg border border-ds-border px-3 py-2 rounded-xl hover:bg-ds-card transition-all shadow-sm"
+
+          <button
+            onClick={fetchChamados}
+            className="p-2 bg-ds-card border border-ds-border rounded-xl text-ds-dim hover:text-ds-text transition-colors shadow-sm cursor-pointer"
+            title="Atualizar chamados"
           >
-            <RefreshCcw className="w-4 h-4" /> Atualizar
+            <RefreshCcw className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {chamadosFiltrados.length === 0 ? (
-        <div className="bg-ds-card p-8 rounded-[16px] text-center shadow-sm border border-ds-border">
-          <div className="w-16 h-16 bg-ds-bg border border-ds-border rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <MessageSquareWarning className="w-8 h-8 text-ds-dim" />
-          </div>
-          <p className="text-ds-text font-bold mb-1">Tudo tranquilo!</p>
+        <div className="bg-ds-card border border-ds-border p-12 text-center rounded-[20px] shadow-sm">
+          <CheckCircle2 className="w-12 h-12 text-ds-success mx-auto mb-3 opacity-60" />
+          <h3 className="text-base font-bold text-ds-text mb-1">Tudo em dia!</h3>
           <p className="text-ds-dim text-sm">
             {filtroStatus === 'TODOS'
               ? 'Nenhum chamado escalado para a administração no momento.'
@@ -163,6 +180,34 @@ export function OuvidoriaAdminPanel() {
                 <p>{chamado.descricao}</p>
               </div>
 
+              {/* Evidência / Foto Anexada */}
+              {chamado.fotoAnexo && (
+                <div className="mb-4">
+                  <p className="text-[11px] text-ds-faint font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                    <ImageIcon className="w-3.5 h-3.5 text-ds-primary" />
+                    <span>Evidência Fotográfica Anexada</span>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setFotoModal(chamado.fotoAnexo || null)}
+                    className="flex items-center gap-3 p-2.5 rounded-xl bg-ds-bg border border-ds-border hover:border-ds-primary transition-all text-left cursor-pointer group w-full"
+                  >
+                    <img
+                      src={chamado.fotoAnexo}
+                      alt="Miniatura de evidência"
+                      className="w-14 h-14 object-cover rounded-lg shrink-0 border border-ds-border shadow-sm"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-ds-text group-hover:text-ds-primary transition-colors">
+                        <span>Foto enviada pelo morador</span>
+                        <ExternalLink className="w-3.5 h-3.5 text-ds-dim" />
+                      </div>
+                      <p className="text-[11px] text-ds-dim mt-0.5">Clique para examinar em alta resolução</p>
+                    </div>
+                  </button>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-2 text-[13px] bg-ds-bg p-3 rounded-xl border border-ds-border mb-4">
                 <div>
                   <p className="text-[11px] text-ds-faint font-bold uppercase tracking-wider mb-0.5">Morador</p>
@@ -181,7 +226,7 @@ export function OuvidoriaAdminPanel() {
                     <button
                       onClick={() => handleUpdateStatus(chamado.id, 'EM_ANDAMENTO')}
                       disabled={atualizandoId === chamado.id}
-                      className="px-4 py-2 bg-ds-primary text-ds-primary-ink text-xs font-bold rounded-xl hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 shadow-sm"
+                      className="px-4 py-2 bg-ds-primary text-ds-primary-ink text-xs font-bold rounded-xl hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
                     >
                       {atualizandoId === chamado.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Clock className="w-3.5 h-3.5" />}
                       Atender Chamado
@@ -190,7 +235,7 @@ export function OuvidoriaAdminPanel() {
                   <button
                     onClick={() => handleUpdateStatus(chamado.id, 'RESOLVIDO')}
                     disabled={atualizandoId === chamado.id}
-                    className="px-4 py-2 bg-ds-success text-ds-bg text-xs font-bold rounded-xl hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 shadow-sm"
+                    className="px-4 py-2 bg-ds-success text-ds-bg text-xs font-bold rounded-xl hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
                   >
                     {atualizandoId === chamado.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                     Resolver Chamado
@@ -199,6 +244,28 @@ export function OuvidoriaAdminPanel() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal de Ampliação da Imagem */}
+      {fotoModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-ds-card border border-ds-border rounded-3xl max-w-lg w-full p-4 relative flex flex-col items-center">
+            <button
+              onClick={() => setFotoModal(null)}
+              className="absolute top-4 right-4 w-9 h-9 bg-ds-bg text-ds-dim hover:text-ds-text rounded-full flex items-center justify-center border border-ds-border cursor-pointer transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-sm font-bold text-ds-text mb-3 self-start">Visualização da Evidência</h3>
+            <div className="max-h-[70vh] overflow-hidden rounded-2xl border border-ds-border bg-black">
+              <img
+                src={fotoModal}
+                alt="Evidência ampliada"
+                className="max-h-[70vh] w-auto object-contain rounded-2xl"
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>

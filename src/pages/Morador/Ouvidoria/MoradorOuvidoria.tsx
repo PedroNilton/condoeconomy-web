@@ -1,15 +1,16 @@
-import { useState, useEffect } from 'react';
-import { MessageSquare, Plus, ChevronLeft, Send, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { MessageSquare, Plus, ChevronLeft, Send, Loader2, Camera, X, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import api from '../../../services/api';
 import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
 interface Chamado {
-  id: number;
+  id: string;
   assunto: string;
   descricao: string;
   categoria: string;
   status: string;
   dataAbertura: string;
+  fotoAnexo?: string | null;
 }
 
 export function MoradorOuvidoria() {
@@ -22,7 +23,11 @@ export function MoradorOuvidoria() {
   const [categoriaVisual, setCategoriaVisual] = useState('Reclamação');
   const [assunto, setAssunto] = useState('');
   const [descricao, setDescricao] = useState('');
+  const [fotoAnexo, setFotoAnexo] = useState<string | null>(null);
+  const [fotoModal, setFotoModal] = useState<string | null>(null);
+  const [erroFoto, setErroFoto] = useState<string | null>(null);
   
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
@@ -57,6 +62,40 @@ export function MoradorOuvidoria() {
     }
   };
 
+  const handleFotoSelecionada = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setErroFoto(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validação de tipo MIME
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!tiposPermitidos.includes(file.type)) {
+      setErroFoto('Formato inválido. Apenas imagens JPEG, PNG ou WebP são permitidas.');
+      return;
+    }
+
+    // Limite de 2.5MB
+    if (file.size > 2.5 * 1024 * 1024) {
+      setErroFoto('A imagem deve ter no máximo 2.5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      setFotoAnexo(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoverFoto = () => {
+    setFotoAnexo(null);
+    setErroFoto(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!categoriaVisual || !assunto.trim() || !descricao.trim()) return;
@@ -71,12 +110,14 @@ export function MoradorOuvidoria() {
       await api.post('/api/v1/chamados', {
         categoria: mapCategoriaToEnum(categoriaVisual),
         assunto: sanitizarEntrada(assunto),
-        descricao: sanitizarEntrada(descricao)
+        descricao: sanitizarEntrada(descricao),
+        fotoAnexo: fotoAnexo || null
       });
       
       setCategoriaVisual('Reclamação');
       setAssunto('');
       setDescricao('');
+      setFotoAnexo(null);
       setIsFormOpen(false);
       
       setShowToast(true);
@@ -112,7 +153,7 @@ export function MoradorOuvidoria() {
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsFormOpen(false)} 
-              className="w-10 h-10 rounded-[12px] bg-ds-card border border-ds-border flex items-center justify-center text-ds-text active:scale-95 transition-transform shadow-sm flex-none"
+              className="w-10 h-10 rounded-[12px] bg-ds-card border border-ds-border flex items-center justify-center text-ds-text active:scale-95 transition-transform shadow-sm flex-none cursor-pointer"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -132,7 +173,7 @@ export function MoradorOuvidoria() {
                     key={cat}
                     type="button"
                     onClick={() => setCategoriaVisual(cat)}
-                    className={`px-4 py-2 rounded-full border text-[13px] font-bold transition-colors whitespace-nowrap
+                    className={`px-4 py-2 rounded-full border text-[13px] font-bold transition-colors whitespace-nowrap cursor-pointer
                       ${categoriaVisual === cat 
                         ? 'border-ds-primary bg-ds-primary-dim text-ds-primary' 
                         : 'border-ds-border bg-ds-card text-ds-dim'
@@ -172,13 +213,61 @@ export function MoradorOuvidoria() {
                 {descricao.length}/500
               </div>
             </div>
+
+            {/* Anexo de Foto / Evidência */}
+            <div>
+              <label className="block text-[11px] font-bold text-ds-dim uppercase tracking-wider mb-2.5">
+                Foto / Evidência (Opcional)
+              </label>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleFotoSelecionada}
+                className="hidden"
+              />
+
+              {fotoAnexo ? (
+                <div className="relative inline-block border border-ds-border rounded-2xl overflow-hidden bg-ds-card p-1 shadow-sm">
+                  <img
+                    src={fotoAnexo}
+                    alt="Evidência anexada"
+                    className="w-40 h-28 object-cover rounded-xl"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoverFoto}
+                    className="absolute top-2 right-2 w-7 h-7 bg-black/70 hover:bg-black text-white rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md"
+                    title="Remover foto"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <p className="text-[10px] text-ds-dim font-bold text-center mt-1">Foto anexada</p>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full py-4 border-2 border-dashed border-ds-border rounded-2xl flex flex-col items-center justify-center gap-1.5 bg-ds-card/50 hover:bg-ds-card text-ds-dim hover:text-ds-primary transition-all cursor-pointer"
+                >
+                  <Camera className="w-6 h-6 text-ds-dim" />
+                  <span className="text-xs font-bold">Tirar foto ou anexar imagem</span>
+                  <span className="text-[10px] text-ds-faint">JPG, PNG ou WebP até 2.5MB</span>
+                </button>
+              )}
+
+              {erroFoto && (
+                <p className="text-xs text-rose-500 font-semibold mt-1.5">{erroFoto}</p>
+              )}
+            </div>
             
           </div>
 
           <button 
             type="submit" 
             disabled={isSubmitting || !assunto.trim() || !descricao.trim()}
-            className="w-full bg-ds-primary text-ds-primary-ink font-bold py-3.5 rounded-[10px] flex items-center justify-center gap-2 active:scale-95 transition-transform mt-6 shadow-md disabled:opacity-50 disabled:active:scale-100"
+            className="w-full bg-ds-primary text-ds-primary-ink font-bold py-3.5 rounded-[10px] flex items-center justify-center gap-2 active:scale-95 transition-transform mt-6 shadow-md disabled:opacity-50 disabled:active:scale-100 cursor-pointer"
           >
             {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-[18px] h-[18px] ml-1" />}
             {isSubmitting ? 'Enviando...' : 'Enviar para o síndico'}
@@ -203,7 +292,7 @@ export function MoradorOuvidoria() {
           </div>
           <button 
             onClick={() => setIsFormOpen(true)}
-            className="w-11 h-11 bg-ds-primary text-ds-primary-ink rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-transform flex-none"
+            className="w-11 h-11 bg-ds-primary text-ds-primary-ink rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-transform flex-none cursor-pointer"
             aria-label="Novo chamado"
           >
             <Plus className="w-[22px] h-[22px]" strokeWidth={2.5} />
@@ -240,6 +329,31 @@ export function MoradorOuvidoria() {
                   {chamado.descricao}
                 </p>
 
+                {/* Evidência Anexada */}
+                {chamado.fotoAnexo && (
+                  <div className="mb-3">
+                    <button
+                      type="button"
+                      onClick={() => setFotoModal(chamado.fotoAnexo || null)}
+                      className="flex items-center gap-2 p-2 rounded-xl bg-ds-bg border border-ds-border hover:border-ds-primary transition-all text-left cursor-pointer group"
+                    >
+                      <img
+                        src={chamado.fotoAnexo}
+                        alt="Miniatura da evidência"
+                        className="w-10 h-10 object-cover rounded-lg shrink-0 border border-ds-border"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1 text-[11px] font-bold text-ds-text group-hover:text-ds-primary transition-colors">
+                          <ImageIcon className="w-3.5 h-3.5 text-ds-primary" />
+                          <span>Foto da Evidência</span>
+                          <ExternalLink className="w-3 h-3 text-ds-dim" />
+                        </div>
+                        <p className="text-[10px] text-ds-dim truncate">Clique para ampliar a foto</p>
+                      </div>
+                    </button>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center text-[10.5px] font-bold text-ds-faint tracking-wider">
                   <span className="uppercase">{chamado.categoria}</span>
                   <span>
@@ -252,6 +366,28 @@ export function MoradorOuvidoria() {
           </div>
         )}
       </main>
+
+      {/* Modal de Visualização da Foto */}
+      {fotoModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-ds-card border border-ds-border rounded-3xl max-w-lg w-full p-4 relative flex flex-col items-center">
+            <button
+              onClick={() => setFotoModal(null)}
+              className="absolute top-4 right-4 w-9 h-9 bg-ds-bg text-ds-dim hover:text-ds-text rounded-full flex items-center justify-center border border-ds-border cursor-pointer transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-sm font-bold text-ds-text mb-3 self-start">Evidência Anexada ao Chamado</h3>
+            <div className="max-h-[70vh] overflow-hidden rounded-2xl border border-ds-border bg-black">
+              <img
+                src={fotoModal}
+                alt="Evidência ampliada"
+                className="max-h-[70vh] w-auto object-contain rounded-2xl"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notification */}
       <div 
