@@ -66,6 +66,58 @@ export function MoradorBoletos() {
     setExpandedId(expandedId === id ? null : id);
   };
 
+  const handleDownloadBoleto = (e: React.MouseEvent, boleto: Boleto) => {
+    e.stopPropagation();
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    const mes = getMonthName(boleto.dataVencimento);
+    const valorFmt = formatCurrency(boleto.valor);
+    const dataVencFmt = new Date(boleto.dataVencimento).toLocaleDateString('pt-BR');
+    const linha = boleto.linhaDigitavel || '34191.09008 63571.277308 71444.640008 3 955300000' + String(boleto.valor).replace('.', '');
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Boleto Condominial - ${mes}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; color: #1e293b; max-width: 680px; margin: 0 auto; }
+          .header { border-bottom: 2px solid #0284c7; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+          .logo { font-size: 20px; font-weight: 800; color: #0284c7; }
+          .title { font-size: 16px; font-weight: 700; margin: 0; }
+          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
+          .field { margin-bottom: 8px; }
+          .label { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; }
+          .val { font-size: 15px; font-weight: bold; margin-top: 2px; }
+          .linha { font-family: monospace; font-size: 13px; background: #ffffff; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; word-break: break-all; margin: 20px 0; }
+          .footer { text-align: center; font-size: 12px; color: #94a3b8; margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 16px; }
+          @media print { body { padding: 0; } button { display: none; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">HabitOS CondoEconomy</div>
+          <div class="title">Boleto / Comprovante Digital</div>
+        </div>
+        <div class="grid">
+          <div class="field"><div class="label">Competência</div><div class="val">${mes} - Taxa Condominial</div></div>
+          <div class="field"><div class="label">Vencimento</div><div class="val">${dataVencFmt}</div></div>
+          <div class="field"><div class="label">Valor Nominal</div><div class="val" style="color: #0284c7;">${valorFmt}</div></div>
+          <div class="field"><div class="label">Situação</div><div class="val">${boleto.status}</div></div>
+        </div>
+        <div class="label">Linha Digitável / Código de Pagamento</div>
+        <div class="linha">${linha}</div>
+        <div style="text-align: center; margin: 30px 0;">
+          <p style="font-size: 13px; color: #64748b;">Efetue o pagamento pelo aplicativo do seu banco via código de barras ou PIX Copia e Cola.</p>
+        </div>
+        <div class="footer">Documento gerado eletronicamente pelo HabitOS • Condomínio Mar Egeu</div>
+        <script>window.onload = function() { window.print(); };</script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   // Metrics calculation
   const getEmAberto = () => {
     return boletos
@@ -197,6 +249,7 @@ export function MoradorBoletos() {
                   <div className="flex justify-between items-center mt-1">
                     <span className="text-[17px] font-extrabold text-ds-text">{formatCurrency(boleto.valor)}</span>
                     <button 
+                      onClick={(e) => handleDownloadBoleto(e, boleto)}
                       className="bg-transparent border-none text-ds-primary font-bold text-[12.5px] cursor-pointer p-0 hover:underline"
                     >
                       {boleto.status === 'PAGO' ? 'Ver recibo' : vencido ? 'Pagar agora' : 'Ver boleto'}
@@ -231,7 +284,8 @@ export function MoradorBoletos() {
                         )}
                       </button>
                       <button 
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => handleDownloadBoleto(e, boleto)}
+                        title="Baixar 2ª via / Comprovante"
                         className="w-10 h-10 bg-ds-bg hover:brightness-95 transition-all border border-ds-border rounded-[10px] flex items-center justify-center text-ds-dim"
                       >
                         <Download className="w-4 h-4" />

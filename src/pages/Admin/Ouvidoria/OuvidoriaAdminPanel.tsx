@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MessageSquareWarning, Loader2, RefreshCcw } from 'lucide-react';
+import { MessageSquareWarning, Loader2, RefreshCcw, CheckCircle2, Clock, Wrench, AlertTriangle, MessageSquare } from 'lucide-react';
 import api from '../../../services/api';
 import { useWebSocket } from '../../../hooks/useWebSocket';
 
@@ -10,7 +10,7 @@ interface Chamado {
   categoria: string;
   assunto: string;
   descricao: string;
-  status: string;
+  status: 'ABERTO' | 'EM_ANDAMENTO' | 'RESOLVIDO';
   dataAbertura: string;
   escaladoSindico: boolean;
 }
@@ -18,6 +18,8 @@ interface Chamado {
 export function OuvidoriaAdminPanel() {
   const [chamados, setChamados] = useState<Chamado[]>([]);
   const [loading, setLoading] = useState(true);
+  const [atualizandoId, setAtualizandoId] = useState<string | null>(null);
+  const [filtroStatus, setFiltroStatus] = useState<string>('TODOS');
 
   useWebSocket('/topic/chamados', () => {
     fetchChamados();
@@ -25,8 +27,9 @@ export function OuvidoriaAdminPanel() {
 
   const fetchChamados = async () => {
     try {
+      setLoading(true);
       const res = await api.get('/api/v1/chamados');
-      const escalados = res.data.filter((c: Chamado) => c.escaladoSindico);
+      const escalados = (Array.isArray(res.data) ? res.data : []).filter((c: Chamado) => c.escaladoSindico);
       setChamados(escalados);
     } catch (err) {
       console.error(err);
@@ -39,6 +42,48 @@ export function OuvidoriaAdminPanel() {
     fetchChamados();
   }, []);
 
+  const handleUpdateStatus = async (id: string, novoStatus: 'EM_ANDAMENTO' | 'RESOLVIDO') => {
+    setAtualizandoId(id);
+    try {
+      await api.put(`/api/v1/chamados/${id}/status`, { novoStatus });
+      await fetchChamados();
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao atualizar status do chamado.');
+    } finally {
+      setAtualizandoId(null);
+    }
+  };
+
+  const getCategoriaIcon = (categoria: string) => {
+    switch (categoria) {
+      case 'MANUTENCAO': return <Wrench className="w-3.5 h-3.5 text-orange-500" />;
+      case 'RECLAMACAO': return <AlertTriangle className="w-3.5 h-3.5 text-red-500" />;
+      case 'SUGESTAO': return <MessageSquare className="w-3.5 h-3.5 text-blue-500" />;
+      default: return <MessageSquare className="w-3.5 h-3.5 text-ds-dim" />;
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const base = "inline-flex items-center gap-1 font-mono text-[10.5px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider";
+    if (status === 'ABERTO') return `${base} bg-ds-warning-dim text-ds-warning`;
+    if (status === 'EM_ANDAMENTO') return `${base} bg-ds-primary-dim text-ds-primary`;
+    if (status === 'RESOLVIDO') return `${base} bg-ds-success-dim text-ds-success`;
+    return `${base} bg-ds-bg text-ds-dim`;
+  };
+
+  const formatStatus = (status: string) => {
+    if (status === 'ABERTO') return 'Aberto';
+    if (status === 'EM_ANDAMENTO') return 'Em Atendimento';
+    if (status === 'RESOLVIDO') return 'Resolvido';
+    return status;
+  };
+
+  const chamadosFiltrados = chamados.filter(c => {
+    if (filtroStatus === 'TODOS') return true;
+    return c.status === filtroStatus;
+  });
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center bg-ds-bg">
@@ -49,47 +94,76 @@ export function OuvidoriaAdminPanel() {
 
   return (
     <div className="h-full overflow-y-auto no-scrollbar space-y-6">
-      <div className="flex justify-between items-end mb-2">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-2">
         <div>
           <p className="text-ds-dim text-xs font-bold uppercase tracking-wider mb-1">Ouvidoria</p>
           <h2 className="text-ds-text text-2xl font-extrabold tracking-tight flex items-center gap-2">
-            Escalonados
+            Chamados Escalonados
           </h2>
         </div>
-        <button onClick={fetchChamados} className="flex items-center gap-2 text-xs font-bold text-ds-dim bg-ds-bg border border-ds-border px-3 py-2 rounded-xl hover:bg-ds-card transition-all shadow-sm">
-           <RefreshCcw className="w-4 h-4" /> Atualizar
-        </button>
+        <div className="flex items-center gap-2">
+          <select
+            value={filtroStatus}
+            onChange={(e) => setFiltroStatus(e.target.value)}
+            className="text-xs font-bold text-ds-dim bg-ds-bg border border-ds-border px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-ds-primary"
+          >
+            <option value="TODOS">Todos os Status</option>
+            <option value="ABERTO">Abertos</option>
+            <option value="EM_ANDAMENTO">Em Atendimento</option>
+            <option value="RESOLVIDO">Resolvidos</option>
+          </select>
+          <button 
+            onClick={fetchChamados} 
+            className="flex items-center gap-2 text-xs font-bold text-ds-dim bg-ds-bg border border-ds-border px-3 py-2 rounded-xl hover:bg-ds-card transition-all shadow-sm"
+          >
+            <RefreshCcw className="w-4 h-4" /> Atualizar
+          </button>
+        </div>
       </div>
 
-      {chamados.length === 0 ? (
+      {chamadosFiltrados.length === 0 ? (
         <div className="bg-ds-card p-8 rounded-[16px] text-center shadow-sm border border-ds-border">
           <div className="w-16 h-16 bg-ds-bg border border-ds-border rounded-2xl flex items-center justify-center mx-auto mb-4">
             <MessageSquareWarning className="w-8 h-8 text-ds-dim" />
           </div>
           <p className="text-ds-text font-bold mb-1">Tudo tranquilo!</p>
-          <p className="text-ds-dim text-sm">Nenhum chamado escalado para a administração no momento.</p>
+          <p className="text-ds-dim text-sm">
+            {filtroStatus === 'TODOS'
+              ? 'Nenhum chamado escalado para a administração no momento.'
+              : 'Nenhum chamado escalado com o filtro selecionado.'}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
-          {chamados.map(chamado => (
+          {chamadosFiltrados.map(chamado => (
             <div key={chamado.id} className="bg-ds-card p-5 rounded-[16px] shadow-sm border border-ds-border relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1 h-full bg-ds-danger"></div>
+              <div className={`absolute top-0 left-0 w-1 h-full ${chamado.status === 'RESOLVIDO' ? 'bg-ds-success' : 'bg-ds-danger'}`}></div>
               
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <span className="inline-flex items-center gap-1.5 font-mono text-[10.5px] font-semibold px-[9px] py-[4px] rounded-full uppercase tracking-wider bg-ds-danger-dim text-ds-danger mb-2">
-                    ESCALADO
-                  </span>
+                  <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider bg-ds-danger-dim text-ds-danger">
+                      ESCALADO
+                    </span>
+                    <span className={getStatusBadge(chamado.status)}>
+                      {formatStatus(chamado.status)}
+                    </span>
+                  </div>
                   <h3 className="font-bold text-ds-text text-[15px]">{chamado.assunto}</h3>
-                  <p className="text-[12.5px] text-ds-dim font-semibold mt-0.5">{chamado.categoria} — {new Date(chamado.dataAbertura).toLocaleDateString('pt-BR')}</p>
+                  <div className="flex items-center gap-1.5 text-[12px] text-ds-dim font-medium mt-0.5">
+                    {getCategoriaIcon(chamado.categoria)}
+                    <span>{chamado.categoria}</span>
+                    <span>•</span>
+                    <span>{new Date(chamado.dataAbertura).toLocaleDateString('pt-BR')}</span>
+                  </div>
                 </div>
               </div>
               
-              <div className="text-[13.5px] text-ds-text leading-relaxed mb-5 bg-ds-danger-dim border border-ds-danger/20 p-4 rounded-xl">
+              <div className="text-[13.5px] text-ds-text leading-relaxed mb-4 bg-ds-bg border border-ds-border p-4 rounded-xl">
                 <p>{chamado.descricao}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-[13px] bg-ds-bg p-3 rounded-xl border border-ds-border">
+              <div className="grid grid-cols-2 gap-2 text-[13px] bg-ds-bg p-3 rounded-xl border border-ds-border mb-4">
                 <div>
                   <p className="text-[11px] text-ds-faint font-bold uppercase tracking-wider mb-0.5">Morador</p>
                   <p className="font-bold text-ds-text">{chamado.moradorSolicitante}</p>
@@ -100,6 +174,29 @@ export function OuvidoriaAdminPanel() {
                 </div>
               </div>
 
+              {/* Ações do Síndico */}
+              {chamado.status !== 'RESOLVIDO' && (
+                <div className="flex justify-end gap-2 pt-1 border-t border-ds-border">
+                  {chamado.status === 'ABERTO' && (
+                    <button
+                      onClick={() => handleUpdateStatus(chamado.id, 'EM_ANDAMENTO')}
+                      disabled={atualizandoId === chamado.id}
+                      className="px-4 py-2 bg-ds-primary text-ds-primary-ink text-xs font-bold rounded-xl hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 shadow-sm"
+                    >
+                      {atualizandoId === chamado.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Clock className="w-3.5 h-3.5" />}
+                      Atender Chamado
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleUpdateStatus(chamado.id, 'RESOLVIDO')}
+                    disabled={atualizandoId === chamado.id}
+                    className="px-4 py-2 bg-ds-success text-ds-bg text-xs font-bold rounded-xl hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 shadow-sm"
+                  >
+                    {atualizandoId === chamado.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                    Resolver Chamado
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
