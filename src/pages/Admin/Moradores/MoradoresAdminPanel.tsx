@@ -11,7 +11,11 @@ import {
   X,
   Loader2,
   AlertCircle,
-  Plus
+  Plus,
+  Upload,
+  Download,
+  FileSpreadsheet,
+  AlertTriangle
 } from 'lucide-react';
 import api from '../../../services/api';
 import { sanitizarEntrada, contemAmeacas, EMAIL_SECURITY_REGEX } from '../../../utils/security';
@@ -82,6 +86,62 @@ export function MoradoresAdminPanel() {
   const [novoBloco, setNovoBloco] = useState('');
   const [salvando, setSalvando] = useState(false);
   const [erroForm, setErroForm] = useState('');
+
+  // Modal de Importação CSV
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [arquivoCsv, setArquivoCsv] = useState<File | null>(null);
+  const [importando, setImportando] = useState(false);
+  const [resultadoImportacao, setResultadoImportacao] = useState<{
+    totalProcessados: number;
+    sucessoCount: number;
+    falhaCount: number;
+    importados: Array<{ id: string; nome: string; email: string; apartamento: string; bloco: string | null; telefone: string | null }>;
+    erros: Array<{ linha: number; email: string; motivo: string }>;
+  } | null>(null);
+  const [erroImportacao, setErroImportacao] = useState('');
+
+  const handleBaixarModeloCsv = async () => {
+    try {
+      const res = await api.get('/api/v1/admin/usuarios/modelo-csv', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv;charset=utf-8;' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'modelo_importacao_moradores.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      alert('Não foi possível baixar o modelo CSV.');
+    }
+  };
+
+  const handleImportarCsv = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!arquivoCsv) {
+      setErroImportacao('Selecione um arquivo CSV para continuar.');
+      return;
+    }
+    setErroImportacao('');
+    setImportando(true);
+    setResultadoImportacao(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('arquivo', arquivoCsv);
+
+      const res = await api.post('/api/v1/admin/usuarios/importar-csv', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      setResultadoImportacao(res.data);
+      carregarUsuarios();
+    } catch (err: any) {
+      setErroImportacao(err.response?.data?.message || 'Falha ao processar arquivo CSV.');
+    } finally {
+      setImportando(false);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -327,17 +387,32 @@ export function MoradoresAdminPanel() {
                 <p className="text-xs text-ds-dim m-0 truncate">Cadastros e revogação instantânea de acesso</p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setErroForm('');
-                setIsModalOpen(true);
-              }}
-              className="px-3 py-2 rounded-xl bg-ds-primary text-ds-primary-ink text-xs font-bold flex items-center gap-1.5 hover:brightness-110 transition-all shrink-0 cursor-pointer"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>Novo</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setArquivoCsv(null);
+                  setResultadoImportacao(null);
+                  setErroImportacao('');
+                  setIsImportModalOpen(true);
+                }}
+                className="px-3 py-2 rounded-xl bg-ds-bg border border-ds-border text-ds-text text-xs font-bold flex items-center gap-1.5 hover:bg-ds-card transition-all shrink-0 cursor-pointer shadow-sm"
+              >
+                <Upload className="w-3.5 h-3.5 text-ds-primary" />
+                <span>Importar CSV</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setErroForm('');
+                  setIsModalOpen(true);
+                }}
+                className="px-3 py-2 rounded-xl bg-ds-primary text-ds-primary-ink text-xs font-bold flex items-center gap-1.5 hover:brightness-110 transition-all shrink-0 cursor-pointer shadow-sm"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Novo</span>
+              </button>
+            </div>
           </div>
 
           {/* KPIs */}
@@ -796,6 +871,210 @@ export function MoradoresAdminPanel() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Importação em Lote via CSV */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-ds-card border border-ds-border rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Header Modal */}
+            <div className="p-5 border-b border-ds-border flex items-center justify-between shrink-0 bg-ds-bg/40">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-ds-primary/10 border border-ds-primary/20 flex items-center justify-center text-ds-primary">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-ds-text m-0">Importação em Lote de Moradores</h3>
+                  <p className="text-xs text-ds-dim font-medium m-0">
+                    Cadastre múltiplos apartamentos e moradores enviando uma planilha CSV
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                className="w-8 h-8 rounded-lg border border-ds-border flex items-center justify-center text-ds-dim hover:text-ds-text hover:bg-ds-bg transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Conteúdo com scroll */}
+            <div className="p-6 overflow-y-auto space-y-5 flex-1">
+              {/* Card de Instruções e Download do Modelo */}
+              <div className="bg-ds-bg p-4 rounded-xl border border-ds-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold text-ds-text m-0">Modelo Padrão de Planilha</p>
+                  <p className="text-[11.5px] text-ds-dim mt-0.5 m-0">
+                    Colunas aceitas: <span className="font-mono text-ds-text font-semibold">Nome, Email, Apartamento, Bloco, Telefone, SenhaProvisoria</span>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleBaixarModeloCsv}
+                  className="px-3 py-1.5 rounded-lg bg-ds-card border border-ds-border text-xs font-bold text-ds-text hover:bg-ds-card/80 transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm"
+                >
+                  <Download className="w-3.5 h-3.5 text-ds-primary" />
+                  <span>Baixar Modelo CSV</span>
+                </button>
+              </div>
+
+              {erroImportacao && (
+                <div className="p-3 bg-ds-danger-dim border border-ds-danger/20 rounded-xl flex items-center gap-2 text-xs text-ds-danger">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{erroImportacao}</span>
+                </div>
+              )}
+
+              {/* Área de Seleção do Arquivo */}
+              {!resultadoImportacao && (
+                <form onSubmit={handleImportarCsv} className="space-y-4">
+                  <div className="border-2 border-dashed border-ds-border hover:border-ds-primary/60 rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-colors bg-ds-bg/30">
+                    <input
+                      type="file"
+                      accept=".csv,text/csv"
+                      id="input-csv-moradores"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        setArquivoCsv(file);
+                        setErroImportacao('');
+                      }}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="input-csv-moradores"
+                      className="cursor-pointer flex flex-col items-center gap-2 w-full"
+                    >
+                      <div className="w-12 h-12 rounded-2xl bg-ds-primary/10 flex items-center justify-center text-ds-primary">
+                        <Upload className="w-6 h-6" />
+                      </div>
+                      {arquivoCsv ? (
+                        <div>
+                          <p className="text-sm font-bold text-ds-text m-0">{arquivoCsv.name}</p>
+                          <p className="text-xs text-ds-dim mt-0.5 m-0 font-mono">
+                            {(arquivoCsv.size / 1024).toFixed(1)} KB • Arquivo CSV pronto para processamento
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="text-sm font-bold text-ds-text m-0">Clique para selecionar seu arquivo CSV</p>
+                          <p className="text-xs text-ds-dim mt-0.5 m-0">ou arraste e solte o arquivo aqui</p>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsImportModalOpen(false)}
+                      className="px-4 py-2.5 rounded-xl border border-ds-border text-xs font-bold text-ds-text hover:bg-ds-bg transition-colors cursor-pointer"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!arquivoCsv || importando}
+                      className="px-5 py-2.5 rounded-xl bg-ds-primary text-ds-primary-ink text-xs font-bold flex items-center gap-1.5 hover:brightness-110 disabled:opacity-50 transition-all cursor-pointer shadow-sm"
+                    >
+                      {importando ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Processando Planilha...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Processar e Cadastrar Moradores</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Resultado do Processamento */}
+              {resultadoImportacao && (
+                <div className="space-y-4 animate-in fade-in duration-200">
+                  {/* Cards de Resumo */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-ds-bg p-3.5 rounded-xl border border-ds-border text-center">
+                      <p className="text-[10.5px] font-bold text-ds-dim uppercase tracking-wider m-0">Linhas Lidas</p>
+                      <p className="text-lg font-bold text-ds-text mt-1 m-0">{resultadoImportacao.totalProcessados}</p>
+                    </div>
+                    <div className="bg-emerald-500/10 p-3.5 rounded-xl border border-emerald-500/20 text-center">
+                      <p className="text-[10.5px] font-bold text-emerald-500 uppercase tracking-wider m-0">Cadastrados</p>
+                      <p className="text-lg font-bold text-emerald-500 mt-1 m-0">{resultadoImportacao.sucessoCount}</p>
+                    </div>
+                    <div className="bg-amber-500/10 p-3.5 rounded-xl border border-amber-500/20 text-center">
+                      <p className="text-[10.5px] font-bold text-amber-500 uppercase tracking-wider m-0">Não Importados</p>
+                      <p className="text-lg font-bold text-amber-500 mt-1 m-0">{resultadoImportacao.falhaCount}</p>
+                    </div>
+                  </div>
+
+                  {/* Lista de Sucessos */}
+                  {resultadoImportacao.importados.length > 0 && (
+                    <div className="border border-ds-border rounded-xl bg-ds-bg overflow-hidden">
+                      <div className="p-3 bg-emerald-500/10 border-b border-emerald-500/20 flex items-center justify-between">
+                        <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider flex items-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4" /> Novos Moradores Criados ({resultadoImportacao.importados.length})
+                        </span>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto divide-y divide-ds-border">
+                        {resultadoImportacao.importados.map((m) => (
+                          <div key={m.id} className="p-2.5 flex items-center justify-between text-xs hover:bg-ds-card transition-colors">
+                            <div>
+                              <p className="font-semibold text-ds-text m-0">{m.nome}</p>
+                              <p className="text-[11px] text-ds-dim m-0">{m.email}</p>
+                            </div>
+                            <span className="font-mono font-bold text-ds-primary bg-ds-primary/10 px-2 py-0.5 rounded text-[11px]">
+                              Apto {m.apartamento} {m.bloco ? `(${m.bloco})` : ''}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Lista de Linhas com Erro/Aviso */}
+                  {resultadoImportacao.erros.length > 0 && (
+                    <div className="border border-ds-border rounded-xl bg-ds-bg overflow-hidden">
+                      <div className="p-3 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between">
+                        <span className="text-xs font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1.5">
+                          <AlertTriangle className="w-4 h-4" /> Linhas Ignoradas com Aviso ({resultadoImportacao.erros.length})
+                        </span>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto divide-y divide-ds-border">
+                        {resultadoImportacao.erros.map((err, i) => (
+                          <div key={i} className="p-2.5 flex items-center justify-between text-xs hover:bg-ds-card transition-colors">
+                            <div>
+                              <p className="font-semibold text-ds-text m-0">Linha {err.linha} • {err.email}</p>
+                              <p className="text-[11px] text-amber-500 mt-0.5 m-0">{err.motivo}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setArquivoCsv(null);
+                        setResultadoImportacao(null);
+                        setIsImportModalOpen(false);
+                      }}
+                      className="px-5 py-2.5 rounded-xl bg-ds-primary text-ds-primary-ink text-xs font-bold hover:brightness-110 transition-all cursor-pointer shadow-sm"
+                    >
+                      Concluir e Fechar
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
