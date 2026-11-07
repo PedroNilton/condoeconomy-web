@@ -15,7 +15,8 @@ import {
   Upload,
   Download,
   FileSpreadsheet,
-  AlertTriangle
+  AlertTriangle,
+  ShieldCheck
 } from 'lucide-react';
 import api from '../../../services/api';
 import { sanitizarEntrada, contemAmeacas, EMAIL_SECURITY_REGEX } from '../../../utils/security';
@@ -910,6 +911,10 @@ export function MoradoresAdminPanel() {
                   <p className="text-[11.5px] text-ds-dim mt-0.5 m-0">
                     Colunas aceitas: <span className="font-mono text-ds-text font-semibold">Nome, Email, Apartamento, Bloco, Telefone, SenhaProvisoria</span>
                   </p>
+                  <div className="flex items-center gap-1.5 text-[11px] text-emerald-500 font-medium mt-1">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Higienização e sanitização contra injeção de fórmulas CSV (CWE-1236) ativas.</span>
+                  </div>
                 </div>
                 <button
                   type="button"
