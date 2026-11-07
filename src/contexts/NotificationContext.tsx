@@ -4,14 +4,15 @@ import { useWebSocket } from '../hooks/useWebSocket';
 
 interface BadgeCounts {
   visitantesAguardando: number;
-  chamadosPortaria: number; // Abertos nǜo escalados
-  chamadosAdmin: number;    // Escalados para sndico
-  reservasAdmin: number;    // Pendentes de aprovaǜo
+  chamadosPortaria: number; // Abertos não escalados
+  chamadosAdmin: number;    // Escalados para síndico
+  reservasAdmin: number;    // Pendentes de aprovação
   encomendasPendentes: number;
 }
 
 interface NotificationContextData {
   counts: BadgeCounts;
+  refreshCounts: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextData>({} as NotificationContextData);
@@ -29,9 +30,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       const hoje = new Date().toISOString().split('T')[0];
       const res = await api.get(`/api/v1/visitantes?dataVisita=${hoje}`);
-      const c = res.data.filter((v: any) => v.status === 'AGUARDANDO').length;
+      const c = res.data.filter(
+        (v: any) => v.status === 'AGUARDANDO_LIBERACAO' || v.status === 'AGUARDANDO'
+      ).length;
       setCounts(prev => ({ ...prev, visitantesAguardando: c }));
-    } catch (e) { /* ignore */ }
+    } catch { /* ignore */ }
   };
 
   const fetchChamados = async () => {
@@ -40,7 +43,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const abertos = res.data.filter((c: any) => c.status === 'ABERTO' && !c.escaladoSindico).length;
       const escalados = res.data.filter((c: any) => c.status === 'ABERTO' && c.escaladoSindico).length;
       setCounts(prev => ({ ...prev, chamadosPortaria: abertos, chamadosAdmin: escalados }));
-    } catch (e) { /* ignore */ }
+    } catch { /* ignore */ }
   };
 
   const fetchReservas = async () => {
@@ -48,7 +51,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const res = await api.get('/api/v1/reservas');
       const pendentes = res.data.filter((r: any) => r.status === 'PENDENTE_APROVACAO').length;
       setCounts(prev => ({ ...prev, reservasAdmin: pendentes }));
-    } catch (e) { /* ignore */ }
+    } catch { /* ignore */ }
   };
 
   const fetchEncomendas = async () => {
@@ -56,7 +59,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const res = await api.get('/api/v1/encomendas');
       const pend = res.data.filter((e: any) => e.status === 'AGUARDANDO_RETIRADA').length;
       setCounts(prev => ({ ...prev, encomendasPendentes: pend }));
-    } catch (e) { /* ignore */ }
+    } catch { /* ignore */ }
   };
 
   const loadAll = () => {
@@ -88,7 +91,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   useWebSocket('/topic/encomendas', fetchEncomendas);
 
   return (
-    <NotificationContext.Provider value={{ counts }}>
+    <NotificationContext.Provider value={{ counts, refreshCounts: loadAll }}>
       {children}
     </NotificationContext.Provider>
   );

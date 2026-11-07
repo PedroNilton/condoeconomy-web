@@ -1,14 +1,13 @@
 import { useEffect } from 'react';
-import { Home, UserCheck, Package, CalendarDays, MessageSquare, LogOut, Car } from 'lucide-react';
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useNotification } from '../../contexts/NotificationContext';
-import { ThemeToggle } from '../ThemeToggle';
+import { useTheme } from '../../contexts/ThemeContext';
 import api from '../../services/api';
 
 export function DashboardLayout() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { counts } = useNotification();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const token = localStorage.getItem('@HabitOS:token');
@@ -28,103 +27,208 @@ export function DashboardLayout() {
     navigate('/login');
   };
 
+  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+    `relative flex flex-col items-center gap-[4px] no-underline text-[9.5px] font-semibold transition-colors ${
+      isActive ? 'text-ds-primary' : 'text-ds-faint hover:text-ds-dim'
+    }`;
+
   return (
-    <div className="min-h-screen bg-black flex justify-center font-sans selection:bg-ds-primary-dim">
-      {/* Container que simula a tela do celular/tablet */}
-      <div className="w-full max-w-md bg-ds-bg h-screen shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] flex flex-col relative overflow-hidden border-x border-ds-border">
-        
-        {/* Header Premium */}
-        <header className="bg-ds-bg/80 backdrop-blur-xl border-b border-ds-border flex justify-between items-center px-6 h-20 shrink-0 z-20 sticky top-0">
-          <div className="flex flex-col">
-            <h2 className="text-xl font-extrabold text-ds-text tracking-tight">PORTARIA</h2>
-            <p className="text-[11px] font-bold text-ds-primary uppercase tracking-widest mt-0.5">Condomínio Mar Egeu</p>
+    <div className="min-h-screen bg-ds-bg text-ds-text font-sans flex justify-center selection:bg-ds-primary-dim">
+      <div className="w-full max-w-[412px] min-h-screen min-h-dvh flex flex-col bg-ds-bg">
+        {/* Header Superior */}
+        <header className="pt-[calc(16px+env(safe-area-inset-top,0px))] px-[18px] pb-[12px] flex justify-between items-center">
+          <div>
+            <div className="text-[19px] font-extrabold tracking-[-0.01em] text-ds-text leading-tight">
+              Portaria
+            </div>
+            <div className="font-mono text-[10.5px] text-ds-primary font-semibold mt-[2px] uppercase">
+              Condomínio Mar Egeu
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
-            <button 
-              onClick={handleLogout}
-              className="w-10 h-10 rounded-full bg-ds-card flex items-center justify-center text-ds-dim hover:bg-ds-danger-dim hover:text-ds-danger transition-all border border-ds-border"
+
+          <div className="flex gap-[8px]">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label="Alternar tema"
+              title={theme === 'dark' ? 'Tema claro' : 'Tema escuro'}
+              className="w-[40px] h-[40px] rounded-[11px] border border-ds-border bg-ds-card grid place-items-center text-ds-text cursor-pointer hover:border-ds-border-strong transition-colors"
             >
-              <LogOut className="w-4 h-4 ml-0.5" />
+              {theme === 'dark' ? (
+                <svg
+                  className="w-[18px] h-[18px]"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+                </svg>
+              ) : (
+                <svg
+                  className="w-[18px] h-[18px]"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                </svg>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              aria-label="Sair"
+              title="Sair"
+              className="w-[40px] h-[40px] rounded-[11px] border border-ds-border bg-ds-card grid place-items-center text-ds-text cursor-pointer hover:border-ds-danger/40 hover:text-ds-danger transition-colors"
+            >
+              <svg
+                className="w-[18px] h-[18px]"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <path d="M16 17l5-5-5-5" />
+                <path d="M21 12H9" />
+              </svg>
             </button>
           </div>
         </header>
 
         {/* Conteúdo Principal */}
-        <main className="flex-1 overflow-y-auto pb-28 pt-2 px-4 no-scrollbar bg-ds-bg">
+        <main className="flex-1 pt-[4px] px-[18px] pb-[110px] flex flex-col gap-[22px]">
           <Outlet />
         </main>
 
-        {/* Floating Premium Tab Bar */}
-        <div className="absolute bottom-6 w-full px-4 z-50">
-          <nav className="bg-ds-card/90 backdrop-blur-2xl border border-ds-border rounded-[16px] flex justify-around items-center h-16 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)] px-1">
-            
-            <NavLink 
-              to="/portaria" 
-              end
-              className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-all duration-300 ${isActive ? 'text-ds-primary scale-110' : 'text-ds-dim hover:text-ds-text'}`}
+        {/* Barra de Navegação Inferior Fixa */}
+        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[412px] bg-ds-card border-t border-ds-border pt-[9px] px-[4px] pb-[calc(9px+env(safe-area-inset-bottom,0px))] grid grid-cols-6 z-[5]">
+          <NavLink to="/portaria" end className={navLinkClass}>
+            <svg
+              className="w-[20px] h-[20px]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <Home className={`w-5 h-5 ${location.pathname === '/portaria' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-            </NavLink>
+              <path d="M3 10 12 3l9 7" />
+              <path d="M5 9v11h14V9" />
+            </svg>
+            <span>Início</span>
+          </NavLink>
 
-            <NavLink 
-              to="/portaria/visitantes" 
-              className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-all duration-300 ${isActive ? 'text-ds-primary scale-110' : 'text-ds-dim hover:text-ds-text'}`}
+          <NavLink to="/portaria/visitantes" className={navLinkClass}>
+            <svg
+              className="w-[20px] h-[20px]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <div className="relative">
-                <UserCheck className={`w-5 h-5 ${location.pathname.includes('/visitantes') ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-                {counts.visitantesAguardando > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 bg-ds-warning text-ds-warning-dim text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
-                    {counts.visitantesAguardando}
-                  </span>
-                )}
-              </div>
-            </NavLink>
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="m16 11 2 2 4-4" />
+            </svg>
+            <span>Visitantes</span>
+            {counts.visitantesAguardando > 0 && (
+              <span className="absolute -top-[5px] left-[calc(50%+4px)] bg-ds-primary text-white text-[9px] font-bold min-w-[15px] h-[15px] rounded-full grid place-items-center px-[4px]">
+                {counts.visitantesAguardando}
+              </span>
+            )}
+          </NavLink>
 
-            <NavLink 
-              to="/portaria/encomendas" 
-              className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-all duration-300 ${isActive ? 'text-ds-primary scale-110' : 'text-ds-dim hover:text-ds-text'}`}
+          <NavLink to="/portaria/encomendas" className={navLinkClass}>
+            <svg
+              className="w-[20px] h-[20px]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <div className="relative">
-                <Package className={`w-5 h-5 ${location.pathname.includes('/encomendas') ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-                {counts.encomendasPendentes > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 bg-ds-warning text-ds-warning-dim text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
-                    {counts.encomendasPendentes}
-                  </span>
-                )}
-              </div>
-            </NavLink>
+              <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" />
+              <path d="M3 8l9 5 9-5M12 13v8" />
+            </svg>
+            <span>Encomendas</span>
+            {counts.encomendasPendentes > 0 && (
+              <span className="absolute -top-[5px] left-[calc(50%+4px)] bg-ds-primary text-white text-[9px] font-bold min-w-[15px] h-[15px] rounded-full grid place-items-center px-[4px]">
+                {counts.encomendasPendentes}
+              </span>
+            )}
+          </NavLink>
 
-            <NavLink 
-              to="/portaria/reservas" 
-              className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-all duration-300 ${isActive ? 'text-ds-primary scale-110' : 'text-ds-dim hover:text-ds-text'}`}
+          <NavLink to="/portaria/reservas" className={navLinkClass}>
+            <svg
+              className="w-[20px] h-[20px]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <CalendarDays className={`w-5 h-5 ${location.pathname.includes('/reservas') ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-            </NavLink>
+              <rect x="3" y="5" width="18" height="16" rx="2" />
+              <path d="M16 3v4M8 3v4M3 11h18" />
+            </svg>
+            <span>Reservas</span>
+            {counts.reservasAdmin > 0 && (
+              <span className="absolute -top-[5px] left-[calc(50%+4px)] bg-ds-primary text-white text-[9px] font-bold min-w-[15px] h-[15px] rounded-full grid place-items-center px-[4px]">
+                {counts.reservasAdmin}
+              </span>
+            )}
+          </NavLink>
 
-            <NavLink 
-              to="/portaria/chamados" 
-              className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 relative transition-all duration-300 ${isActive ? 'text-ds-primary scale-110' : 'text-ds-dim hover:text-ds-text'}`}
+          <NavLink to="/portaria/chamados" className={navLinkClass}>
+            <svg
+              className="w-[20px] h-[20px]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <div className="relative">
-                <MessageSquare className={`w-5 h-5 ${location.pathname.includes('/chamados') ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-                {counts.chamadosPortaria > 0 && (
-                  <span className="absolute -top-1.5 -right-2.5 bg-ds-warning text-ds-warning-dim text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
-                    {counts.chamadosPortaria}
-                  </span>
-                )}
-              </div>
-            </NavLink>
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <span>Ouvidoria</span>
+            {counts.chamadosPortaria > 0 && (
+              <span className="absolute -top-[5px] left-[calc(50%+4px)] bg-ds-primary text-white text-[9px] font-bold min-w-[15px] h-[15px] rounded-full grid place-items-center px-[4px]">
+                {counts.chamadosPortaria}
+              </span>
+            )}
+          </NavLink>
 
-            <NavLink 
-              to="/portaria/veiculos" 
-              className={({ isActive }) => `flex flex-col items-center justify-center w-full h-full space-y-1 transition-all duration-300 ${isActive ? 'text-ds-primary scale-110' : 'text-ds-dim hover:text-ds-text'}`}
+          <NavLink to="/portaria/veiculos" className={navLinkClass}>
+            <svg
+              className="w-[20px] h-[20px]"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <Car className={`w-5 h-5 ${location.pathname.includes('/veiculos') ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-            </NavLink>
-
-          </nav>
-        </div>
+              <path d="M3 13l2-5a2 2 0 0 1 2-1.3h10a2 2 0 0 1 2 1.3l2 5v5H3z" />
+              <circle cx="7.5" cy="18" r="1.5" />
+              <circle cx="16.5" cy="18" r="1.5" />
+            </svg>
+            <span>Veículos</span>
+          </NavLink>
+        </nav>
       </div>
     </div>
   );
