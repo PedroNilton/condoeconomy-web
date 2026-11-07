@@ -217,7 +217,7 @@ export function MoradorVisitantes() {
               >
                 <div
                   className={`absolute left-0 top-0 bottom-0 w-1.5 ${
-                    vis.status === 'AGUARDANDO'
+                    vis.status === 'AGUARDANDO' || vis.status === 'AGUARDANDO_LIBERACAO'
                       ? 'bg-amber-500'
                       : vis.status === 'NO_CONDOMINIO'
                       ? 'bg-ds-primary'
@@ -242,7 +242,7 @@ export function MoradorVisitantes() {
                   </div>
                 </div>
 
-                {vis.status === 'AGUARDANDO' && (
+                {(vis.status === 'AGUARDANDO' || vis.status === 'AGUARDANDO_LIBERACAO') && (
                   <button
                     type="button"
                     onClick={() => setSelectedQrCode(vis.id)}
