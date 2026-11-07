@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, User, MapPin, Truck } from 'lucide-react';
+import { Package, User, MapPin, Truck, Loader2 } from 'lucide-react';
 import api from '../../../services/api';
 import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
@@ -11,7 +11,7 @@ interface NovaEncomendaFormProps {
 export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const [formData, setFormData] = useState({
     codigoRastreio: '',
     destinatario: '',
@@ -26,11 +26,13 @@ export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (contemAmeacas(formData.codigoRastreio) ||
-        contemAmeacas(formData.destinatario) ||
-        contemAmeacas(formData.bloco) ||
-        contemAmeacas(formData.apartamento) ||
-        contemAmeacas(formData.transportadora)) {
+    if (
+      contemAmeacas(formData.codigoRastreio) ||
+      contemAmeacas(formData.destinatario) ||
+      contemAmeacas(formData.bloco) ||
+      contemAmeacas(formData.apartamento) ||
+      contemAmeacas(formData.transportadora)
+    ) {
       setError('Entrada contém caracteres ou padrões não permitidos.');
       return;
     }
@@ -39,12 +41,11 @@ export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProp
     setError('');
 
     try {
-      // Por padrão, a API deve iniciar a encomenda como AGUARDANDO_RETIRADA
       await api.post('/api/v1/encomendas', {
         codigoRastreio: sanitizarEntrada(formData.codigoRastreio),
         transportadora: sanitizarEntrada(formData.transportadora),
         destinatario: sanitizarEntrada(formData.destinatario),
-        unidade: `${sanitizarEntrada(formData.bloco)} - ${sanitizarEntrada(formData.apartamento)}`,
+        unidade: `Bloco ${sanitizarEntrada(formData.bloco)} · Apto ${sanitizarEntrada(formData.apartamento)}`,
         status: 'AGUARDANDO_RETIRADA'
       });
       onSuccess();
@@ -55,125 +56,123 @@ export function NovaEncomendaForm({ onSuccess, onCancel }: NovaEncomendaFormProp
     }
   };
 
+  const inputBase =
+    'w-full pl-9 pr-3.5 py-2.5 bg-ds-bg border border-ds-border text-ds-text rounded-[11px] text-[13px] placeholder:text-ds-faint focus:outline-none focus:border-ds-primary transition-colors';
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
       {error && (
-        <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+        <div className="p-3 bg-ds-danger-dim text-ds-danger border border-ds-danger/25 rounded-[11px] text-[12px] font-semibold">
           {error}
         </div>
       )}
 
-      {/* Código de Rastreio */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Código de Rastreio</label>
+        <label className="block text-[11px] font-bold uppercase tracking-[0.04em] text-ds-dim mb-1.5">
+          Código de rastreio
+        </label>
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-            <Package size={18} />
-          </div>
+          <Package className="w-4 h-4 text-ds-faint absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             name="codigoRastreio"
             required
             value={formData.codigoRastreio}
             onChange={handleChange}
-            className="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow"
-            placeholder="Ex: BR123456789BR"
+            className={`${inputBase} font-mono uppercase`}
+            placeholder="BR123456789BR"
           />
         </div>
       </div>
 
-      {/* Destinatário */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Destinatário (Morador)</label>
+        <label className="block text-[11px] font-bold uppercase tracking-[0.04em] text-ds-dim mb-1.5">
+          Destinatário (Morador)
+        </label>
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-            <User size={18} />
-          </div>
+          <User className="w-4 h-4 text-ds-faint absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             name="destinatario"
             required
             value={formData.destinatario}
             onChange={handleChange}
-            className="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow"
+            className={inputBase}
             placeholder="Nome do morador"
           />
         </div>
       </div>
 
-      {/* Bloco e Apartamento */}
-      <div className="flex gap-4">
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Bloco</label>
+      <div className="grid grid-cols-2 gap-2.5">
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-[0.04em] text-ds-dim mb-1.5">
+            Bloco
+          </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-              <MapPin size={18} />
-            </div>
+            <MapPin className="w-4 h-4 text-ds-faint absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               name="bloco"
               required
               value={formData.bloco}
               onChange={handleChange}
-              className="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow"
-              placeholder="Ex: Bloco A"
+              className={inputBase}
+              placeholder="05"
             />
           </div>
         </div>
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Apartamento</label>
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-[0.04em] text-ds-dim mb-1.5">
+            Apartamento
+          </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-              <MapPin size={18} />
-            </div>
+            <MapPin className="w-4 h-4 text-ds-faint absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               name="apartamento"
               required
               value={formData.apartamento}
               onChange={handleChange}
-              className="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow"
-              placeholder="Ex: 204"
+              className={inputBase}
+              placeholder="201"
             />
           </div>
         </div>
       </div>
 
-      {/* Transportadora */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Transportadora</label>
+        <label className="block text-[11px] font-bold uppercase tracking-[0.04em] text-ds-dim mb-1.5">
+          Transportadora
+        </label>
         <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-            <Truck size={18} />
-          </div>
+          <Truck className="w-4 h-4 text-ds-faint absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             name="transportadora"
             required
             value={formData.transportadora}
             onChange={handleChange}
-            className="pl-10 w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-shadow"
-            placeholder="Ex: Correios, Loggi, Mercado Livre"
+            className={inputBase}
+            placeholder="Correios, Loggi, Mercado Livre"
           />
         </div>
       </div>
 
-      {/* Ações */}
-      <div className="flex items-center justify-end gap-3 mt-6">
+      <div className="grid grid-cols-2 gap-2.5 mt-2">
         <button
           type="button"
           onClick={onCancel}
           disabled={loading}
-          className="px-4 py-2 text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 rounded-lg transition-colors font-medium"
+          className="py-2.5 px-4 rounded-[11px] border border-ds-border bg-ds-bg text-ds-text text-[13px] font-bold hover:border-ds-border-strong transition-colors cursor-pointer"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="px-4 py-2 text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors font-medium flex items-center justify-center min-w-[120px]"
+          className="py-2.5 px-4 rounded-[11px] border border-ds-primary bg-ds-primary text-ds-primary-ink text-[13px] font-bold hover:brightness-110 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
         >
-          {loading ? 'Registrando...' : 'Registrar'}
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Receber pacote'}
         </button>
       </div>
     </form>

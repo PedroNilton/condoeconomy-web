@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Package, Search, Plus, Loader2, CheckCircle2 } from 'lucide-react';
 import { Modal } from '../../components/UI/Modal';
 import { NovaEncomendaForm } from './components/NovaEncomendaForm';
+import { useNotification } from '../../contexts/NotificationContext';
+import { useWebSocket } from '../../hooks/useWebSocket';
 import api from '../../services/api';
 
 interface Encomenda {
@@ -20,203 +22,246 @@ export function EncomendasList() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  // Filtros
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'TODAS' | 'AGUARDANDO_RETIRADA' | 'RETIRADA'>('TODAS');
 
-  const fetchEncomendas = async () => {
+  const { refreshCounts } = useNotification();
+
+  const fetchEncomendas = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const res = await api.get('/api/v1/encomendas');
-      setEncomendas(res.data);
+      setEncomendas(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      setError('Falha ao carregar encomendas. Verifique a conexão.');
+      setError('Falha ao carregar encomendas.');
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchEncomendas();
-  }, []);
+  }, [fetchEncomendas]);
+
+  useWebSocket('/topic/encomendas', fetchEncomendas);
 
   const handleRetirar = async (id: string) => {
     if (!window.confirm('Confirmar a entrega deste pacote ao morador?')) return;
-    
     try {
       await api.put(`/api/v1/encomendas/${id}/retirar`);
       fetchEncomendas();
+      refreshCounts();
     } catch (err) {
       console.error('Erro ao registrar retirada', err);
       alert('Erro ao confirmar entrega. Tente novamente.');
     }
   };
 
-  const getStatusClass = (status: string) => {
-    const base = "inline-flex items-center gap-1.5 font-mono text-[10.5px] font-semibold px-[9px] py-[4px] rounded-full uppercase tracking-wider";
-    if (status === 'AGUARDANDO_RETIRADA') return `${base} bg-ds-warning-dim text-ds-warning`;
-    if (status === 'RETIRADA' || status === 'ENTREGUE') return `${base} bg-ds-success-dim text-ds-success`;
-    return `${base} bg-ds-disabled-bg text-ds-dim`;
-  };
+  const filteredEncomendas = encomendas.filter((enc) => {
+    const term = searchTerm.toLowerCase();
+    const matchesSearch =
+      enc.codigoRastreio.toLowerCase().includes(term) ||
+      enc.destinatario.toLowerCase().includes(term) ||
+      enc.unidade.toLowerCase().includes(term) ||
+      (enc.transportadora?.toLowerCase().includes(term) ?? false);
 
-  const formatStatus = (status: string) => {
-    if (status === 'AGUARDANDO_RETIRADA') return 'Aguardando Retirada';
-    if (status === 'RETIRADA') return 'Retirada';
-    if (status === 'ENTREGUE') return 'Entregue';
-    return status;
-  };
+    const matchesStatus =
+      statusFilter === 'TODAS' ||
+      (statusFilter === 'RETIRADA' && (enc.status === 'RETIRADA' || enc.status === 'ENTREGUE')) ||
+      enc.status === statusFilter;
 
-  const filteredEncomendas = encomendas.filter(enc => {
-    const matchesSearch = 
-      enc.codigoRastreio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      enc.destinatario.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      enc.unidade.toLowerCase().includes(searchTerm.toLowerCase());
-      
-    const matchesStatus = statusFilter ? enc.status === statusFilter : true;
-    
     return matchesSearch && matchesStatus;
   });
 
   return (
-    <div className="space-y-6 pb-20">
-      {/* Cabeçalho da Página */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="flex flex-col gap-[16px]">
+      {/* Cabeçalho */}
+      <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-ds-dim text-xs font-bold uppercase tracking-wider mb-1">Recepção</p>
-          <h3 className="text-2xl font-extrabold text-ds-text flex items-center gap-2">
-            Gestão de Encomendas
-          </h3>
+          <p className="text-[11px] font-bold uppercase tracking-[0.05em] text-ds-faint m-0">
+            Recepção
+          </p>
+          <h2 className="text-[17px] font-extrabold text-ds-text tracking-[-0.01em] m-0 mt-0.5">
+            Encomendas
+          </h2>
         </div>
-        <button 
+
+        <button
+          type="button"
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-ds-primary hover:brightness-110 active:scale-[0.98] text-ds-primary-ink rounded-xl transition-all font-bold shadow-sm"
+          className="h-[38px] px-3.5 rounded-[11px] bg-ds-primary text-ds-primary-ink text-[12.5px] font-bold flex items-center gap-1.5 hover:brightness-110 transition-all cursor-pointer"
         >
-          <Plus className="w-5 h-5 stroke-[2.5px]" />
-          Registrar Pacote
+          <Plus className="w-4 h-4 stroke-[2.5px]" />
+          <span>Receber</span>
         </button>
       </div>
 
-      {/* Área de Filtros / Busca */}
-      <div className="bg-ds-card p-4 rounded-[16px] border border-ds-border shadow-sm flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-ds-dim" />
-          <input 
-            type="text" 
+      {/* Busca e filtros */}
+      <div className="flex flex-col gap-2.5">
+        <div className="relative">
+          <Search className="w-4 h-4 text-ds-faint absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por código, destinatário ou unidade..." 
-            className="w-full pl-11 pr-4 py-2.5 bg-ds-bg border border-ds-border text-ds-text rounded-xl focus:ring-2 focus:ring-ds-primary focus:border-transparent outline-none transition-all placeholder:text-ds-dim text-[14px]"
+            placeholder="Código, morador ou unidade..."
+            className="w-full pl-9 pr-3.5 py-2.5 bg-ds-card border border-ds-border text-ds-text rounded-[12px] text-[13px] placeholder:text-ds-faint focus:outline-none focus:border-ds-primary transition-colors"
           />
         </div>
-        <select 
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2.5 bg-ds-bg border border-ds-border text-ds-text rounded-xl outline-none focus:ring-2 focus:ring-ds-primary text-[14px]"
-        >
-          <option value="">Todos os Status</option>
-          <option value="AGUARDANDO_RETIRADA">Aguardando Retirada</option>
-          <option value="RETIRADA">Retirada</option>
-        </select>
+
+        <div className="grid grid-cols-3 gap-1 p-1 bg-ds-card border border-ds-border rounded-[12px]">
+          {(
+            [
+              { id: 'TODAS', label: 'Todas' },
+              { id: 'AGUARDANDO_RETIRADA', label: 'Aguardando' },
+              { id: 'RETIRADA', label: 'Entregues' },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setStatusFilter(tab.id)}
+              className={`py-1.5 px-2 rounded-[9px] text-[11px] font-bold transition-colors cursor-pointer ${
+                statusFilter === tab.id
+                  ? 'bg-ds-primary-dim text-ds-primary'
+                  : 'text-ds-dim hover:text-ds-text'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Tabela de Dados */}
-      <div className="bg-ds-card rounded-[16px] border border-ds-border shadow-sm overflow-hidden min-h-[400px]">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-32 text-ds-primary">
-            <Loader2 className="w-8 h-8 animate-spin mb-4" />
-            <p className="text-ds-dim font-medium">Carregando pacotes...</p>
+      {/* Lista */}
+      {loading ? (
+        <div className="bg-ds-card border border-ds-border rounded-[14px] py-12 flex flex-col items-center justify-center gap-2 text-ds-dim text-[12.5px]">
+          <Loader2 className="w-5 h-5 animate-spin text-ds-primary" />
+          <span>Carregando pacotes...</span>
+        </div>
+      ) : error ? (
+        <div className="bg-ds-card border border-ds-border rounded-[14px] py-10 px-4 text-center">
+          <p className="text-[12.5px] font-semibold text-ds-danger m-0 mb-3">{error}</p>
+          <button
+            type="button"
+            onClick={fetchEncomendas}
+            className="px-4 py-2 rounded-[10px] border border-ds-border bg-ds-bg text-ds-text text-[12px] font-bold cursor-pointer"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      ) : filteredEncomendas.length === 0 ? (
+        <div className="bg-ds-card border border-ds-border rounded-[14px] py-10 px-4 text-center">
+          <div className="w-10 h-10 rounded-[10px] bg-ds-bg border border-ds-border grid place-items-center mx-auto mb-2.5 text-ds-faint">
+            <Package className="w-5 h-5" />
           </div>
-        ) : error ? (
-          <div className="text-center py-20 px-4">
-            <p className="text-ds-danger font-medium mb-4">{error}</p>
-            <button onClick={fetchEncomendas} className="px-5 py-2.5 bg-ds-bg hover:bg-ds-border border border-ds-border text-ds-text rounded-xl transition-colors font-bold">
-              Tentar Novamente
-            </button>
-          </div>
-        ) : filteredEncomendas.length === 0 ? (
-          <div className="text-center py-20 px-4">
-            <div className="bg-ds-bg w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-ds-border">
-              <Package className="w-8 h-8 text-ds-dim" />
-            </div>
-            <h4 className="text-lg font-bold text-ds-text">Nenhum pacote encontrado</h4>
-            <p className="text-ds-dim text-[14px] mt-1 max-w-sm mx-auto">Não há encomendas registradas ou elas não correspondem aos filtros aplicados.</p>
-          </div>
-        ) : (
-          <div className="flex flex-col p-4 bg-ds-card">
-            {filteredEncomendas.map((enc) => (
-              <div key={enc.id} className="bg-ds-card p-5 rounded-[16px] border border-ds-border flex flex-col gap-3 transition-colors hover:border-ds-border-strong mb-4 last:mb-0">
-                
-                {/* Cabeçalho do Card */}
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-bold text-ds-text text-[15px]">{enc.codigoRastreio}</h4>
-                    <div className="mt-1.5">
-                      <span className={getStatusClass(enc.status)}>
-                        {formatStatus(enc.status)}
-                      </span>
+          <p className="text-[13px] font-bold text-ds-text m-0">Nenhum pacote encontrado</p>
+          <p className="text-[11.5px] text-ds-dim m-0 mt-1">
+            Registre novas encomendas assim que chegarem na portaria.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-[10px]">
+          {filteredEncomendas.map((enc) => {
+            const pendente = enc.status === 'AGUARDANDO_RETIRADA';
+            return (
+              <div
+                key={enc.id}
+                className="bg-ds-card border border-ds-border rounded-[14px] p-[14px] flex flex-col gap-3"
+              >
+                <div className="flex justify-between items-start gap-2">
+                  <div className="min-w-0">
+                    <span className="font-mono text-[13px] font-semibold text-ds-text block truncate">
+                      {enc.codigoRastreio}
+                    </span>
+                    <span className="text-[12px] font-bold text-ds-primary block mt-0.5">
+                      {enc.unidade}
+                    </span>
+                  </div>
+                  <span
+                    className={`font-mono text-[9.5px] font-semibold px-2 py-1 rounded-full uppercase shrink-0 ${
+                      pendente
+                        ? 'bg-ds-warning-dim text-ds-warning'
+                        : 'bg-ds-success-dim text-ds-success'
+                    }`}
+                  >
+                    {pendente ? 'Aguardando' : 'Entregue'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 p-2.5 rounded-[10px] bg-ds-bg border border-ds-border">
+                  <div className="min-w-0">
+                    <span className="block text-[9.5px] font-bold uppercase tracking-[0.04em] text-ds-faint">
+                      Destinatário
+                    </span>
+                    <span className="block text-[12px] font-bold text-ds-text truncate mt-0.5">
+                      {enc.destinatario}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-[9.5px] font-bold uppercase tracking-[0.04em] text-ds-faint">
+                      Transportadora
+                    </span>
+                    <span className="block text-[12px] font-bold text-ds-text truncate mt-0.5">
+                      {enc.transportadora}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                  <div className="font-mono text-[10.5px] text-ds-dim leading-[1.4]">
+                    <div>
+                      Chegada:{' '}
+                      {enc.dataRecebimento
+                        ? new Date(enc.dataRecebimento).toLocaleString('pt-BR', {
+                            dateStyle: 'short',
+                            timeStyle: 'short',
+                          })
+                        : '-'}
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-ds-faint">Unidade</p>
-                    <p className="font-bold text-ds-primary text-[15px]">{enc.unidade}</p>
-                  </div>
-                </div>
-
-                {/* Detalhes (Destinatário e Transp) */}
-                <div className="grid grid-cols-2 gap-2 bg-ds-bg p-3.5 rounded-xl border border-ds-border">
-                  <div>
-                    <p className="text-[10px] text-ds-faint uppercase font-bold tracking-wider">Destinatário</p>
-                    <p className="text-[13.5px] font-bold text-ds-text mt-0.5">{enc.destinatario}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-ds-faint uppercase font-bold tracking-wider">Transportadora</p>
-                    <p className="text-[13.5px] font-bold text-ds-text mt-0.5 line-clamp-1">{enc.transportadora}</p>
-                  </div>
-                </div>
-
-                {/* Datas e Ação */}
-                <div className="flex items-center justify-between mt-2">
-                  <div className="flex flex-col text-[12px] font-medium text-ds-dim">
-                    <span>Chegada: {enc.dataRecebimento ? new Date(enc.dataRecebimento).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '-'}</span>
-                    {enc.status !== 'AGUARDANDO_RETIRADA' && (
-                      <span>Retirada: {enc.dataRetirada ? new Date(enc.dataRetirada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '-'}</span>
+                    {!pendente && enc.dataRetirada && (
+                      <div>
+                        Retirada:{' '}
+                        {new Date(enc.dataRetirada).toLocaleString('pt-BR', {
+                          dateStyle: 'short',
+                          timeStyle: 'short',
+                        })}
+                      </div>
                     )}
                   </div>
-                  
-                  {enc.status === 'AGUARDANDO_RETIRADA' && (
-                    <button 
+
+                  {pendente && (
+                    <button
+                      type="button"
                       onClick={() => handleRetirar(enc.id)}
-                      className="bg-ds-success text-ds-bg px-4 py-2 rounded-[9px] text-[13px] font-bold shadow-sm transition-all hover:brightness-110 active:scale-95 flex items-center gap-1.5"
+                      className="px-3.5 py-2 rounded-[10px] bg-ds-success text-white text-[12px] font-bold hover:brightness-110 transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
                     >
-                      <CheckCircle2 className="w-4 h-4" /> Entregar
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Entregar
                     </button>
                   )}
                 </div>
-
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
-      {/* Modal de Nova Encomenda */}
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        title="Registrar Nova Encomenda"
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Receber encomenda"
       >
-        <div className="p-1">
-        <NovaEncomendaForm 
+        <NovaEncomendaForm
           onCancel={() => setIsModalOpen(false)}
           onSuccess={() => {
             setIsModalOpen(false);
             fetchEncomendas();
+            refreshCounts();
           }}
         />
-        </div>
       </Modal>
     </div>
   );
