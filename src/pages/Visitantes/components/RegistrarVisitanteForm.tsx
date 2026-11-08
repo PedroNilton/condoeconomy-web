@@ -26,12 +26,14 @@ interface RegistrarVisitanteSheetProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  initialPlaca?: string;
 }
 
 export function RegistrarVisitanteSheet({
   isOpen,
   onClose,
   onSuccess,
+  initialPlaca,
 }: RegistrarVisitanteSheetProps) {
   const [nomeCompleto, setNomeCompleto] = useState('');
   const [tipo, setTipo] = useState<string>('VISITANTE');
@@ -44,8 +46,10 @@ export function RegistrarVisitanteSheet({
   useEffect(() => {
     if (!isOpen) {
       setErro('');
+    } else if (initialPlaca !== undefined) {
+      setPlaca(initialPlaca);
     }
-  }, [isOpen]);
+  }, [isOpen, initialPlaca]);
 
   const handleSalvar = async (e: React.FormEvent) => {
     e.preventDefault();
