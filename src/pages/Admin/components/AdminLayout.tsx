@@ -21,8 +21,12 @@ export function AdminLayout() {
       if (rawUser) {
         const parsed = JSON.parse(rawUser);
         if (parsed?.nome) {
-          const papel = parsed?.papel === 'ROLE_SINDICO' || parsed?.papel === 'ROLE_ADMIN' ? 'síndico(a)' : parsed?.papel?.replace('ROLE_', '').toLowerCase() || 'síndico';
-          setSubtitulo(`${parsed.nome} (${papel})`);
+          if (parsed.nome.includes('(')) {
+            setSubtitulo(parsed.nome);
+          } else {
+            const papel = parsed?.papel === 'ROLE_SINDICO' || parsed?.papel === 'ROLE_ADMIN' ? 'síndico(a)' : parsed?.papel?.replace('ROLE_', '').toLowerCase() || 'síndico';
+            setSubtitulo(`${parsed.nome} (${papel})`);
+          }
         }
       }
     } catch {
