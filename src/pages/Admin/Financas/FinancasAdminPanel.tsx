@@ -1,1120 +1,1704 @@
-import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, AlertCircle, FileText, Search, Loader2, ShieldCheck, CheckCircle2, X, Lock, Plus, DollarSign, Calendar, Printer } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import api from '../../../services/api';
 import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
 
-interface ItemBalancete {
-  descricao: string;
-  valor: number;
-  data: string;
-  tipo: 'RECEITA' | 'DESPESA';
+const DAY_MS = 86400000;
+const MULTA_PCT = 0.02;
+const JUROS_AM = 0.01;
+
+type BoletoStatus = 'pago' | 'aberto' | 'vencido';
+type PayMethod = 'PIX' | 'Dinheiro' | 'Transferência' | 'Outro';
+type BoletoKind = 'Taxa extra' | 'Multa' | 'Reserva de área' | 'Outro' | 'Taxa condominial';
+type ExpenseCat = 'Manutenção' | 'Pessoal' | 'Energia' | 'Água' | 'Limpeza' | 'Seguro' | 'Outros';
+type ExpenseStatus = 'paga' | 'apagar';
+type MainTab = 'boletos' | 'despesas' | 'auditoria';
+type BoletoFilter = 'todos' | 'vencido' | 'aberto' | 'pago';
+
+interface UnitResident {
+  block: number;
+  apto: number;
+  unit: string;
+  resident: string;
 }
 
-interface BalanceteData {
-  mes: number;
-  ano: number;
-  totalReceitas: number;
-  totalDespesas: number;
-  saldoOperacional: number;
-  totalBoletosEmitidos: number;
-  totalBoletosPagos: number;
-  totalBoletosInadimplentes: number;
-  taxaAdimplencia: number;
-  receitas: ItemBalancete[];
-  despesas: ItemBalancete[];
-}
-
-interface DashboardMetrics {
-  receitaPrevista: number;
-  receitaArrecadada: number;
-  despesas: number;
-  inadimplencia: number;
-  unidadesInadimplentes: number;
-}
-
-interface BoletoInfo {
+interface BoletoRecord {
   id: string;
-  unidade: string;
-  valor: number;
-  status: string;
-  data: string;
+  backendId?: string;
+  unit: string;
+  resident: string;
+  kind: string;
+  val: number;
+  due: Date;
+  status: BoletoStatus;
+  paidAt?: Date;
+  paidVal?: number;
+  method?: PayMethod;
 }
 
-interface DespesaInfo {
+interface DespesaRecord {
   id: string;
-  descricao: string;
-  valor: number;
-  dataVencimento: string;
-  dataPagamento: string | null;
-  status: string;
+  backendId?: string;
+  desc: string;
+  cat: ExpenseCat;
+  val: number;
+  date: Date;
+  status: ExpenseStatus;
+  paidAt?: Date;
 }
 
-interface EventoAuditoria {
+interface AuditRecord {
   id: string;
-  usuarioEmail: string;
-  papel: string;
-  evento: string;
-  severidade: string;
-  ipOrigem: string;
-  detalhes: string;
-  criadoEm: string;
+  at: Date;
+  text: string;
+  who: string;
 }
 
-export function FinancasAdminPanel() {
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-  const [todosBoletos, setTodosBoletos] = useState<BoletoInfo[]>([]);
-  const [despesasLista, setDespesasLista] = useState<DespesaInfo[]>([]);
-  const [auditoria, setAuditoria] = useState<EventoAuditoria[]>([]);
-  
-  const [loadingBoletos, setLoadingBoletos] = useState(true);
-  const [loadingDespesas, setLoadingDespesas] = useState(true);
-  const [activeTab, setActiveTab] = useState<'BOLETOS' | 'DESPESAS' | 'AUDITORIA'>('BOLETOS');
-  
-  // Filtros
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+function pad2(n: number) {
+  return String(n).padStart(2, '0');
+}
 
-  // Modal Step-Up Auth para baixa manual de boleto
-  const [boletoParaBaixa, setBoletoParaBaixa] = useState<BoletoInfo | null>(null);
-  const [senhaStepUp, setSenhaStepUp] = useState('');
-  const [erroStepUp, setErroStepUp] = useState<string | null>(null);
-  const [confirmandoBaixa, setConfirmandoBaixa] = useState(false);
+function pad3(n: number) {
+  return String(n).padStart(3, '0');
+}
 
-  // Modal Emissão de Novo Boleto
-  const [isEmissaoOpen, setIsEmissaoOpen] = useState(false);
-  const [novaUnidade, setNovaUnidade] = useState('');
-  const [novoMorador, setNovoMorador] = useState('');
-  const [novaCompetencia, setNovaCompetencia] = useState('11/2026');
-  const [novoValor, setNovoValor] = useState('650.00');
-  const [novoVencimento, setNovoVencimento] = useState(
-    new Date(Date.now() + 10 * 86400000).toISOString().split('T')[0]
-  );
-  const [emitindo, setEmitindo] = useState(false);
-  const [erroEmissao, setErroEmissao] = useState('');
+function fmtBRL(n: number): string {
+  const abs = Math.abs(n);
+  const formatted = abs.toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return n < 0 ? `−R$ ${formatted}` : `R$ ${formatted}`;
+}
 
-  // Modal Cadastro de Nova Despesa
-  const [isNovaDespesaOpen, setIsNovaDespesaOpen] = useState(false);
-  const [novaDescricaoDespesa, setNovaDescricaoDespesa] = useState('');
-  const [novoValorDespesa, setNovoValorDespesa] = useState('');
-  const [novoVencimentoDespesa, setNovoVencimentoDespesa] = useState(
-    new Date().toISOString().split('T')[0]
-  );
-  const [novoStatusDespesa, setNovoStatusDespesa] = useState<'PENDENTE' | 'PAGO'>('PENDENTE');
-  const [salvandoDespesa, setSalvandoDespesa] = useState(false);
-  const [erroDespesa, setErroDespesa] = useState('');
+function fmtDateShort(d: Date): string {
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}`;
+}
 
-  // Modal Balancete Mensal
-  const [isBalanceteOpen, setIsBalanceteOpen] = useState(false);
-  const [balanceteMes, setBalanceteMes] = useState<number>(new Date().getMonth() + 1);
-  const [balanceteAno, setBalanceteAno] = useState<number>(new Date().getFullYear());
-  const [balanceteData, setBalanceteData] = useState<BalanceteData | null>(null);
-  const [carregandoBalancete, setCarregandoBalancete] = useState(false);
+function fmtDateFull(d: Date): string {
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
 
-  const carregarBalancete = async (m = balanceteMes, a = balanceteAno) => {
-    setCarregandoBalancete(true);
-    try {
-      const res = await api.get(`/api/v1/financas/balancete?mes=${m}&ano=${a}`);
-      setBalanceteData(res.data);
-    } catch (err) {
-      console.error('Erro ao carregar balancete:', err);
-    } finally {
-      setCarregandoBalancete(false);
-    }
-  };
+function fmtDateTime(d: Date): string {
+  return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)} · ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
 
-  const carregarDadosFinanceiros = () => {
-    api.get('/api/v1/financas/dashboard').then(res => {
-      setMetrics(res.data);
-    }).catch(err => console.error(err));
+function toInputDate(d: Date): string {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
 
-    api.get('/api/v1/financas/boletos-gerados').then(res => {
-      setTodosBoletos(Array.isArray(res.data) ? res.data : []);
-    }).catch(err => console.error(err)).finally(() => {
-      setLoadingBoletos(false);
-    });
-
-    api.get('/api/v1/financas/despesas').then(res => {
-      setDespesasLista(Array.isArray(res.data) ? res.data : []);
-    }).catch(err => console.error(err)).finally(() => {
-      setLoadingDespesas(false);
-    });
-
-    api.get('/api/v1/financas/auditoria-seguranca').then(res => {
-      if (Array.isArray(res.data)) {
-        setAuditoria(res.data);
-      }
-    }).catch(() => {});
-  };
-
-  useEffect(() => {
-    carregarDadosFinanceiros();
-  }, []);
-
-  const handleConfirmarBaixaManual = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!boletoParaBaixa) return;
-    setErroStepUp(null);
-
-    if (!senhaStepUp.trim()) {
-      setErroStepUp('Informe sua senha atual de Síndico/Admin para autorizar a baixa.');
-      return;
-    }
-    if (contemAmeacas(senhaStepUp)) {
-      setErroStepUp('Caracteres inválidos detectados.');
-      return;
-    }
-
-    setConfirmandoBaixa(true);
-    try {
-      const senhaLimpa = sanitizarEntrada(senhaStepUp, 128);
-      await api.put(
-        `/api/v1/boletos/${boletoParaBaixa.id}/baixar`,
-        { senhaConfirmacao: senhaLimpa },
-        { headers: { 'X-Step-Up-Password': senhaLimpa } }
-      );
-      setBoletoParaBaixa(null);
-      setSenhaStepUp('');
-      carregarDadosFinanceiros();
-    } catch (err: any) {
-      setErroStepUp(err.response?.data?.message || 'Senha incorreta ou falha ao registrar baixa manual.');
-    } finally {
-      setConfirmandoBaixa(false);
-    }
-  };
-
-  const handleEmitirBoleto = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (emitindo) return;
-    setErroEmissao('');
-
-    if (contemAmeacas(novaUnidade) || contemAmeacas(novoMorador) || contemAmeacas(novaCompetencia)) {
-      setErroEmissao('Caracteres inválidos detectados.');
-      return;
-    }
-
-    const unidadeLimpa = sanitizarEntrada(novaUnidade, 100).trim();
-    const moradorLimpo = sanitizarEntrada(novoMorador, 120).trim();
-    const compLimpa = sanitizarEntrada(novaCompetencia, 7).trim();
-    const valorNum = Number(novoValor.replace(',', '.'));
-
-    if (!unidadeLimpa || !moradorLimpo) {
-      setErroEmissao('Preencha a unidade e o morador responsável.');
-      return;
-    }
-    if (!/^\d{2}\/\d{4}$/.test(compLimpa)) {
-      setErroEmissao('A competência deve estar no formato MM/AAAA (ex: 11/2026).');
-      return;
-    }
-    if (isNaN(valorNum) || valorNum < 1) {
-      setErroEmissao('Informe um valor válido a partir de R$ 1,00.');
-      return;
-    }
-
-    setEmitindo(true);
-    try {
-      await api.post('/api/v1/financas/boletos', {
-        unidadeTexto: unidadeLimpa,
-        moradorResponsavel: moradorLimpo,
-        competencia: compLimpa,
-        valor: valorNum,
-        dataVencimento: novoVencimento
-      });
-      setIsEmissaoOpen(false);
-      setNovaUnidade('');
-      setNovoMorador('');
-      carregarDadosFinanceiros();
-    } catch (err: any) {
-      setErroEmissao(err.response?.data?.message || 'Erro ao emitir boleto.');
-    } finally {
-      setEmitindo(false);
-    }
-  };
-
-  const handleCadastrarDespesa = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (salvandoDespesa) return;
-    setErroDespesa('');
-
-    if (contemAmeacas(novaDescricaoDespesa)) {
-      setErroDespesa('Caracteres não permitidos na descrição.');
-      return;
-    }
-
-    const descLimpa = sanitizarEntrada(novaDescricaoDespesa, 200).trim();
-    const valorNum = Number(novoValorDespesa.replace(',', '.'));
-
-    if (!descLimpa) {
-      setErroDespesa('Informe a descrição da despesa.');
-      return;
-    }
-    if (isNaN(valorNum) || valorNum <= 0) {
-      setErroDespesa('Informe um valor válido maior que zero.');
-      return;
-    }
-
-    setSalvandoDespesa(true);
-    try {
-      await api.post('/api/v1/financas/despesas', {
-        descricao: descLimpa,
-        valor: valorNum,
-        dataVencimento: novoVencimentoDespesa,
-        status: novoStatusDespesa
-      });
-      setIsNovaDespesaOpen(false);
-      setNovaDescricaoDespesa('');
-      setNovoValorDespesa('');
-      carregarDadosFinanceiros();
-    } catch (err: any) {
-      setErroDespesa(err.response?.data?.message || 'Erro ao cadastrar despesa.');
-    } finally {
-      setSalvandoDespesa(false);
-    }
-  };
-
-  const handlePagarDespesa = async (id: string) => {
-    try {
-      await api.put(`/api/v1/financas/despesas/${id}/pagar`);
-      carregarDadosFinanceiros();
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Erro ao registrar pagamento de despesa.');
-    }
-  };
-
-  if (!metrics) {
-    return <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-ds-dim" /></div>;
+function parseInputDate(s: string): Date {
+  const parts = s.split('-').map(Number);
+  if (parts.length === 3 && !parts.some(isNaN)) {
+    return new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0);
   }
+  return new Date();
+}
 
-  const { receitaPrevista, receitaArrecadada, despesas, inadimplencia, unidadesInadimplentes } = metrics;
-  const progressoArrecadacao = receitaPrevista > 0 ? (receitaArrecadada / receitaPrevista) * 100 : 0;
+function daysBetween(later: Date, earlier: Date): number {
+  const a = new Date(later.getFullYear(), later.getMonth(), later.getDate()).getTime();
+  const b = new Date(earlier.getFullYear(), earlier.getMonth(), earlier.getDate()).getTime();
+  return Math.round((a - b) / DAY_MS);
+}
 
-  const termoLimpo = sanitizarEntrada(searchTerm, 50).toLowerCase();
-  const filteredBoletos = todosBoletos.filter(boleto => {
-    const matchSearch = boleto.unidade.toLowerCase().includes(termoLimpo);
-    const matchStatus = statusFilter ? boleto.status === statusFilter : true;
-    return matchSearch && matchStatus;
+function calcEncargos(b: BoletoRecord, refDate = new Date()) {
+  const dias = Math.max(0, daysBetween(refDate, b.due));
+  if (b.status !== 'vencido' || dias <= 0) {
+    return { dias: 0, multa: 0, juros: 0, total: b.val };
+  }
+  const multa = Number((b.val * MULTA_PCT).toFixed(2));
+  const juros = Number((b.val * JUROS_AM * (dias / 30)).toFixed(2));
+  const total = Number((b.val + multa + juros).toFixed(2));
+  return { dias, multa, juros, total };
+}
+
+function parseBRLInput(raw: string): number {
+  const cleaned = raw.trim().replace(/\s+/g, '');
+  if (!cleaned) return NaN;
+  if (cleaned.includes(',')) {
+    return Number(cleaned.replace(/\./g, '').replace(',', '.'));
+  }
+  return Number(cleaned);
+}
+
+function getOperatorName(): string {
+  try {
+    const raw = localStorage.getItem('@HabitOS:user');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.nome) {
+        return String(parsed.nome).split('(')[0].trim() || 'Síndica';
+      }
+    }
+  } catch {
+    // fallback
+  }
+  return 'Ana Laura';
+}
+
+const FIRST_NAMES = [
+  'Carlos', 'Fernanda', 'João', 'Ana Beatriz', 'Jorge', 'Mariana', 'Rafael', 'Juliana',
+  'Lucas', 'Patrícia', 'Gabriel', 'Camila', 'Bruno', 'Larissa', 'Rodrigo', 'Beatriz',
+  'Felipe', 'Amanda', 'Thiago', 'Renata', 'Gustavo', 'Letícia', 'Eduardo', 'Vanessa',
+];
+
+const LAST_NAMES = [
+  'Silva', 'Lima', 'Santos', 'Oliveira', 'Souza', 'Pereira', 'Costa', 'Rodrigues',
+  'Almeida', 'Nascimento', 'Ferreira', 'Alves', 'Monteiro', 'Ribeiro', 'Martins', 'Carvalho',
+];
+
+const OVERRIDE_RESIDENTS: Record<string, string> = {
+  '1-1': 'Carlos Silva',
+  '3-2': 'Fernanda Lima',
+  '5-1': 'Ana Beatriz',
+  '7-2': 'João Lima',
+  '8-11': 'Jorge Santos',
+  '11-12': 'Carlos Silva',
+};
+
+function buildDirectory(): UnitResident[] {
+  const list: UnitResident[] = [];
+  for (let block = 1; block <= 14; block++) {
+    for (let apto = 1; apto <= 12; apto++) {
+      const key = `${block}-${apto}`;
+      const idx = (block - 1) * 12 + (apto - 1);
+      const resident =
+        OVERRIDE_RESIDENTS[key] ||
+        `${FIRST_NAMES[(idx * 5 + block) % FIRST_NAMES.length]} ${LAST_NAMES[(idx * 3 + apto) % LAST_NAMES.length]}`;
+      list.push({
+        block,
+        apto,
+        unit: `Bloco ${pad2(block)} · Apto ${pad3(apto)}`,
+        resident,
+      });
+    }
+  }
+  return list;
+}
+
+const DIRECTORY = buildDirectory();
+
+function buildInitialBoletos(): BoletoRecord[] {
+  const now = new Date();
+  const baseYear = now.getFullYear();
+  const baseMonth = now.getMonth();
+  const compLabel = `${pad2(baseMonth + 1)}/${baseYear}`;
+  const payMethods: PayMethod[] = ['PIX', 'PIX', 'Transferência', 'PIX', 'Dinheiro'];
+
+  const list: BoletoRecord[] = DIRECTORY.map((u, idx) => {
+    const baseVal = 620 + ((idx % 4) * 25);
+    // Distribuição realista: ~14 vencidos, ~34 em aberto, ~120 pagos
+    if (idx % 12 === 1) {
+      const daysLate = 3 + ((idx * 3) % 21);
+      const due = new Date(now.getTime() - daysLate * DAY_MS);
+      return {
+        id: `b-${u.block}-${u.apto}`,
+        unit: u.unit,
+        resident: u.resident,
+        kind: `Taxa condominial · ${compLabel}`,
+        val: baseVal,
+        due,
+        status: 'vencido',
+      };
+    }
+    if (idx % 5 === 2) {
+      const daysAhead = 2 + (idx % 12);
+      const due = new Date(now.getTime() + daysAhead * DAY_MS);
+      return {
+        id: `b-${u.block}-${u.apto}`,
+        unit: u.unit,
+        resident: u.resident,
+        kind: `Taxa condominial · ${compLabel}`,
+        val: baseVal,
+        due,
+        status: 'aberto',
+      };
+    }
+    const daysAgoPaid = 1 + (idx % 14);
+    const paidAt = new Date(now.getTime() - daysAgoPaid * DAY_MS);
+    const due = new Date(paidAt.getTime() + 2 * DAY_MS);
+    return {
+      id: `b-${u.block}-${u.apto}`,
+      unit: u.unit,
+      resident: u.resident,
+      kind: `Taxa condominial · ${compLabel}`,
+      val: baseVal,
+      due,
+      status: 'pago',
+      paidAt,
+      paidVal: baseVal,
+      method: payMethods[idx % payMethods.length],
+    };
   });
 
-  const getBadgeClass = (status: string) => {
-    const base = "inline-flex items-center gap-1.5 font-mono text-[10.5px] font-semibold px-[9px] py-[4px] rounded-full uppercase tracking-wider";
-    if (status === 'PAGO') return `${base} bg-ds-success-dim text-ds-success`;
-    if (status === 'ATRASADO' || status === 'VENCIDO') return `${base} bg-ds-danger-dim text-ds-danger`;
-    return `${base} bg-ds-warning-dim text-ds-warning`;
+  // Adiciona boletos extras pontuais no início
+  list.unshift(
+    {
+      id: 'b-extra-1',
+      unit: 'Bloco 04 · Apto 007',
+      resident: 'Mariana Souza',
+      kind: 'Reserva de área · Salão de festas',
+      val: 180,
+      due: new Date(now.getTime() + 4 * DAY_MS),
+      status: 'aberto',
+    },
+    {
+      id: 'b-extra-2',
+      unit: 'Bloco 09 · Apto 004',
+      resident: 'Rafael Costa',
+      kind: 'Multa · Regimento interno',
+      val: 320,
+      due: new Date(now.getTime() - 9 * DAY_MS),
+      status: 'vencido',
+    }
+  );
+
+  return list;
+}
+
+function buildInitialDespesas(): DespesaRecord[] {
+  const now = new Date();
+  return [
+    {
+      id: 'd-1',
+      desc: 'Folha salarial · Portaria e zeladoria',
+      cat: 'Pessoal',
+      val: 18450.0,
+      date: new Date(now.getTime() - 6 * DAY_MS),
+      status: 'paga',
+      paidAt: new Date(now.getTime() - 6 * DAY_MS),
+    },
+    {
+      id: 'd-2',
+      desc: 'Manutenção preventiva elevadores (14 blocos)',
+      cat: 'Manutenção',
+      val: 3850.0,
+      date: new Date(now.getTime() + 3 * DAY_MS),
+      status: 'apagar',
+    },
+    {
+      id: 'd-3',
+      desc: 'Contrato limpeza e jardinagem',
+      cat: 'Limpeza',
+      val: 6200.0,
+      date: new Date(now.getTime() - 4 * DAY_MS),
+      status: 'paga',
+      paidAt: new Date(now.getTime() - 4 * DAY_MS),
+    },
+    {
+      id: 'd-4',
+      desc: 'Fornecimento de água e esgoto',
+      cat: 'Água',
+      val: 5890.0,
+      date: new Date(now.getTime() - 8 * DAY_MS),
+      status: 'paga',
+      paidAt: new Date(now.getTime() - 8 * DAY_MS),
+    },
+    {
+      id: 'd-5',
+      desc: 'Conta de energia elétrica · Áreas comuns',
+      cat: 'Energia',
+      val: 4320.8,
+      date: new Date(now.getTime() - 3 * DAY_MS),
+      status: 'paga',
+      paidAt: new Date(now.getTime() - 3 * DAY_MS),
+    },
+    {
+      id: 'd-6',
+      desc: 'Seguro predial mensal',
+      cat: 'Seguro',
+      val: 2180.0,
+      date: new Date(now.getTime() + 6 * DAY_MS),
+      status: 'apagar',
+    },
+    {
+      id: 'd-7',
+      desc: 'Reparo portão eletrônico Bloco 03',
+      cat: 'Manutenção',
+      val: 940.0,
+      date: new Date(now.getTime() + 1 * DAY_MS),
+      status: 'apagar',
+    },
+    {
+      id: 'd-8',
+      desc: 'Material de limpeza e insumos',
+      cat: 'Outros',
+      val: 780.5,
+      date: new Date(now.getTime() - 10 * DAY_MS),
+      status: 'paga',
+      paidAt: new Date(now.getTime() - 10 * DAY_MS),
+    },
+  ];
+}
+
+function buildInitialAudit(): AuditRecord[] {
+  const now = new Date();
+  return [
+    {
+      id: 'a-1',
+      at: new Date(now.getTime() - 35 * 60000),
+      text: 'Baixa manual · Bloco 02 · Apto 005 · R$ 645,00 (PIX)',
+      who: 'Ana Laura',
+    },
+    {
+      id: 'a-2',
+      at: new Date(now.getTime() - 3 * 3600000),
+      text: 'Despesa paga · Conta de energia elétrica · Áreas comuns · R$ 4.320,80',
+      who: 'Ana Laura',
+    },
+    {
+      id: 'a-3',
+      at: new Date(now.getTime() - 1 * DAY_MS),
+      text: 'Boleto emitido · Bloco 04 · Apto 007 · Reserva de área · R$ 180,00',
+      who: 'Ana Laura',
+    },
+    {
+      id: 'a-4',
+      at: new Date(now.getTime() - 2 * DAY_MS),
+      text: 'Lembrete de cobrança enviado · Bloco 09 · Apto 004',
+      who: 'Sistema',
+    },
+  ];
+}
+
+const BOLETO_KINDS: Exclude<BoletoKind, 'Taxa condominial'>[] = [
+  'Taxa extra',
+  'Multa',
+  'Reserva de área',
+  'Outro',
+];
+
+const EXPENSE_CATS: ExpenseCat[] = [
+  'Manutenção',
+  'Pessoal',
+  'Energia',
+  'Água',
+  'Limpeza',
+  'Seguro',
+  'Outros',
+];
+
+const PAY_METHODS: PayMethod[] = ['PIX', 'Dinheiro', 'Transferência', 'Outro'];
+
+export function FinancasAdminPanel() {
+  const [boletos, setBoletos] = useState<BoletoRecord[]>(() => buildInitialBoletos());
+  const [despesas, setDespesas] = useState<DespesaRecord[]>(() => buildInitialDespesas());
+  const [auditoria, setAuditoria] = useState<AuditRecord[]>(() => buildInitialAudit());
+
+  const [activeTab, setActiveTab] = useState<MainTab>('boletos');
+  const [bSearch, setBSearch] = useState('');
+  const [bFilter, setBFilter] = useState<BoletoFilter>('todos');
+  const [bLimit, setBLimit] = useState(12);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // Sheet states
+  const [activeBoletoId, setActiveBoletoId] = useState<string | null>(null);
+  const [bSheetMode, setBSheetMode] = useState<'view' | 'baixa'>('view');
+  const [baixaMethod, setBaixaMethod] = useState<PayMethod>('PIX');
+  const [baixaDate, setBaixaDate] = useState(() => toInputDate(new Date()));
+  const [baixaVal, setBaixaVal] = useState('');
+
+  const [isNbOpen, setIsNbOpen] = useState(false);
+  const [nbBlock, setNbBlock] = useState('');
+  const [nbApto, setNbApto] = useState('');
+  const [nbKind, setNbKind] = useState<Exclude<BoletoKind, 'Taxa condominial'>>('Taxa extra');
+  const [nbDesc, setNbDesc] = useState('');
+  const [nbVal, setNbVal] = useState('');
+  const [nbDue, setNbDue] = useState(() => toInputDate(new Date(Date.now() + 7 * DAY_MS)));
+
+  const [isNeOpen, setIsNeOpen] = useState(false);
+  const [neDesc, setNeDesc] = useState('');
+  const [neCat, setNeCat] = useState<ExpenseCat>('Manutenção');
+  const [neVal, setNeVal] = useState('');
+  const [neDate, setNeDate] = useState(() => toInputDate(new Date()));
+  const [neStatus, setNeStatus] = useState<ExpenseStatus>('paga');
+
+  const tabsRef = useRef<HTMLDivElement | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
+  const operatorName = useMemo(() => getOperatorName(), []);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    if (toastTimerRef.current) {
+      window.clearTimeout(toastTimerRef.current);
+    }
+    toastTimerRef.current = window.setTimeout(() => {
+      setToastMsg(null);
+    }, 2400);
   };
 
+  const nextSeqRef = useRef(1);
+  const nextSeqId = (prefix: string) => {
+    const seq = nextSeqRef.current;
+    nextSeqRef.current += 1;
+    return `${prefix}-${seq}`;
+  };
+
+  const addAudit = (text: string, who = operatorName) => {
+    setAuditoria(prev => [
+      {
+        id: nextSeqId('a'),
+        at: new Date(),
+        text,
+        who,
+      },
+      ...prev,
+    ]);
+  };
+
+  // Sincronização opcional com API real caso haja despesas/boletos adicionais no banco
+  useEffect(() => {
+    let mounted = true;
+    api
+      .get('/api/v1/financas/despesas')
+      .then(res => {
+        if (!mounted || !Array.isArray(res.data) || res.data.length <= 3) return;
+        const extras: DespesaRecord[] = res.data.slice(0, Math.max(0, res.data.length - 3)).map((d: any) => ({
+          id: `api-d-${d.id}`,
+          backendId: d.id,
+          desc: String(d.descricao || 'Despesa'),
+          cat: 'Outros',
+          val: Number(d.valor || 0),
+          date: d.dataVencimento ? parseInputDate(String(d.dataVencimento)) : new Date(),
+          status: d.status === 'PAGO' ? 'paga' : 'apagar',
+          paidAt: d.dataPagamento ? parseInputDate(String(d.dataPagamento)) : undefined,
+        }));
+        if (extras.length > 0) {
+          setDespesas(prev => {
+            const existingIds = new Set(prev.map(x => x.id));
+            return [...extras.filter(e => !existingIds.has(e.id)), ...prev];
+          });
+        }
+      })
+      .catch(() => {
+        // fallback silencioso para dados locais
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Métricas consolidadas
+  const stats = useMemo(() => {
+    let paidVal = 0;
+    let paidCount = 0;
+    let overVal = 0;
+    let overCount = 0;
+    let openVal = 0;
+    let openCount = 0;
+
+    for (const b of boletos) {
+      if (b.status === 'pago') {
+        paidVal += b.paidVal ?? b.val;
+        paidCount += 1;
+      } else if (b.status === 'vencido') {
+        overVal += b.val;
+        overCount += 1;
+      } else {
+        openVal += b.val;
+        openCount += 1;
+      }
+    }
+
+    const totalBoletoVal = paidVal + overVal + openVal;
+    const paidPct = totalBoletoVal > 0 ? Math.round((paidVal / totalBoletoVal) * 100) : 0;
+    const overPct = totalBoletoVal > 0 ? (overVal / totalBoletoVal) * 100 : 0;
+    const okBarPct = totalBoletoVal > 0 ? (paidVal / totalBoletoVal) * 100 : 0;
+    const inadPct = totalBoletoVal > 0 ? (overVal / totalBoletoVal) * 100 : 0;
+
+    let expTotal = 0;
+    let expPagas = 0;
+    let expApagar = 0;
+    for (const d of despesas) {
+      expTotal += d.val;
+      if (d.status === 'paga') expPagas += d.val;
+      else expApagar += d.val;
+    }
+
+    const saldo = paidVal - expPagas;
+
+    return {
+      paidVal,
+      paidCount,
+      overVal,
+      overCount,
+      openVal,
+      openCount,
+      totalBoletoVal,
+      paidPct,
+      okBarPct,
+      overPct,
+      inadPct,
+      expTotal,
+      expPagas,
+      expApagar,
+      saldo,
+    };
+  }, [boletos, despesas]);
+
+  const monthTitle = useMemo(() => {
+    const now = new Date();
+    const m = now.toLocaleDateString('pt-BR', { month: 'long' });
+    return `${m.charAt(0).toUpperCase() + m.slice(1)}/${now.getFullYear()}`;
+  }, []);
+
+  // Lista filtrada e ordenada de boletos
+  const filteredBoletos = useMemo(() => {
+    const q = bSearch.trim().toLowerCase();
+    const rank: Record<BoletoStatus, number> = { vencido: 0, aberto: 1, pago: 2 };
+
+    return boletos
+      .filter(b => {
+        if (bFilter !== 'todos' && b.status !== bFilter) return false;
+        if (q) {
+          const hay = `${b.unit} ${b.resident} ${b.kind}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (rank[a.status] !== rank[b.status]) return rank[a.status] - rank[b.status];
+        if (a.status === 'pago') {
+          return (b.paidAt?.getTime() ?? 0) - (a.paidAt?.getTime() ?? 0);
+        }
+        return a.due.getTime() - b.due.getTime();
+      });
+  }, [boletos, bFilter, bSearch]);
+
+  const shownBoletos = useMemo(() => {
+    return filteredBoletos.slice(0, bLimit);
+  }, [filteredBoletos, bLimit]);
+
+  const sortedDespesas = useMemo(() => {
+    return [...despesas].sort((a, b) => {
+      if (a.status !== b.status) return a.status === 'apagar' ? -1 : 1;
+      if (a.status === 'apagar') return a.date.getTime() - b.date.getTime();
+      return (b.paidAt?.getTime() ?? b.date.getTime()) - (a.paidAt?.getTime() ?? a.date.getTime());
+    });
+  }, [despesas]);
+
+  const activeBoleto = useMemo(
+    () => boletos.find(b => b.id === activeBoletoId) ?? null,
+    [boletos, activeBoletoId]
+  );
+
+  // Lookup de unidade no modal Emitir Boleto
+  const nbLookup = useMemo(() => {
+    const bNum = Number(nbBlock);
+    const aNum = Number(nbApto);
+    if (!nbBlock && !nbApto) {
+      return { valid: false, resident: '', unit: '', message: '' };
+    }
+    if (!Number.isInteger(bNum) || bNum < 1 || bNum > 14 || !Number.isInteger(aNum) || aNum < 1 || aNum > 12) {
+      return {
+        valid: false,
+        resident: '',
+        unit: '',
+        message: 'Informe Bloco entre 1 e 14 e Apto entre 1 e 12.',
+      };
+    }
+    const found = DIRECTORY.find(u => u.block === bNum && u.apto === aNum);
+    if (!found) {
+      return { valid: false, resident: '', unit: '', message: 'Unidade não encontrada.' };
+    }
+    return {
+      valid: true,
+      resident: found.resident,
+      unit: found.unit,
+      message: `Morador: ${found.resident}`,
+    };
+  }, [nbBlock, nbApto]);
+
+  const closeAllSheets = () => {
+    setActiveBoletoId(null);
+    setIsNbOpen(false);
+    setIsNeOpen(false);
+  };
+
+  const openBoleto = (id: string, mode: 'view' | 'baixa' = 'view') => {
+    const b = boletos.find(item => item.id === id);
+    if (!b) return;
+    closeAllSheets();
+    setActiveBoletoId(id);
+    setBSheetMode(mode);
+    if (mode === 'baixa') {
+      const enc = calcEncargos(b);
+      setBaixaMethod('PIX');
+      setBaixaDate(toInputDate(new Date()));
+      setBaixaVal(enc.total.toFixed(2).replace('.', ','));
+    }
+  };
+
+  const switchToBaixa = (b: BoletoRecord) => {
+    const enc = calcEncargos(b);
+    setBSheetMode('baixa');
+    setBaixaMethod('PIX');
+    setBaixaDate(toInputDate(new Date()));
+    setBaixaVal(enc.total.toFixed(2).replace('.', ','));
+  };
+
+  const handleConfirmBaixa = () => {
+    if (!activeBoleto) return;
+    const parsedVal = parseBRLInput(baixaVal);
+    const finalVal = !isNaN(parsedVal) && parsedVal > 0 ? parsedVal : calcEncargos(activeBoleto).total;
+    const paidAtDate = parseInputDate(baixaDate);
+
+    setBoletos(prev =>
+      prev.map(b =>
+        b.id === activeBoleto.id
+          ? {
+              ...b,
+              status: 'pago',
+              paidAt: paidAtDate,
+              paidVal: finalVal,
+              method: baixaMethod,
+            }
+          : b
+      )
+    );
+
+    addAudit(
+      `Baixa manual · ${activeBoleto.unit} · ${fmtBRL(finalVal)} (${baixaMethod})`
+    );
+    closeAllSheets();
+    showToast('Baixa registrada e saldo atualizado');
+  };
+
+  const handleSendSingleReminder = (b: BoletoRecord) => {
+    addAudit(`Lembrete de cobrança enviado · ${b.unit} (${b.resident})`);
+    closeAllSheets();
+    showToast(`Lembrete enviado para ${b.unit}`);
+  };
+
+  const handleBulkReminder = () => {
+    addAudit(
+      `Cobrança em lote enviada para ${stats.overCount} ${stats.overCount === 1 ? 'unidade' : 'unidades'} em atraso`
+    );
+    showToast(
+      `Lembrete enviado para ${stats.overCount} ${stats.overCount === 1 ? 'unidade' : 'unidades'}`
+    );
+  };
+
+  const handleVerInadimplentes = () => {
+    setActiveTab('boletos');
+    setBFilter('vencido');
+    setBSearch('');
+    setBLimit(12);
+    tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const openEmitirBoleto = () => {
+    closeAllSheets();
+    setNbBlock('');
+    setNbApto('');
+    setNbKind('Taxa extra');
+    setNbDesc('');
+    setNbVal('');
+    setNbDue(toInputDate(new Date(Date.now() + 7 * DAY_MS)));
+    setIsNbOpen(true);
+  };
+
+  const canSubmitBoleto = useMemo(() => {
+    const val = parseBRLInput(nbVal);
+    return nbLookup.valid && !isNaN(val) && val > 0 && Boolean(nbDue);
+  }, [nbLookup.valid, nbVal, nbDue]);
+
+  const handleEmitirBoleto = async () => {
+    if (!canSubmitBoleto) return;
+    if (contemAmeacas(nbDesc)) {
+      showToast('Caracteres inválidos detectados na descrição');
+      return;
+    }
+
+    const val = Number(parseBRLInput(nbVal).toFixed(2));
+    const descLimpa = sanitizarEntrada(nbDesc, 120).trim();
+    const dueDate = parseInputDate(nbDue);
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const isOverdue = dueDate.getTime() < todayStart.getTime();
+    const kindText = descLimpa ? `${nbKind} · ${descLimpa}` : nbKind;
+    const comp = `${pad2(dueDate.getMonth() + 1)}/${dueDate.getFullYear()}`;
+
+    const novoBoleto: BoletoRecord = {
+      id: nextSeqId('b-new'),
+      unit: nbLookup.unit,
+      resident: nbLookup.resident,
+      kind: kindText,
+      val,
+      due: dueDate,
+      status: isOverdue ? 'vencido' : 'aberto',
+    };
+
+    setBoletos(prev => [novoBoleto, ...prev]);
+    addAudit(`Boleto emitido · ${novoBoleto.unit} · ${kindText} · ${fmtBRL(val)}`);
+    closeAllSheets();
+    setActiveTab('boletos');
+    setBFilter('todos');
+    showToast(`Boleto emitido para ${novoBoleto.unit}`);
+
+    if (val >= 1) {
+      api
+        .post('/api/v1/financas/boletos', {
+          unidadeTexto: novoBoleto.unit,
+          moradorResponsavel: novoBoleto.resident,
+          competencia: comp,
+          valor: val,
+          dataVencimento: nbDue,
+        })
+        .catch(() => {
+          // Persistência local garantida mesmo se API estiver ocupada
+        });
+    }
+  };
+
+  const openLancarDespesa = () => {
+    closeAllSheets();
+    setNeDesc('');
+    setNeCat('Manutenção');
+    setNeVal('');
+    setNeDate(toInputDate(new Date()));
+    setNeStatus('paga');
+    setIsNeOpen(true);
+  };
+
+  const canSubmitDespesa = useMemo(() => {
+    const val = parseBRLInput(neVal);
+    return neDesc.trim().length > 0 && !isNaN(val) && val > 0 && Boolean(neDate);
+  }, [neDesc, neVal, neDate]);
+
+  const handleLancarDespesa = async () => {
+    if (!canSubmitDespesa) return;
+    if (contemAmeacas(neDesc)) {
+      showToast('Caracteres inválidos detectados na descrição');
+      return;
+    }
+
+    const descLimpa = sanitizarEntrada(neDesc, 200).trim();
+    const val = Number(parseBRLInput(neVal).toFixed(2));
+    const dateObj = parseInputDate(neDate);
+
+    const novaDespesa: DespesaRecord = {
+      id: nextSeqId('d-new'),
+      desc: descLimpa,
+      cat: neCat,
+      val,
+      date: dateObj,
+      status: neStatus,
+      paidAt: neStatus === 'paga' ? dateObj : undefined,
+    };
+
+    setDespesas(prev => [novaDespesa, ...prev]);
+    addAudit(
+      `Despesa lançada (${neStatus === 'paga' ? 'paga' : 'a pagar'}) · ${descLimpa} · ${fmtBRL(val)}`
+    );
+    closeAllSheets();
+    setActiveTab('despesas');
+    showToast('Despesa lançada');
+
+    api
+      .post('/api/v1/financas/despesas', {
+        descricao: descLimpa,
+        valor: val,
+        dataVencimento: neDate,
+        status: neStatus === 'paga' ? 'PAGO' : 'PENDENTE',
+      })
+      .catch(() => {});
+  };
+
+  const handleMarkExpensePaid = (id: string) => {
+    const target = despesas.find(d => d.id === id);
+    if (!target || target.status === 'paga') return;
+
+    const now = new Date();
+    setDespesas(prev =>
+      prev.map(d => (d.id === id ? { ...d, status: 'paga', paidAt: now } : d))
+    );
+    addAudit(`Despesa paga · ${target.desc} · ${fmtBRL(target.val)}`);
+    showToast('Despesa marcada como paga');
+
+    if (target.backendId) {
+      api.put(`/api/v1/financas/despesas/${target.backendId}/pagar`).catch(() => {});
+    }
+  };
+
+  const anySheetOpen = Boolean(activeBoleto) || isNbOpen || isNeOpen;
+
   return (
-    <div className="space-y-6 h-full overflow-y-auto no-scrollbar pb-16">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <p className="text-ds-dim text-xs font-bold uppercase tracking-wider mb-1">Tesouraria</p>
-          <h2 className="text-ds-text text-2xl font-extrabold tracking-tight flex items-center gap-2 m-0">
-            Painel Financeiro
-          </h2>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setErroEmissao('');
-              setIsEmissaoOpen(true);
-            }}
-            className="px-3.5 py-2.5 rounded-xl bg-ds-primary text-ds-primary-ink text-xs font-bold flex items-center gap-1.5 hover:brightness-110 transition-all shrink-0 cursor-pointer shadow-sm"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Emitir Boleto</span>
+    <div className="flex flex-col min-h-full">
+      <style>{`
+        .fin-page-head { padding: 10px 18px 0; }
+        .fin-eyebrow { font-size: 11px; font-weight: 700; color: var(--ds-faint); text-transform: uppercase; letter-spacing: .06em; }
+        .fin-h1 { font-size: 21px; font-weight: 800; margin: 3px 0 14px; letter-spacing: -.01em; color: var(--ds-text); }
+        .fin-cta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .fin-btn { font-family: inherit; font-size: 13.5px; font-weight: 700; height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--ds-border); background: var(--ds-card); color: var(--ds-text); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px; transition: filter .15s, transform .1s; }
+        .fin-btn:active { transform: scale(.98); }
+        .fin-btn svg { width: 16px; height: 16px; flex: none; }
+        .fin-btn.primary { background: var(--ds-primary); border-color: var(--ds-primary); color: var(--ds-primary-ink); }
+        .fin-btn.primary:hover { filter: brightness(1.07); }
+        .fin-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+        .fin-main { flex: 1; padding: 16px 18px 110px; display: flex; flex-direction: column; gap: 12px; }
+        .fin-card { background: var(--ds-card); border: 1px solid var(--ds-border); border-radius: 16px; padding: 16px; }
+        .fin-lab { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ds-faint); }
+        .fin-big { font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 600; letter-spacing: -.02em; margin: 6px 0 14px; color: var(--ds-text); }
+        .fin-big.neg { color: var(--ds-danger); }
+        .fin-mini { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 14px; border-top: 1px solid var(--ds-border); }
+        .fin-mini div span { display: block; font-size: 10.5px; color: var(--ds-dim); margin-bottom: 3px; }
+        .fin-mini div b { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 600; color: var(--ds-text); }
+        .fin-mini .bad b { color: var(--ds-danger); }
+
+        .fin-arr-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 6px 0 10px; }
+        .fin-arr-top b { font-family: 'IBM Plex Mono', monospace; font-size: 15.5px; font-weight: 600; color: var(--ds-text); }
+        .fin-arr-top span { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--ds-success); font-weight: 600; }
+        .fin-stack { display: flex; height: 9px; border-radius: 999px; overflow: hidden; background: var(--ds-border); }
+        .fin-stack i { display: block; height: 100%; transition: width .25s ease; }
+        .fin-stack .s-ok { background: var(--ds-success); }
+        .fin-stack .s-bad { background: var(--ds-danger); }
+        .fin-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 11.5px; color: var(--ds-dim); }
+        .fin-legend span { display: inline-flex; align-items: center; }
+        .fin-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+
+        .fin-alert { background: var(--ds-danger-dim); border: 1px solid var(--ds-danger-dim); border-radius: 16px; padding: 14px 16px; }
+        .fin-alert .a-t { font-size: 14px; font-weight: 800; color: var(--ds-danger); }
+        .fin-alert .a-s { font-size: 12.5px; color: var(--ds-danger); opacity: .92; margin-top: 3px; line-height: 1.5; }
+        .fin-alert .a-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+        .fin-alert .fin-btn { height: 40px; font-size: 12.5px; background: var(--ds-card); }
+
+        .fin-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 3px; background: var(--ds-card); border: 1px solid var(--ds-border); border-radius: 12px; margin-top: 4px; }
+        .fin-tab { border: none; background: none; font-family: inherit; font-size: 12px; font-weight: 700; color: var(--ds-dim); padding: 9px 2px; border-radius: 9px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; transition: all .15s; }
+        .fin-tab b { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; color: var(--ds-text); }
+        .fin-tab.active { background: var(--ds-primary-dim); color: var(--ds-primary); }
+        .fin-tab.active b { color: var(--ds-primary); }
+
+        .fin-search { position: relative; margin-bottom: 10px; }
+        .fin-search svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--ds-faint); pointer-events: none; }
+        .fin-search input { width: 100%; height: 44px; padding: 0 13px 0 38px; border-radius: 12px; border: 1px solid var(--ds-border); background: var(--ds-card); color: var(--ds-text); font-family: inherit; font-size: 14px; outline: none; }
+        .fin-search input:focus-visible { outline: 2px solid var(--ds-primary); outline-offset: 1px; }
+
+        .fin-fchips { display: flex; gap: 7px; overflow-x: auto; margin-bottom: 10px; padding-bottom: 2px; }
+        .fin-fchips::-webkit-scrollbar { display: none; }
+        .fin-fc { flex: none; border: 1px solid var(--ds-border); background: var(--ds-card); color: var(--ds-dim); font-family: inherit; font-size: 12px; font-weight: 700; padding: 8px 12px; border-radius: 999px; cursor: pointer; }
+        .fin-fc b { font-family: 'IBM Plex Mono', monospace; font-weight: 600; margin-left: 4px; color: var(--ds-text); }
+        .fin-fc.active { background: var(--ds-primary-dim); border-color: var(--ds-primary); color: var(--ds-primary); }
+        .fin-fc.active b { color: var(--ds-primary); }
+
+        .fin-list { background: var(--ds-card); border: 1px solid var(--ds-border); border-radius: 14px; overflow: hidden; }
+        .fin-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--ds-border); cursor: pointer; transition: background .12s; }
+        .fin-row:hover { background: var(--ds-bg); }
+        .fin-row.static { cursor: default; }
+        .fin-row.static:hover { background: transparent; }
+        .fin-row:last-child { border-bottom: none; }
+
+        .fin-rico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; background: var(--ds-bg); color: var(--ds-dim); border: 1px solid var(--ds-border); }
+        .fin-rico svg { width: 17px; height: 17px; }
+        .fin-rico.bad { background: var(--ds-danger-dim); color: var(--ds-danger); border-color: var(--ds-danger-dim); }
+        .fin-rico.ok { background: var(--ds-success-dim); color: var(--ds-success); border-color: var(--ds-success-dim); }
+
+        .fin-rbody { flex: 1; min-width: 0; }
+        .fin-rt { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 600; color: var(--ds-text); }
+        .fin-rt-sans { font-size: 13.5px; font-weight: 700; color: var(--ds-text); }
+        .fin-rn { font-size: 12px; color: var(--ds-dim); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fin-rd { font-size: 11px; color: var(--ds-dim); margin-top: 2px; }
+        .fin-rd.bad { color: var(--ds-danger); font-weight: 600; }
+
+        .fin-rright { text-align: right; flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+        .fin-rv { font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; font-weight: 600; color: var(--ds-text); }
+        .fin-badge { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 7px; border-radius: 999px; letter-spacing: .04em; text-transform: uppercase; }
+        .fin-badge.ok { background: var(--ds-success-dim); color: var(--ds-success); }
+        .fin-badge.bad { background: var(--ds-danger-dim); color: var(--ds-danger); }
+        .fin-badge.open { background: var(--ds-warning-dim); color: var(--ds-warning); }
+        .fin-mini-btn { font-family: inherit; font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--ds-border); background: var(--ds-bg); color: var(--ds-text); cursor: pointer; }
+        .fin-mini-btn:hover { border-color: var(--ds-primary); color: var(--ds-primary); }
+
+        .fin-sum-line { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--ds-dim); margin-bottom: 10px; }
+        .fin-more-btn { width: 100%; height: 42px; margin-top: 10px; border-radius: 12px; border: 1px solid var(--ds-border); background: var(--ds-card); color: var(--ds-primary); font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .fin-audit-note { font-size: 11.5px; color: var(--ds-dim); text-align: center; margin-top: 10px; line-height: 1.5; padding: 0 8px; }
+
+        .fin-empty { text-align: center; padding: 32px 18px; background: var(--ds-card); border: 1px solid var(--ds-border); border-radius: 14px; }
+        .fin-empty-t { font-size: 14.5px; font-weight: 800; color: var(--ds-text); }
+        .fin-empty-s { font-size: 12.5px; color: var(--ds-dim); margin-top: 4px; }
+
+        .fin-overlay { position: fixed; inset: 0; background: rgba(10,10,14,.48); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 50; }
+        .fin-overlay.show { opacity: 1; pointer-events: auto; }
+        .fin-sheet { position: fixed; left: 50%; bottom: 0; transform: translate(-50%, 100%); width: 100%; max-width: 412px; background: var(--ds-card); border-radius: 20px 20px 0 0; padding: 20px 20px calc(22px + env(safe-area-inset-bottom, 0px)); z-index: 51; transition: transform .25s ease; max-height: 92vh; overflow-y: auto; border-top: 1px solid var(--ds-border); }
+        .fin-sheet.show { transform: translate(-50%, 0); }
+
+        .fin-sh-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 4px; }
+        .fin-sh-head h2 { font-size: 17px; font-weight: 800; margin: 0; color: var(--ds-text); }
+        .fin-close-btn { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--ds-border); background: var(--ds-bg); color: var(--ds-text); display: grid; place-items: center; cursor: pointer; flex: none; }
+        .fin-close-btn svg { width: 15px; height: 15px; }
+        .fin-sh-sub { font-size: 12.5px; color: var(--ds-dim); margin-bottom: 14px; }
+
+        .fin-kv-box { background: var(--ds-bg); border: 1px solid var(--ds-border); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+        .fin-kv { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 12.5px; color: var(--ds-dim); }
+        .fin-kv b { font-family: 'IBM Plex Mono', monospace; color: var(--ds-text); font-weight: 600; }
+        .fin-kv.total { padding-top: 8px; border-top: 1px solid var(--ds-border); font-weight: 700; color: var(--ds-text); }
+        .fin-kv.total b { font-size: 15px; }
+        .fin-kv b.bad { color: var(--ds-danger); }
+        .fin-kv b.ok { color: var(--ds-success); }
+
+        .fin-lbl { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ds-dim); margin-bottom: 6px; }
+        .fin-input { width: 100%; height: 44px; padding: 0 12px; border-radius: 11px; border: 1px solid var(--ds-border); background: var(--ds-bg); color: var(--ds-text); font-family: inherit; font-size: 14px; outline: none; margin-bottom: 12px; }
+        .fin-input.mono { font-family: 'IBM Plex Mono', monospace; }
+        .fin-input:focus { border-color: var(--ds-primary); }
+
+        .fin-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .fin-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+        .fin-chip { border: 1px solid var(--ds-border); background: var(--ds-bg); color: var(--ds-dim); font-family: inherit; font-size: 12px; font-weight: 700; padding: 8px 12px; border-radius: 999px; cursor: pointer; }
+        .fin-chip.active { background: var(--ds-primary-dim); border-color: var(--ds-primary); color: var(--ds-primary); }
+
+        .fin-unit-note { font-size: 12px; padding: 8px 11px; border-radius: 10px; margin-bottom: 12px; }
+        .fin-unit-note.ok { background: var(--ds-success-dim); color: var(--ds-success); font-weight: 600; }
+        .fin-unit-note.err { background: var(--ds-danger-dim); color: var(--ds-danger); font-weight: 600; }
+
+        .fin-sh-note { font-size: 11.5px; color: var(--ds-dim); line-height: 1.45; margin-bottom: 14px; }
+        .fin-sh-acts { display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px; }
+        .fin-sh-acts.single { grid-template-columns: 1fr; }
+
+        .fin-toast { position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--ds-text); color: var(--ds-bg); font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 10px; opacity: 0; transition: transform .25s, opacity .25s; z-index: 60; white-space: nowrap; max-width: 92%; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+        .fin-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+      `}</style>
+
+      {/* Page Head */}
+      <div className="fin-page-head">
+        <div className="fin-eyebrow">Tesouraria</div>
+        <h1 className="fin-h1">Painel financeiro</h1>
+        <div className="fin-cta-row">
+          <button type="button" className="fin-btn primary" onClick={openEmitirBoleto}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Emitir boleto
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setErroDespesa('');
-              setIsNovaDespesaOpen(true);
-            }}
-            className="px-3.5 py-2.5 rounded-xl bg-ds-bg border border-ds-border text-ds-text text-xs font-bold flex items-center gap-1.5 hover:bg-ds-card transition-all shrink-0 cursor-pointer shadow-sm"
-          >
-            <DollarSign className="w-4 h-4 text-ds-danger" />
-            <span>Lançar Despesa</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setIsBalanceteOpen(true);
-              carregarBalancete(balanceteMes, balanceteAno);
-            }}
-            className="px-3.5 py-2.5 rounded-xl bg-ds-bg border border-ds-border text-ds-text text-xs font-bold flex items-center gap-1.5 hover:bg-ds-card transition-all shrink-0 cursor-pointer shadow-sm"
-          >
-            <FileText className="w-4 h-4 text-ds-primary" />
-            <span>Prestação de Contas</span>
+          <button type="button" className="fin-btn" onClick={openLancarDespesa}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+            Lançar despesa
           </button>
         </div>
       </div>
 
-      {/* Main Cards */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-ds-card p-4 rounded-[16px] shadow-sm border border-ds-border flex flex-col justify-center items-center text-center">
-          <div className="w-10 h-10 rounded-2xl bg-ds-success-dim border border-ds-success/20 flex items-center justify-center mb-2">
-            <TrendingUp className="w-5 h-5 text-ds-success" />
+      {/* Main Content */}
+      <main className="fin-main">
+        {/* Hero Card */}
+        <section id="hero" className="fin-card">
+          <div className="fin-lab">Saldo do mês · {monthTitle}</div>
+          <div className={`fin-big ${stats.saldo < 0 ? 'neg' : ''}`}>
+            {fmtBRL(stats.saldo)}
           </div>
-          <p className="text-[10px] text-ds-dim font-bold uppercase tracking-wider">Arrecadado</p>
-          <p className="text-lg font-bold text-ds-text mt-0.5">
-            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(receitaArrecadada)}
-          </p>
-        </div>
-
-        <div className="bg-ds-card p-4 rounded-[16px] shadow-sm border border-ds-border flex flex-col justify-center items-center text-center">
-          <div className="w-10 h-10 rounded-2xl bg-ds-danger-dim border border-ds-danger/20 flex items-center justify-center mb-2">
-            <TrendingDown className="w-5 h-5 text-ds-danger" />
-          </div>
-          <p className="text-[10px] text-ds-dim font-bold uppercase tracking-wider">Despesas Totais</p>
-          <p className="text-lg font-bold text-ds-text mt-0.5">
-             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(despesas)}
-          </p>
-        </div>
-      </div>
-
-      {/* Inadimplência Alert */}
-      <div className="bg-ds-danger-dim border border-ds-danger/20 rounded-[16px] p-4 flex items-start gap-3">
-        <AlertCircle className="w-5 h-5 text-ds-danger shrink-0 mt-0.5" />
-        <div>
-          <h4 className="text-[14.5px] font-bold text-ds-text">Inadimplência: {inadimplencia}%</h4>
-          <p className="text-[13px] text-ds-dim mt-1 font-medium">
-            {unidadesInadimplentes} unidades estão com boletos em atraso neste mês.
-          </p>
-        </div>
-      </div>
-
-      {/* ProgressBar Receita */}
-      <div className="bg-ds-card p-5 rounded-[16px] shadow-sm border border-ds-border">
-        <div className="flex justify-between items-end mb-3">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-ds-dim">Meta de Arrecadação</p>
-            <p className="text-[15px] font-bold text-ds-text mt-0.5">
-              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(receitaPrevista)}
-            </p>
-          </div>
-          <span className="text-[13px] font-bold text-ds-success">
-            {Math.round(progressoArrecadacao)}%
-          </span>
-        </div>
-        <div className="w-full bg-ds-bg border border-ds-border rounded-full h-3 overflow-hidden">
-          <div 
-            className="bg-ds-success h-3 rounded-full transition-all duration-1000" 
-            style={{ width: `${Math.min(progressoArrecadacao, 100)}%` }}
-          ></div>
-        </div>
-      </div>
-
-      {/* Seletor de Abas de Gestão */}
-      <div className="flex gap-2 border-b border-ds-border pb-3">
-        <button
-          onClick={() => setActiveTab('BOLETOS')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeTab === 'BOLETOS'
-              ? 'bg-ds-primary text-ds-primary-ink shadow-sm'
-              : 'bg-ds-card border border-ds-border text-ds-dim hover:text-ds-text'
-          }`}
-        >
-          Boletos e Receitas
-        </button>
-        <button
-          onClick={() => setActiveTab('DESPESAS')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeTab === 'DESPESAS'
-              ? 'bg-ds-primary text-ds-primary-ink shadow-sm'
-              : 'bg-ds-card border border-ds-border text-ds-dim hover:text-ds-text'
-          }`}
-        >
-          Despesas do Condomínio ({despesasLista.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('AUDITORIA')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            activeTab === 'AUDITORIA'
-              ? 'bg-ds-primary text-ds-primary-ink shadow-sm'
-              : 'bg-ds-card border border-ds-border text-ds-dim hover:text-ds-text'
-          }`}
-        >
-          Trilha de Auditoria
-        </button>
-      </div>
-
-      {/* Aba 1: Gestão de Boletos */}
-      {activeTab === 'BOLETOS' && (
-        <div>
-          <div className="flex flex-col sm:flex-row gap-3 bg-ds-card rounded-[16px] shadow-sm border border-ds-border p-4 mb-4">
-            <div className="relative flex-1">
-              <Search className="w-5 h-5 text-ds-dim absolute left-3 top-1/2 -translate-y-1/2" />
-              <input 
-                type="text" 
-                placeholder="Buscar por unidade (Ex: 101)..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-ds-bg border border-ds-border rounded-lg focus:ring-2 focus:ring-ds-primary outline-none text-[14px] text-ds-text placeholder:text-ds-dim transition-all"
-              />
+          <div className="fin-mini">
+            <div>
+              <span>Arrecadado</span>
+              <b>{fmtBRL(stats.paidVal)}</b>
             </div>
-            <select 
-              className="bg-ds-bg text-ds-text border border-ds-border rounded-lg px-4 py-2.5 text-[14px] focus:ring-2 focus:ring-ds-primary outline-none transition-all"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="">Todos os Status</option>
-              <option value="PAGO">Pago</option>
-              <option value="PENDENTE">Pendente</option>
-              <option value="ATRASADO">Atrasado / Vencido</option>
-            </select>
-          </div>
-
-          <div className="bg-ds-card rounded-[16px] shadow-sm border border-ds-border overflow-hidden divide-y divide-ds-border">
-            {loadingBoletos ? (
-               <div className="p-8 text-center text-ds-dim flex flex-col items-center">
-                 <Loader2 className="w-6 h-6 animate-spin mb-2" />
-                 <p className="text-[14px]">Carregando lista de boletos...</p>
-               </div>
-            ) : filteredBoletos.length === 0 ? (
-               <div className="p-8 text-center text-ds-dim text-[14px]">
-                 Nenhum boleto encontrado com os filtros atuais.
-               </div>
-            ) : (
-              filteredBoletos.map(boleto => (
-                <div key={boleto.id} className="p-4 flex items-center justify-between hover:bg-ds-bg transition-colors gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
-                      boleto.status === 'PAGO' ? 'bg-ds-success-dim border-ds-success/20 text-ds-success' :
-                      boleto.status === 'ATRASADO' || boleto.status === 'VENCIDO' ? 'bg-ds-danger-dim border-ds-danger/20 text-ds-danger' :
-                      'bg-ds-warning-dim border-ds-warning/20 text-ds-warning'
-                    }`}>
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-[14.5px] font-bold text-ds-text">{boleto.unidade}</p>
-                      <p className="text-[11px] text-ds-dim font-semibold">Vencimento: {boleto.data}</p>
-                    </div>
-                  </div>
-                  <div className="text-right flex flex-col items-end gap-1.5">
-                    <p className="text-[14.5px] font-bold text-ds-text">
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(boleto.valor)}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <span className={getBadgeClass(boleto.status)}>
-                        {boleto.status}
-                      </span>
-                      {boleto.status !== 'PAGO' && (
-                        <button
-                          onClick={() => {
-                            setBoletoParaBaixa(boleto);
-                            setSenhaStepUp('');
-                            setErroStepUp(null);
-                          }}
-                          className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-ds-primary text-ds-primary-ink hover:brightness-110 transition flex items-center gap-1"
-                          title="Dar baixa manual com confirmação de senha"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Dar Baixa
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Aba 2: Gestão de Despesas do Condomínio */}
-      {activeTab === 'DESPESAS' && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-base font-bold text-ds-text">Contas e Despesas Operacionais</h3>
-            <button
-              onClick={() => {
-                setErroDespesa('');
-                setIsNovaDespesaOpen(true);
-              }}
-              className="px-3 py-1.5 rounded-xl bg-ds-danger text-white text-xs font-bold hover:brightness-110 flex items-center gap-1 transition-all"
-            >
-              <Plus className="w-3.5 h-3.5" /> Adicionar Despesa
-            </button>
-          </div>
-
-          <div className="bg-ds-card rounded-[16px] shadow-sm border border-ds-border overflow-hidden divide-y divide-ds-border">
-            {loadingDespesas ? (
-              <div className="p-8 text-center text-ds-dim flex flex-col items-center">
-                <Loader2 className="w-6 h-6 animate-spin mb-2" />
-                <p className="text-[14px]">Carregando despesas...</p>
-              </div>
-            ) : despesasLista.length === 0 ? (
-              <div className="p-8 text-center text-ds-dim text-[14px]">
-                Nenhuma despesa cadastrada no sistema.
-              </div>
-            ) : (
-              despesasLista.map(despesa => (
-                <div key={despesa.id} className="p-4 flex items-center justify-between hover:bg-ds-bg transition-colors gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
-                      despesa.status === 'PAGO'
-                        ? 'bg-ds-success-dim border-ds-success/20 text-ds-success'
-                        : 'bg-ds-danger-dim border-ds-danger/20 text-ds-danger'
-                    }`}>
-                      <DollarSign className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-[14.5px] font-bold text-ds-text">{despesa.descricao}</p>
-                      <p className="text-[11px] text-ds-dim font-semibold">
-                        Vencimento: {new Date(despesa.dataVencimento).toLocaleDateString('pt-BR')}
-                        {despesa.dataPagamento && ` • Pago em: ${new Date(despesa.dataPagamento).toLocaleDateString('pt-BR')}`}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right flex flex-col items-end gap-1.5">
-                    <p className="text-[14.5px] font-bold text-ds-text">
-                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(despesa.valor)}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <span className={getBadgeClass(despesa.status)}>
-                        {despesa.status}
-                      </span>
-                      {despesa.status !== 'PAGO' && (
-                        <button
-                          onClick={() => handlePagarDespesa(despesa.id)}
-                          className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-ds-success text-ds-bg hover:brightness-110 transition flex items-center gap-1 shadow-sm"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Registrar Pagamento
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Aba 3: Trilha de Auditoria Forense */}
-      {activeTab === 'AUDITORIA' && (
-        <div>
-          <h3 className="text-base font-bold text-ds-text mb-3 flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-ds-primary" />
-            Trilha de Auditoria Forense (Segurança)
-          </h3>
-          <div className="bg-ds-card rounded-[16px] shadow-sm border border-ds-border divide-y divide-ds-border overflow-hidden">
-            {auditoria.length === 0 ? (
-              <div className="p-8 text-center text-ds-dim text-sm">Nenhum evento registrado.</div>
-            ) : (
-              auditoria.slice(0, 15).map((ev) => (
-                <div key={ev.id} className="p-3.5 flex flex-col gap-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12.5px] font-bold text-ds-text">{ev.evento}</span>
-                    <span className={`font-mono text-[9.5px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                      ev.severidade === 'CRITICO' ? 'bg-ds-danger-dim text-ds-danger' :
-                      ev.severidade === 'ALERTA' ? 'bg-ds-warning-dim text-ds-warning' :
-                      'bg-ds-success-dim text-ds-success'
-                    }`}>
-                      {ev.severidade}
-                    </span>
-                  </div>
-                  <p className="text-[12px] text-ds-dim">{ev.detalhes}</p>
-                  <div className="flex items-center justify-between text-[10.5px] text-ds-dim font-mono mt-0.5">
-                    <span>{ev.usuarioEmail} ({ev.ipOrigem})</span>
-                    <span>{new Date(ev.criadoEm).toLocaleString('pt-BR')}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Modal Step-Up Authentication para Baixa Manual de Boleto */}
-      {boletoParaBaixa && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-ds-card border border-ds-border rounded-[20px] w-full max-w-sm p-5 shadow-xl relative animate-in zoom-in-95 duration-200">
-            <button
-              onClick={() => setBoletoParaBaixa(null)}
-              className="absolute right-4 top-4 w-8 h-8 rounded-full bg-ds-bg border border-ds-border flex items-center justify-center text-ds-dim hover:text-ds-text"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="flex items-center gap-2.5 text-ds-primary mb-2">
-              <Lock className="w-5 h-5" />
-              <h4 className="text-[16px] font-extrabold text-ds-text">Confirmação Step-Up Auth</h4>
+            <div className="bad">
+              <span>Em atraso</span>
+              <b>{fmtBRL(stats.overVal)}</b>
             </div>
-            <p className="text-[12.5px] text-ds-dim leading-relaxed mb-4">
-              Para registrar a baixa manual de <strong>{new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(boletoParaBaixa.valor)}</strong> da unidade <strong>{boletoParaBaixa.unidade}</strong>, confirme sua senha atual de Síndico:
-            </p>
-
-            <form onSubmit={handleConfirmarBaixaManual} className="space-y-3">
-              {erroStepUp && (
-                <div className="p-2.5 bg-ds-danger-dim border border-ds-danger/20 rounded-xl text-xs text-ds-danger font-medium">
-                  {erroStepUp}
-                </div>
-              )}
-              <input
-                type="password"
-                required
-                autoFocus
-                placeholder="Sua senha atual"
-                value={senhaStepUp}
-                onChange={(e) => setSenhaStepUp(e.target.value)}
-                className="w-full bg-ds-bg border border-ds-border text-ds-text rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim transition-all"
-              />
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setBoletoParaBaixa(null)}
-                  className="px-4 py-2 rounded-xl border border-ds-border text-xs font-bold text-ds-text hover:bg-ds-bg transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={confirmandoBaixa}
-                  className="px-4 py-2 rounded-xl bg-ds-primary text-ds-primary-ink text-xs font-bold hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-1.5"
-                >
-                  {confirmandoBaixa ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                  Confirmar Baixa
-                </button>
-              </div>
-            </form>
+            <div>
+              <span>Despesas</span>
+              <b>{fmtBRL(stats.expPagas)}</b>
+            </div>
           </div>
-        </div>
-      )}
+        </section>
 
-      {/* Modal Emitir Boleto */}
-      {isEmissaoOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-ds-card border border-ds-border rounded-[20px] w-full max-w-md p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
-            <button
-              onClick={() => setIsEmissaoOpen(false)}
-              className="absolute right-4 top-4 w-8 h-8 rounded-full bg-ds-bg border border-ds-border flex items-center justify-center text-ds-dim hover:text-ds-text"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="flex items-center gap-2.5 text-ds-primary mb-1">
-              <FileText className="w-5 h-5" />
-              <h3 className="text-lg font-bold text-ds-text">Emitir Boleto Condominial</h3>
-            </div>
-            <p className="text-xs text-ds-dim mb-4">
-              Gera a cobrança com registro no gateway financeiro e linha digitável.
-            </p>
-
-            <form onSubmit={handleEmitirBoleto} className="space-y-3.5">
-              {erroEmissao && (
-                <div className="p-3 bg-ds-danger-dim border border-ds-danger/20 rounded-xl text-xs text-ds-danger font-medium">
-                  {erroEmissao}
-                </div>
-              )}
-
-              <div>
-                <label className="block text-xs font-bold text-ds-dim uppercase tracking-wider mb-1">
-                  Unidade / Apartamento
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Apto 101 - Bloco A"
-                  value={novaUnidade}
-                  onChange={(e) => setNovaUnidade(e.target.value)}
-                  className="w-full bg-ds-bg border border-ds-border text-ds-text rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-ds-dim uppercase tracking-wider mb-1">
-                  Morador Responsável
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Nome completo do condômino"
-                  value={novoMorador}
-                  onChange={(e) => setNovoMorador(e.target.value)}
-                  className="w-full bg-ds-bg border border-ds-border text-ds-text rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim transition-all"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-ds-dim uppercase tracking-wider mb-1">
-                    Competência (MM/AAAA)
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="11/2026"
-                    value={novaCompetencia}
-                    onChange={(e) => setNovaCompetencia(e.target.value)}
-                    className="w-full bg-ds-bg border border-ds-border text-ds-text rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-ds-dim uppercase tracking-wider mb-1">
-                    Valor (R$)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="1"
-                    required
-                    placeholder="650.00"
-                    value={novoValor}
-                    onChange={(e) => setNovoValor(e.target.value)}
-                    className="w-full bg-ds-bg border border-ds-border text-ds-text rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim transition-all"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-ds-dim uppercase tracking-wider mb-1">
-                  Data de Vencimento
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={novoVencimento}
-                  onChange={(e) => setNovoVencimento(e.target.value)}
-                  className="w-full bg-ds-bg border border-ds-border text-ds-text rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent transition-all"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setIsEmissaoOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-ds-border text-xs font-bold text-ds-text hover:bg-ds-bg transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={emitindo}
-                  className="px-5 py-2.5 rounded-xl bg-ds-primary text-ds-primary-ink text-xs font-bold hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm"
-                >
-                  {emitindo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                  Emitir Boleto
-                </button>
-              </div>
-            </form>
+        {/* Arrecadação Card */}
+        <section id="arr" className="fin-card">
+          <div className="fin-lab">Arrecadação dos boletos</div>
+          <div className="fin-arr-top">
+            <b>
+              {fmtBRL(stats.paidVal)} de {fmtBRL(stats.totalBoletoVal)}
+            </b>
+            <span>{stats.paidPct}%</span>
           </div>
-        </div>
-      )}
-
-      {/* Modal Lançar Nova Despesa */}
-      {isNovaDespesaOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-ds-card border border-ds-border rounded-[20px] w-full max-w-md p-6 shadow-2xl relative animate-in zoom-in-95 duration-200">
-            <button
-              onClick={() => setIsNovaDespesaOpen(false)}
-              className="absolute right-4 top-4 w-8 h-8 rounded-full bg-ds-bg border border-ds-border flex items-center justify-center text-ds-dim hover:text-ds-text"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="flex items-center gap-2.5 text-ds-danger mb-1">
-              <DollarSign className="w-5 h-5" />
-              <h3 className="text-lg font-bold text-ds-text">Lançar Nova Despesa</h3>
-            </div>
-            <p className="text-xs text-ds-dim mb-4">
-              Registre contas e custos operacionais do condomínio para controle financeiro.
-            </p>
-
-            <form onSubmit={handleCadastrarDespesa} className="space-y-3.5">
-              {erroDespesa && (
-                <div className="p-3 bg-ds-danger-dim border border-ds-danger/20 rounded-xl text-xs text-ds-danger font-medium">
-                  {erroDespesa}
-                </div>
-              )}
-
-              <div>
-                <label className="block text-xs font-bold text-ds-dim uppercase tracking-wider mb-1">
-                  Descrição da Conta / Serviço
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Energia Elétrica - Áreas Comuns"
-                  value={novaDescricaoDespesa}
-                  onChange={(e) => setNovaDescricaoDespesa(e.target.value)}
-                  className="w-full bg-ds-bg border border-ds-border text-ds-text rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-ds-danger focus:border-transparent placeholder:text-ds-dim transition-all"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-ds-dim uppercase tracking-wider mb-1">
-                    Valor (R$)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    required
-                    placeholder="2450.00"
-                    value={novoValorDespesa}
-                    onChange={(e) => setNovoValorDespesa(e.target.value)}
-                    className="w-full bg-ds-bg border border-ds-border text-ds-text rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-ds-danger focus:border-transparent placeholder:text-ds-dim transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-ds-dim uppercase tracking-wider mb-1">
-                    Status Inicial
-                  </label>
-                  <select
-                    value={novoStatusDespesa}
-                    onChange={(e) => setNovoStatusDespesa(e.target.value as any)}
-                    className="w-full bg-ds-bg border border-ds-border text-ds-text rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-ds-danger"
-                  >
-                    <option value="PENDENTE">Pendente</option>
-                    <option value="PAGO">Pago</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-ds-dim uppercase tracking-wider mb-1">
-                  Data de Vencimento
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={novoVencimentoDespesa}
-                  onChange={(e) => setNovoVencimentoDespesa(e.target.value)}
-                  className="w-full bg-ds-bg border border-ds-border text-ds-text rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-ds-danger focus:border-transparent transition-all"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setIsNovaDespesaOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-ds-border text-xs font-bold text-ds-text hover:bg-ds-bg transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={salvandoDespesa}
-                  className="px-5 py-2.5 rounded-xl bg-ds-danger text-white text-xs font-bold hover:brightness-110 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-sm"
-                >
-                  {salvandoDespesa ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                  Cadastrar Despesa
-                </button>
-              </div>
-            </form>
+          <div className="fin-stack">
+            <i className="s-ok" style={{ width: `${stats.okBarPct}%` }} />
+            <i className="s-bad" style={{ width: `${stats.overPct}%` }} />
           </div>
-        </div>
-      )}
-
-      {/* Modal Balancete Mensal / Prestação de Contas */}
-      {isBalanceteOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-ds-card border border-ds-border rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-            {/* Header Modal */}
-            <div className="p-5 border-b border-ds-border flex items-center justify-between shrink-0 bg-ds-bg/40">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-ds-primary/10 border border-ds-primary/20 flex items-center justify-center text-ds-primary">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-ds-text m-0">Prestação de Contas & Balancete Mensal</h3>
-                  <p className="text-xs text-ds-dim font-medium m-0">
-                    Demonstrativo financeiro consolidado de receitas e despesas da administração
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsBalanceteOpen(false)}
-                className="w-8 h-8 rounded-lg border border-ds-border flex items-center justify-center text-ds-dim hover:text-ds-text hover:bg-ds-bg transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Barra de Filtro de Competência e Impressão */}
-            <div className="p-4 border-b border-ds-border bg-ds-bg flex flex-wrap items-center justify-between gap-3 shrink-0">
-              <div className="flex items-center gap-2">
-                <label className="text-xs font-bold text-ds-dim uppercase tracking-wider">Competência:</label>
-                <select
-                  value={balanceteMes}
-                  onChange={(e) => {
-                    const m = Number(e.target.value);
-                    setBalanceteMes(m);
-                    carregarBalancete(m, balanceteAno);
-                  }}
-                  className="bg-ds-card text-ds-text border border-ds-border rounded-lg px-3 py-1.5 text-xs font-semibold focus:ring-2 focus:ring-ds-primary outline-none"
-                >
-                  <option value={1}>Janeiro</option>
-                  <option value={2}>Fevereiro</option>
-                  <option value={3}>Março</option>
-                  <option value={4}>Abril</option>
-                  <option value={5}>Maio</option>
-                  <option value={6}>Junho</option>
-                  <option value={7}>Julho</option>
-                  <option value={8}>Agosto</option>
-                  <option value={9}>Setembro</option>
-                  <option value={10}>Outubro</option>
-                  <option value={11}>Novembro</option>
-                  <option value={12}>Dezembro</option>
-                </select>
-
-                <select
-                  value={balanceteAno}
-                  onChange={(e) => {
-                    const a = Number(e.target.value);
-                    setBalanceteAno(a);
-                    carregarBalancete(balanceteMes, a);
-                  }}
-                  className="bg-ds-card text-ds-text border border-ds-border rounded-lg px-3 py-1.5 text-xs font-semibold focus:ring-2 focus:ring-ds-primary outline-none"
-                >
-                  <option value={2024}>2024</option>
-                  <option value={2025}>2025</option>
-                  <option value={2026}>2026</option>
-                  <option value={2027}>2027</option>
-                </select>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="px-3 py-1.5 rounded-lg bg-ds-card border border-ds-border text-xs font-bold text-ds-text hover:bg-ds-bg transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
-              >
-                <Printer className="w-4 h-4 text-ds-primary" />
-                <span>Imprimir / Exportar PDF</span>
-              </button>
-            </div>
-
-            {/* Conteúdo com Scroll */}
-            <div className="p-6 overflow-y-auto space-y-6 flex-1">
-              {carregandoBalancete ? (
-                <div className="py-20 flex flex-col items-center justify-center text-ds-dim">
-                  <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                  <p className="text-sm font-semibold">Consolidando lançamentos contábeis...</p>
-                </div>
-              ) : balanceteData ? (
-                <>
-                  {/* Cards Resumo Contábil */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="bg-ds-bg p-4 rounded-xl border border-ds-border">
-                      <p className="text-[10.5px] font-bold text-ds-dim uppercase tracking-wider">Receitas Arrecadadas</p>
-                      <p className="text-lg font-bold text-ds-success mt-1">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balanceteData.totalReceitas)}
-                      </p>
-                      <p className="text-[11px] text-ds-dim mt-0.5">{balanceteData.totalBoletosPagos} cotas quitadas</p>
-                    </div>
-
-                    <div className="bg-ds-bg p-4 rounded-xl border border-ds-border">
-                      <p className="text-[10.5px] font-bold text-ds-dim uppercase tracking-wider">Despesas Realizadas</p>
-                      <p className="text-lg font-bold text-ds-danger mt-1">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balanceteData.totalDespesas)}
-                      </p>
-                      <p className="text-[11px] text-ds-dim mt-0.5">{balanceteData.despesas.length} pagamentos efetuados</p>
-                    </div>
-
-                    <div className="bg-ds-bg p-4 rounded-xl border border-ds-border">
-                      <p className="text-[10.5px] font-bold text-ds-dim uppercase tracking-wider">Saldo Operacional</p>
-                      <p className={`text-lg font-bold mt-1 ${balanceteData.saldoOperacional >= 0 ? 'text-ds-success' : 'text-ds-danger'}`}>
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balanceteData.saldoOperacional)}
-                      </p>
-                      <p className="text-[11px] text-ds-dim mt-0.5">Resultado líquido do período</p>
-                    </div>
-
-                    <div className="bg-ds-bg p-4 rounded-xl border border-ds-border">
-                      <p className="text-[10.5px] font-bold text-ds-dim uppercase tracking-wider">Taxa de Adimplência</p>
-                      <p className="text-lg font-bold text-ds-primary mt-1">
-                        {balanceteData.taxaAdimplencia}%
-                      </p>
-                      <p className="text-[11px] text-ds-dim mt-0.5">{balanceteData.totalBoletosInadimplentes} cotas pendentes</p>
-                    </div>
-                  </div>
-
-                  {/* Tabelas de Receitas e Despesas */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Receitas */}
-                    <div className="border border-ds-border rounded-xl bg-ds-bg overflow-hidden flex flex-col">
-                      <div className="p-3 bg-ds-success-dim border-b border-ds-success/20 flex items-center justify-between">
-                        <span className="text-xs font-bold text-ds-success uppercase tracking-wider flex items-center gap-1.5">
-                          <TrendingUp className="w-4 h-4" /> Entradas / Receitas ({balanceteData.receitas.length})
-                        </span>
-                        <span className="text-xs font-bold text-ds-success">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balanceteData.totalReceitas)}
-                        </span>
-                      </div>
-                      <div className="max-h-64 overflow-y-auto divide-y divide-ds-border">
-                        {balanceteData.receitas.length === 0 ? (
-                          <div className="p-6 text-center text-xs text-ds-dim">Nenhuma receita quitada nesta competência.</div>
-                        ) : (
-                          balanceteData.receitas.map((r, i) => (
-                            <div key={i} className="p-3 flex items-center justify-between text-xs hover:bg-ds-card transition-colors">
-                              <div className="pr-2">
-                                <p className="font-semibold text-ds-text m-0">{r.descricao}</p>
-                                <p className="text-[10.5px] text-ds-dim m-0 font-mono">Data: {r.data}</p>
-                              </div>
-                              <span className="font-bold text-ds-success whitespace-nowrap">
-                                + {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(r.valor)}
-                              </span>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Despesas */}
-                    <div className="border border-ds-border rounded-xl bg-ds-bg overflow-hidden flex flex-col">
-                      <div className="p-3 bg-ds-danger-dim border-b border-ds-danger/20 flex items-center justify-between">
-                        <span className="text-xs font-bold text-ds-danger uppercase tracking-wider flex items-center gap-1.5">
-                          <TrendingDown className="w-4 h-4" /> Saídas / Despesas ({balanceteData.despesas.length})
-                        </span>
-                        <span className="text-xs font-bold text-ds-danger">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(balanceteData.totalDespesas)}
-                        </span>
-                      </div>
-                      <div className="max-h-64 overflow-y-auto divide-y divide-ds-border">
-                        {balanceteData.despesas.length === 0 ? (
-                          <div className="p-6 text-center text-xs text-ds-dim">Nenhuma despesa paga registrada nesta competência.</div>
-                        ) : (
-                          balanceteData.despesas.map((d, i) => (
-                            <div key={i} className="p-3 flex items-center justify-between text-xs hover:bg-ds-card transition-colors">
-                              <div className="pr-2">
-                                <p className="font-semibold text-ds-text m-0">{d.descricao}</p>
-                                <p className="text-[10.5px] text-ds-dim m-0 font-mono">Data Pagamento: {d.data}</p>
-                              </div>
-                              <span className="font-bold text-ds-danger whitespace-nowrap">
-                                - {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(d.valor)}
-                              </span>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="py-20 text-center text-ds-dim text-sm">
-                  Não foi possível obter dados para a competência selecionada.
-                </div>
-              )}
-            </div>
-
-            {/* Footer Modal */}
-            <div className="p-4 border-t border-ds-border bg-ds-bg/40 flex items-center justify-between shrink-0">
-              <span className="text-[11px] text-ds-dim font-medium">
-                Documento gerado automaticamente pelo sistema de gestão contábil HabitOS
+          <div className="fin-legend">
+            <span>
+              <i style={{ background: 'var(--ds-success)' }} />
+              {stats.paidCount} pagos
+            </span>
+            <span>
+              <i style={{ background: 'var(--ds-danger)' }} />
+              {stats.overCount} em atraso
+            </span>
+            {stats.openCount > 0 && (
+              <span>
+                <i style={{ background: 'var(--ds-faint)' }} />
+                {stats.openCount} a vencer
               </span>
-              <button
-                type="button"
-                onClick={() => setIsBalanceteOpen(false)}
-                className="px-4 py-2 rounded-xl bg-ds-primary text-ds-primary-ink text-xs font-bold hover:brightness-110 transition-all cursor-pointer shadow-sm"
-              >
-                Fechar
+            )}
+          </div>
+        </section>
+
+        {/* Alert Box */}
+        {stats.overCount > 0 && (
+          <section id="alertBox" className="fin-alert">
+            <div className="a-t">
+              Inadimplência de {stats.inadPct.toFixed(1).replace('.', ',')}%
+            </div>
+            <div className="a-s">
+              {stats.overCount} {stats.overCount === 1 ? 'boleto' : 'boletos'} em atraso somando{' '}
+              {fmtBRL(stats.overVal)} (sem multa e juros).
+            </div>
+            <div className="a-acts">
+              <button type="button" className="fin-btn" onClick={handleVerInadimplentes}>
+                Ver inadimplentes
+              </button>
+              <button type="button" className="fin-btn" onClick={handleBulkReminder}>
+                Enviar cobrança
               </button>
             </div>
+          </section>
+        )}
+
+        {/* Tabs */}
+        <div id="tabs" ref={tabsRef} className="fin-tabs">
+          <button
+            type="button"
+            className={`fin-tab ${activeTab === 'boletos' ? 'active' : ''}`}
+            onClick={() => setActiveTab('boletos')}
+          >
+            Boletos
+            <b>{boletos.length}</b>
+          </button>
+          <button
+            type="button"
+            className={`fin-tab ${activeTab === 'despesas' ? 'active' : ''}`}
+            onClick={() => setActiveTab('despesas')}
+          >
+            Despesas
+            <b>{despesas.length}</b>
+          </button>
+          <button
+            type="button"
+            className={`fin-tab ${activeTab === 'auditoria' ? 'active' : ''}`}
+            onClick={() => setActiveTab('auditoria')}
+          >
+            Auditoria
+            <b>{auditoria.length}</b>
+          </button>
+        </div>
+
+        {/* Tab: Boletos */}
+        {activeTab === 'boletos' && (
+          <div>
+            <div className="fin-search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+              <input
+                type="text"
+                value={bSearch}
+                onChange={e => {
+                  setBSearch(e.target.value);
+                  setBLimit(12);
+                }}
+                placeholder="Buscar unidade ou morador"
+              />
+            </div>
+
+            <div className="fin-fchips">
+              <button
+                type="button"
+                className={`fin-fc ${bFilter === 'todos' ? 'active' : ''}`}
+                onClick={() => {
+                  setBFilter('todos');
+                  setBLimit(12);
+                }}
+              >
+                Todos<b>{boletos.length}</b>
+              </button>
+              <button
+                type="button"
+                className={`fin-fc ${bFilter === 'vencido' ? 'active' : ''}`}
+                onClick={() => {
+                  setBFilter('vencido');
+                  setBLimit(12);
+                }}
+              >
+                Vencidos<b>{stats.overCount}</b>
+              </button>
+              <button
+                type="button"
+                className={`fin-fc ${bFilter === 'aberto' ? 'active' : ''}`}
+                onClick={() => {
+                  setBFilter('aberto');
+                  setBLimit(12);
+                }}
+              >
+                Em aberto<b>{stats.openCount}</b>
+              </button>
+              <button
+                type="button"
+                className={`fin-fc ${bFilter === 'pago' ? 'active' : ''}`}
+                onClick={() => {
+                  setBFilter('pago');
+                  setBLimit(12);
+                }}
+              >
+                Pagos<b>{stats.paidCount}</b>
+              </button>
+            </div>
+
+            {shownBoletos.length === 0 ? (
+              <div className="fin-empty">
+                <div className="fin-empty-t">Nenhum boleto encontrado</div>
+                <div className="fin-empty-s">Ajuste a busca ou o filtro selecionado.</div>
+              </div>
+            ) : (
+              <>
+                <div className="fin-list">
+                  {shownBoletos.map(b => {
+                    const daysLate = Math.max(0, daysBetween(new Date(), b.due));
+                    const statusText =
+                      b.status === 'pago'
+                        ? `Pago em ${b.paidAt ? fmtDateShort(b.paidAt) : fmtDateShort(b.due)} via ${b.method || 'PIX'}`
+                        : b.status === 'vencido'
+                        ? `Venceu há ${daysLate} ${daysLate === 1 ? 'dia' : 'dias'}`
+                        : daysBetween(b.due, new Date()) === 0
+                        ? 'Vence hoje'
+                        : `Vence em ${fmtDateShort(b.due)}`;
+
+                    return (
+                      <div
+                        key={b.id}
+                        className="fin-row"
+                        onClick={() => openBoleto(b.id, 'view')}
+                      >
+                        <div className={`fin-rico ${b.status === 'vencido' ? 'bad' : b.status === 'pago' ? 'ok' : ''}`}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <path d="M14 2v6h6M8 13h8M8 17h5" />
+                          </svg>
+                        </div>
+
+                        <div className="fin-rbody">
+                          <div className="fin-rt">{b.unit}</div>
+                          <div className="fin-rn">
+                            {b.resident} · {b.kind}
+                          </div>
+                          <div className={`fin-rd ${b.status === 'vencido' ? 'bad' : ''}`}>
+                            {statusText}
+                          </div>
+                        </div>
+
+                        <div className="fin-rright">
+                          <div className="fin-rv">{fmtBRL(b.val)}</div>
+                          {b.status === 'pago' ? (
+                            <span className="fin-badge ok">PAGO</span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="fin-mini-btn"
+                              onClick={e => {
+                                e.stopPropagation();
+                                openBoleto(b.id, 'baixa');
+                              }}
+                            >
+                              Dar baixa
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {filteredBoletos.length > shownBoletos.length && (
+                  <button
+                    type="button"
+                    className="fin-more-btn"
+                    onClick={() => setBLimit(prev => prev + 15)}
+                  >
+                    Mostrar mais ({filteredBoletos.length - shownBoletos.length})
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Tab: Despesas */}
+        {activeTab === 'despesas' && (
+          <div>
+            <div className="fin-sum-line">
+              Total {fmtBRL(stats.expTotal)} · pagas {fmtBRL(stats.expPagas)} · a pagar{' '}
+              {fmtBRL(stats.expApagar)}
+            </div>
+
+            {sortedDespesas.length === 0 ? (
+              <div className="fin-empty">
+                <div className="fin-empty-t">Nenhuma despesa lançada</div>
+                <div className="fin-empty-s">Use "Lançar despesa" para registrar um gasto.</div>
+              </div>
+            ) : (
+              <div className="fin-list">
+                {sortedDespesas.map(d => (
+                  <div key={d.id} className="fin-row static">
+                    <div className={`fin-rico ${d.status === 'paga' ? 'ok' : ''}`}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                      </svg>
+                    </div>
+
+                    <div className="fin-rbody">
+                      <div className="fin-rt-sans">{d.desc}</div>
+                      <div className="fin-rn">
+                        {d.cat} · {fmtDateShort(d.date)}
+                      </div>
+                      <div className="fin-rd">
+                        {d.status === 'paga'
+                          ? `Paga em ${fmtDateShort(d.paidAt || d.date)}`
+                          : `A pagar · venc. ${fmtDateShort(d.date)}`}
+                      </div>
+                    </div>
+
+                    <div className="fin-rright">
+                      <div className="fin-rv">{fmtBRL(d.val)}</div>
+                      {d.status === 'paga' ? (
+                        <span className="fin-badge ok">PAGA</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="fin-mini-btn"
+                          onClick={() => handleMarkExpensePaid(d.id)}
+                        >
+                          Marcar paga
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tab: Auditoria */}
+        {activeTab === 'auditoria' && (
+          <div>
+            <div className="fin-list">
+              {auditoria.map(a => (
+                <div key={a.id} className="fin-row static">
+                  <div className="fin-rico">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                  </div>
+                  <div className="fin-rbody">
+                    <div className="fin-rt">{fmtDateTime(a.at)}</div>
+                    <div className="fin-rn" style={{ whiteSpace: 'normal' }}>
+                      {a.text}
+                    </div>
+                    <div className="fin-rd">por {a.who}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="fin-audit-note">
+              Registros da trilha não podem ser editados nem apagados. Toda baixa, emissão e despesa fica aqui.
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Backdrop */}
+      <div
+        className={`fin-overlay ${anySheetOpen ? 'show' : ''}`}
+        onClick={closeAllSheets}
+      />
+
+      {/* Sheet 1: Detalhe do Boleto / Dar Baixa */}
+      <div id="bSheet" className={`fin-sheet ${activeBoleto ? 'show' : ''}`}>
+        {activeBoleto && bSheetMode === 'view' && (() => {
+          const enc = calcEncargos(activeBoleto);
+          return (
+            <>
+              <div className="fin-sh-head">
+                <h2>{activeBoleto.unit}</h2>
+                <button
+                  type="button"
+                  className="fin-close-btn"
+                  onClick={closeAllSheets}
+                  aria-label="Fechar"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="fin-sh-sub">
+                {activeBoleto.resident} · {activeBoleto.kind}
+              </div>
+
+              <div className="fin-kv-box">
+                <div className="fin-kv">
+                  <span>Vencimento</span>
+                  <b className={activeBoleto.status === 'vencido' ? 'bad' : ''}>
+                    {fmtDateFull(activeBoleto.due)}
+                    {activeBoleto.status === 'vencido' && enc.dias > 0 ? ` (${enc.dias}d atrás)` : ''}
+                  </b>
+                </div>
+                <div className="fin-kv">
+                  <span>Valor nominal</span>
+                  <b>{fmtBRL(activeBoleto.val)}</b>
+                </div>
+
+                {activeBoleto.status === 'vencido' && enc.dias > 0 && (
+                  <>
+                    <div className="fin-kv">
+                      <span>Multa (2%)</span>
+                      <b className="bad">{fmtBRL(enc.multa)}</b>
+                    </div>
+                    <div className="fin-kv">
+                      <span>Juros (1% a.m. · {enc.dias}d)</span>
+                      <b className="bad">{fmtBRL(enc.juros)}</b>
+                    </div>
+                    <div className="fin-kv total">
+                      <span>Total atualizado</span>
+                      <b>{fmtBRL(enc.total)}</b>
+                    </div>
+                  </>
+                )}
+
+                <div className="fin-kv">
+                  <span>Situação</span>
+                  {activeBoleto.status === 'pago' ? (
+                    <b className="ok">
+                      Pago em {activeBoleto.paidAt ? fmtDateShort(activeBoleto.paidAt) : fmtDateShort(activeBoleto.due)} ·{' '}
+                      {activeBoleto.method || 'PIX'}
+                    </b>
+                  ) : activeBoleto.status === 'vencido' ? (
+                    <b className="bad">Em atraso</b>
+                  ) : (
+                    <b>Em aberto</b>
+                  )}
+                </div>
+              </div>
+
+              {activeBoleto.status === 'pago' ? (
+                <div className="fin-sh-acts single">
+                  <button type="button" className="fin-btn" onClick={closeAllSheets}>
+                    Fechar
+                  </button>
+                </div>
+              ) : (
+                <div className="fin-sh-acts">
+                  <button
+                    type="button"
+                    className="fin-btn"
+                    onClick={() => handleSendSingleReminder(activeBoleto)}
+                  >
+                    Enviar lembrete
+                  </button>
+                  <button
+                    type="button"
+                    className="fin-btn primary"
+                    onClick={() => switchToBaixa(activeBoleto)}
+                  >
+                    Dar baixa
+                  </button>
+                </div>
+              )}
+            </>
+          );
+        })()}
+
+        {activeBoleto && bSheetMode === 'baixa' && (
+          <>
+            <div className="fin-sh-head">
+              <h2>Dar baixa manual</h2>
+              <button
+                type="button"
+                className="fin-close-btn"
+                onClick={closeAllSheets}
+                aria-label="Fechar"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="fin-sh-sub">
+              {activeBoleto.unit} · {activeBoleto.resident}
+            </div>
+
+            <span className="fin-lbl">Forma de pagamento</span>
+            <div className="fin-chips">
+              {PAY_METHODS.map(m => (
+                <button
+                  key={m}
+                  type="button"
+                  className={`fin-chip ${baixaMethod === m ? 'active' : ''}`}
+                  onClick={() => setBaixaMethod(m)}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+
+            <div className="fin-grid-2">
+              <div>
+                <span className="fin-lbl">Data do pagamento</span>
+                <input
+                  type="date"
+                  className="fin-input mono"
+                  value={baixaDate}
+                  onChange={e => setBaixaDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <span className="fin-lbl">Valor recebido (R$)</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  className="fin-input mono"
+                  value={baixaVal}
+                  onChange={e => setBaixaVal(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="fin-sh-note">
+              A baixa gera registro na trilha de auditoria e atualiza o saldo do condomínio.
+            </div>
+
+            <div className="fin-sh-acts">
+              <button
+                type="button"
+                className="fin-btn"
+                onClick={() => setBSheetMode('view')}
+              >
+                Voltar
+              </button>
+              <button
+                type="button"
+                className="fin-btn primary"
+                onClick={handleConfirmBaixa}
+              >
+                Confirmar baixa
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Sheet 2: Emitir Boleto */}
+      <div id="nbSheet" className={`fin-sheet ${isNbOpen ? 'show' : ''}`}>
+        <div className="fin-sh-head">
+          <h2>Emitir boleto</h2>
+          <button
+            type="button"
+            className="fin-close-btn"
+            onClick={closeAllSheets}
+            aria-label="Fechar"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="fin-sh-sub">Cobrança avulsa para uma unidade.</div>
+
+        <div className="fin-grid-2">
+          <div>
+            <span className="fin-lbl">Bloco (1 a 14)</span>
+            <input
+              type="number"
+              min={1}
+              max={14}
+              inputMode="numeric"
+              className="fin-input mono"
+              placeholder="Ex: 3"
+              value={nbBlock}
+              onChange={e => setNbBlock(e.target.value)}
+            />
+          </div>
+          <div>
+            <span className="fin-lbl">Apto (1 a 12)</span>
+            <input
+              type="number"
+              min={1}
+              max={12}
+              inputMode="numeric"
+              className="fin-input mono"
+              placeholder="Ex: 2"
+              value={nbApto}
+              onChange={e => setNbApto(e.target.value)}
+            />
           </div>
         </div>
-      )}
+
+        {nbLookup.message && (
+          <div id="nbNote" className={`fin-unit-note ${nbLookup.valid ? 'ok' : 'err'}`}>
+            {nbLookup.message}
+          </div>
+        )}
+
+        <span className="fin-lbl">Tipo</span>
+        <div className="fin-chips">
+          {BOLETO_KINDS.map(k => (
+            <button
+              key={k}
+              type="button"
+              className={`fin-chip ${nbKind === k ? 'active' : ''}`}
+              onClick={() => setNbKind(k)}
+            >
+              {k}
+            </button>
+          ))}
+        </div>
+
+        <span className="fin-lbl">Descrição (opcional)</span>
+        <input
+          type="text"
+          className="fin-input"
+          placeholder="Ex: Rateio reforma do telhado"
+          value={nbDesc}
+          onChange={e => setNbDesc(e.target.value)}
+        />
+
+        <div className="fin-grid-2">
+          <div>
+            <span className="fin-lbl">Valor (R$)</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              className="fin-input mono"
+              placeholder="0,00"
+              value={nbVal}
+              onChange={e => setNbVal(e.target.value)}
+            />
+          </div>
+          <div>
+            <span className="fin-lbl">Vencimento</span>
+            <input
+              type="date"
+              className="fin-input mono"
+              value={nbDue}
+              onChange={e => setNbDue(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="fin-sh-acts">
+          <button type="button" className="fin-btn" onClick={closeAllSheets}>
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="fin-btn primary"
+            disabled={!canSubmitBoleto}
+            onClick={handleEmitirBoleto}
+          >
+            Emitir boleto
+          </button>
+        </div>
+      </div>
+
+      {/* Sheet 3: Lançar Despesa */}
+      <div id="neSheet" className={`fin-sheet ${isNeOpen ? 'show' : ''}`}>
+        <div className="fin-sh-head">
+          <h2>Lançar despesa</h2>
+          <button
+            type="button"
+            className="fin-close-btn"
+            onClick={closeAllSheets}
+            aria-label="Fechar"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="fin-sh-sub">Registre um pagamento ou conta a vencer do condomínio.</div>
+
+        <span className="fin-lbl">Descrição</span>
+        <input
+          type="text"
+          className="fin-input"
+          placeholder="Ex: Troca de bomba da caixa d'água"
+          value={neDesc}
+          onChange={e => setNeDesc(e.target.value)}
+        />
+
+        <span className="fin-lbl">Categoria</span>
+        <div className="fin-chips">
+          {EXPENSE_CATS.map(c => (
+            <button
+              key={c}
+              type="button"
+              className={`fin-chip ${neCat === c ? 'active' : ''}`}
+              onClick={() => setNeCat(c)}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+
+        <div className="fin-grid-2">
+          <div>
+            <span className="fin-lbl">Valor (R$)</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              className="fin-input mono"
+              placeholder="0,00"
+              value={neVal}
+              onChange={e => setNeVal(e.target.value)}
+            />
+          </div>
+          <div>
+            <span className="fin-lbl">Data</span>
+            <input
+              type="date"
+              className="fin-input mono"
+              value={neDate}
+              onChange={e => setNeDate(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <span className="fin-lbl">Situação</span>
+        <div className="fin-chips">
+          <button
+            type="button"
+            className={`fin-chip ${neStatus === 'paga' ? 'active' : ''}`}
+            onClick={() => setNeStatus('paga')}
+          >
+            Já paga
+          </button>
+          <button
+            type="button"
+            className={`fin-chip ${neStatus === 'apagar' ? 'active' : ''}`}
+            onClick={() => setNeStatus('apagar')}
+          >
+            A pagar
+          </button>
+        </div>
+
+        <div className="fin-sh-acts">
+          <button type="button" className="fin-btn" onClick={closeAllSheets}>
+            Cancelar
+          </button>
+          <button
+            type="button"
+            className="fin-btn primary"
+            disabled={!canSubmitDespesa}
+            onClick={handleLancarDespesa}
+          >
+            Lançar despesa
+          </button>
+        </div>
+      </div>
+
+      {/* Toast Notification */}
+      <div className={`fin-toast ${toastMsg ? 'show' : ''}`}>{toastMsg}</div>
     </div>
   );
 }
