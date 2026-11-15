@@ -1,8 +1,27 @@
-import { ChevronLeft, ShieldCheck, Key, EyeOff, Eye, Smartphone, Monitor, AlertTriangle, Loader2, CheckCircle2, History } from 'lucide-react';
+import {
+  Key,
+  EyeOff,
+  Eye,
+  Smartphone,
+  Monitor,
+  AlertTriangle,
+  Loader2,
+  CheckCircle2,
+  History,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useMemo, useEffect } from 'react';
 import api from '../../../services/api';
 import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
+import {
+  Badge,
+  Button,
+  IconChip,
+  InfoBanner,
+  ListCard,
+  PageHead,
+  Toast,
+} from '../../../components/ui';
 
 interface EventoAuditoria {
   id: string;
@@ -27,10 +46,14 @@ export function MoradorSeguranca() {
   const [loading, setLoading] = useState(false);
   const [loadingEncerrar, setLoadingEncerrar] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('Senha atualizada com sucesso');
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [outrasSessoesEncerradas, setOutrasSessoesEncerradas] = useState(false);
   const [historico, setHistorico] = useState<EventoAuditoria[]>([]);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3200);
+  };
 
   const carregarHistorico = async () => {
     try {
@@ -55,13 +78,13 @@ export function MoradorSeguranca() {
     return score;
   }, [nova]);
 
-  const strengthColors = ['bg-ds-border', 'bg-ds-danger', 'bg-ds-warning', 'bg-ds-success'];
+  const strengthColors = ['bg-line', 'bg-bad', 'bg-warn', 'bg-ok'];
   const getBarColor = (index: number) => {
-    if (nova.length === 0) return 'bg-ds-border';
+    if (nova.length === 0) return 'bg-line';
     if (index < strength) {
-      return strengthColors[Math.max(strength, 1)]; // 1=danger, 2=warning, 3=success
+      return strengthColors[Math.max(strength, 1)];
     }
-    return 'bg-ds-border';
+    return 'bg-line';
   };
 
   const strengthText = useMemo(() => {
@@ -107,9 +130,7 @@ export function MoradorSeguranca() {
         localStorage.setItem('@HabitOS:token', res.data.token);
       }
 
-      setToastMessage(res.data?.message || 'Senha atualizada com sucesso!');
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3500);
+      showToast(res.data?.message || 'Senha atualizada com sucesso!');
       setAtual('');
       setNova('');
       setConfirma('');
@@ -132,9 +153,7 @@ export function MoradorSeguranca() {
       if (res.data?.token) {
         localStorage.setItem('@HabitOS:token', res.data.token);
       }
-      setToastMessage(res.data?.message || 'Todas as outras sessões foram encerradas com sucesso.');
-      setShowToast(true);
-      setTimeout(() => setShowToast(false), 3500);
+      showToast(res.data?.message || 'Todas as outras sessões foram encerradas com sucesso.');
       setOutrasSessoesEncerradas(true);
       carregarHistorico();
     } catch (err: any) {
@@ -159,61 +178,41 @@ export function MoradorSeguranca() {
   };
 
   return (
-    <div className="bg-ds-bg min-h-screen flex flex-col text-ds-text animate-in slide-in-from-right-full duration-300 relative overflow-hidden">
-      
-      {/* Header */}
-      <header className="px-5 py-6 flex items-center gap-4">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="w-10 h-10 rounded-[12px] bg-ds-card border border-ds-border flex items-center justify-center text-ds-text active:scale-95 transition-transform shadow-sm flex-none"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-[19px] font-bold tracking-tight text-ds-text">Segurança e senha</h1>
-      </header>
+    <div className="bg-canvas min-h-full flex flex-col text-ink pb-10">
+      <PageHead title="Segurança e senha" onBack={() => navigate(-1)} />
 
-      {/* Main Content */}
-      <main className="px-5 pb-24 flex-1 overflow-y-auto">
-        
-        {/* Info Banner */}
-        <div className="flex gap-2.5 bg-ds-primary-dim text-ds-primary rounded-[12px] p-3 text-[12px] leading-relaxed mb-6 border border-ds-primary/20">
-          <ShieldCheck className="w-5 h-5 flex-none mt-[1px]" />
-          <div>
-            Sua senha nunca é armazenada em texto puro (usamos hash) e toda a conexão com o servidor é criptografada via HTTPS. Nunca compartilhe sua senha com terceiros ou com a portaria.
-          </div>
-        </div>
+      <main className="px-[18px] flex-1 space-y-6">
+        <InfoBanner tone="brand">
+          Sua senha nunca é armazenada em texto puro (usamos hash) e toda a conexão com o servidor é criptografada via HTTPS. Nunca compartilhe sua senha com terceiros ou com a portaria.
+        </InfoBanner>
 
-        {/* Alterar Senha Section */}
-        <section className="mb-8">
-          <h2 className="flex items-center gap-2 text-[14px] font-bold text-ds-text mb-4">
-            <Key className="w-4 h-4 text-ds-dim" />
-            Alterar senha
+        {/* Alterar Senha */}
+        <section>
+          <h2 className="flex items-center gap-2 text-[14px] font-extrabold text-ink mb-3">
+            <Key className="w-4 h-4 text-dim" />
+            <span>Alterar senha</span>
           </h2>
 
-          <div className="space-y-4">
-            
-            {errorMsg && (
-              <div className="flex items-center gap-2.5 p-3 rounded-[12px] bg-ds-danger-dim border border-ds-danger/30 text-ds-danger text-[12.5px] animate-in fade-in">
-                <AlertTriangle className="w-4 h-4 flex-none" />
-                <span>{errorMsg}</span>
-              </div>
-            )}
+          <div className="space-y-3.5">
+            {errorMsg && <InfoBanner tone="bad">{errorMsg}</InfoBanner>}
 
             {/* Senha Atual */}
             <div>
-              <label className="block text-[11px] font-bold text-ds-dim uppercase tracking-wider mb-2">Senha atual</label>
+              <label className="block text-[12px] font-bold uppercase tracking-[0.04em] text-dim mb-1.5">
+                Senha atual
+              </label>
               <div className="relative">
-                <input 
+                <input
                   type={showAtual ? 'text' : 'password'}
                   value={atual}
                   onChange={(e) => setAtual(e.target.value)}
                   placeholder="Digite sua senha atual"
-                  className="w-full bg-ds-bg border border-ds-border rounded-[12px] px-4 py-3.5 pr-12 text-[15px] text-ds-text focus:ring-2 focus:ring-ds-primary focus:border-transparent outline-none placeholder:text-ds-dim/40 transition-shadow"
+                  className="w-full h-[46px] px-[13px] pr-11 rounded-[10px] border border-line bg-surface text-ink text-[14px] placeholder:text-faint focus-visible:outline-2 focus-visible:outline-brand"
                 />
-                <button 
+                <button
                   type="button"
                   onClick={() => setShowAtual(!showAtual)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-ds-dim hover:text-ds-text transition-colors"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-dim hover:text-ink cursor-pointer"
                 >
                   {showAtual ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
                 </button>
@@ -222,180 +221,182 @@ export function MoradorSeguranca() {
 
             {/* Nova Senha */}
             <div>
-              <label className="block text-[11px] font-bold text-ds-dim uppercase tracking-wider mb-2">Nova senha</label>
+              <label className="block text-[12px] font-bold uppercase tracking-[0.04em] text-dim mb-1.5">
+                Nova senha
+              </label>
               <div className="relative">
-                <input 
+                <input
                   type={showNova ? 'text' : 'password'}
                   value={nova}
                   onChange={(e) => setNova(e.target.value)}
                   placeholder="Mínimo de 8 caracteres"
-                  className="w-full bg-ds-bg border border-ds-border rounded-[12px] px-4 py-3.5 pr-12 text-[15px] text-ds-text focus:ring-2 focus:ring-ds-primary focus:border-transparent outline-none placeholder:text-ds-dim/40 transition-shadow"
+                  className="w-full h-[46px] px-[13px] pr-11 rounded-[10px] border border-line bg-surface text-ink text-[14px] placeholder:text-faint focus-visible:outline-2 focus-visible:outline-brand"
                 />
-                <button 
+                <button
                   type="button"
                   onClick={() => setShowNova(!showNova)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-ds-dim hover:text-ds-text transition-colors"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-dim hover:text-ink cursor-pointer"
                 >
                   {showNova ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
                 </button>
               </div>
-              
-              {/* Strength Meter */}
+
               <div className="flex gap-1 mt-2">
-                <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${getBarColor(0)}`}></div>
-                <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${getBarColor(1)}`}></div>
-                <div className={`h-1 flex-1 rounded-full transition-colors duration-300 ${getBarColor(2)}`}></div>
+                <div className={`h-1 flex-1 rounded-full transition-colors ${getBarColor(0)}`} />
+                <div className={`h-1 flex-1 rounded-full transition-colors ${getBarColor(1)}`} />
+                <div className={`h-1 flex-1 rounded-full transition-colors ${getBarColor(2)}`} />
               </div>
-              <div className="text-[11px] text-ds-dim mt-1.5">{strengthText}</div>
+              <div className="text-[11.5px] text-dim mt-1.5">{strengthText}</div>
             </div>
 
             {/* Confirmar Nova Senha */}
             <div>
-              <label className="block text-[11px] font-bold text-ds-dim uppercase tracking-wider mb-2">Confirmar nova senha</label>
+              <label className="block text-[12px] font-bold uppercase tracking-[0.04em] text-dim mb-1.5">
+                Confirmar nova senha
+              </label>
               <div className="relative">
-                <input 
+                <input
                   type={showConfirma ? 'text' : 'password'}
                   value={confirma}
                   onChange={(e) => setConfirma(e.target.value)}
                   placeholder="Repita a nova senha"
-                  className={`w-full bg-ds-bg border ${mismatch ? 'border-ds-danger focus:ring-ds-danger' : 'border-ds-border focus:ring-ds-primary'} rounded-[12px] px-4 py-3.5 pr-12 text-[15px] text-ds-text focus:ring-2 focus:border-transparent outline-none placeholder:text-ds-dim/40 transition-shadow`}
+                  className={`w-full h-[46px] px-[13px] pr-11 rounded-[10px] border ${
+                    mismatch ? 'border-bad' : 'border-line'
+                  } bg-surface text-ink text-[14px] placeholder:text-faint focus-visible:outline-2 focus-visible:outline-brand`}
                 />
-                <button 
+                <button
                   type="button"
                   onClick={() => setShowConfirma(!showConfirma)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-ds-dim hover:text-ds-text transition-colors"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-dim hover:text-ink cursor-pointer"
                 >
                   {showConfirma ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
                 </button>
               </div>
               {mismatch && (
-                <div className="text-[11px] text-ds-danger mt-1.5 animate-in fade-in slide-in-from-top-1">
-                  As senhas não coincidem.
-                </div>
+                <div className="text-[11.5px] text-bad mt-1.5">As senhas não coincidem.</div>
               )}
             </div>
 
-            <button 
+            <Button
+              variant="primary"
+              fullWidth
               onClick={handleUpdate}
               disabled={loading || mismatch || !atual || nova.length < 8}
-              className="w-full bg-ds-primary text-ds-primary-ink font-bold py-3.5 rounded-[10px] active:scale-95 transition-transform text-[14.5px] shadow-md mt-2 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
             >
-              {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                'Atualizar senha'
-              )}
-            </button>
-
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Atualizar senha'}
+            </Button>
           </div>
         </section>
 
-        {/* Sessões ativas Section */}
-        <section className="mb-8">
-          <h2 className="flex items-center gap-2 text-[14px] font-bold text-ds-danger mb-4">
+        {/* Sessões ativas */}
+        <section className="space-y-3">
+          <h2 className="flex items-center gap-2 text-[14px] font-extrabold text-bad">
             <AlertTriangle className="w-4 h-4" />
-            Sessões ativas
+            <span>Sessões ativas</span>
           </h2>
 
-          <div className="flex items-center gap-3 p-3.5 border border-ds-border rounded-[12px] mb-2.5 bg-ds-card shadow-sm">
-            <div className="w-[34px] h-[34px] rounded-lg bg-ds-bg border border-ds-border flex items-center justify-center text-ds-dim flex-none">
-              <Smartphone className="w-4 h-4" />
+          <ListCard>
+            <div className="flex items-center gap-3">
+              <IconChip tone="neutral" size="sm">
+                <Smartphone className="w-4 h-4" />
+              </IconChip>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-bold text-ink truncate">Dispositivo Atual</div>
+                <div className="text-[11.5px] text-dim">Sessão ativa agora</div>
+              </div>
+              <Badge tone="ok">Este dispositivo</Badge>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[13px] font-bold text-ds-text truncate">Dispositivo Atual</div>
-              <div className="text-[11px] text-ds-dim mt-[1px]">Sessão ativa agora</div>
-            </div>
-            <span className="font-mono text-[9px] font-bold px-2 py-1 rounded-full bg-ds-success-dim text-ds-success whitespace-nowrap tracking-wider">
-              ESTE DISPOSITIVO
-            </span>
-          </div>
+          </ListCard>
 
           {outrasSessoesEncerradas ? (
-            <div className="p-3.5 rounded-[12px] bg-ds-success-dim/40 border border-ds-success/30 text-ds-success text-[12.5px] flex items-center gap-2.5 mb-3">
-              <CheckCircle2 className="w-4 h-4 flex-none" />
-              <span>Nenhuma outra sessão ativa. Apenas este dispositivo está autenticado.</span>
-            </div>
+            <InfoBanner tone="ok">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>Nenhuma outra sessão ativa. Apenas este dispositivo está autenticado.</span>
+              </div>
+            </InfoBanner>
           ) : (
-            <div className="flex items-center gap-3 p-3.5 border border-ds-border rounded-[12px] mb-4 bg-ds-card shadow-sm">
-              <div className="w-[34px] h-[34px] rounded-lg bg-ds-bg border border-ds-border flex items-center justify-center text-ds-dim flex-none">
-                <Monitor className="w-4 h-4" />
+            <ListCard>
+              <div className="flex items-center gap-3">
+                <IconChip tone="neutral" size="sm">
+                  <Monitor className="w-4 h-4" />
+                </IconChip>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[13px] font-bold text-ink truncate">
+                    Outros navegadores ou apps
+                  </div>
+                  <div className="text-[11.5px] text-dim">Possíveis sessões abertas</div>
+                </div>
+                <Button variant="mini" onClick={handleEncerrarSessoes} disabled={loadingEncerrar}>
+                  Encerrar
+                </Button>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-bold text-ds-text truncate">Outros navegadores ou apps</div>
-                <div className="text-[11px] text-ds-dim mt-[1px]">Possíveis sessões abertas</div>
-              </div>
-              <button 
-                onClick={handleEncerrarSessoes}
-                disabled={loadingEncerrar}
-                className="text-[11.5px] font-bold text-ds-danger active:opacity-70 transition-opacity whitespace-nowrap"
-              >
-                Encerrar
-              </button>
-            </div>
+            </ListCard>
           )}
 
-          <button 
+          <Button
+            variant="ghost-danger"
+            fullWidth
             onClick={handleEncerrarSessoes}
             disabled={loadingEncerrar || outrasSessoesEncerradas}
-            className="w-full p-3 rounded-[10px] border border-ds-danger bg-ds-danger-dim text-ds-danger font-bold text-[13.5px] active:scale-95 transition-transform mt-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:active:scale-100"
           >
             {loadingEncerrar ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               'Encerrar todas as outras sessões'
             )}
-          </button>
-          <p className="text-[11px] text-ds-dim mt-2 leading-relaxed text-center">
+          </Button>
+          <p className="text-[11.5px] text-dim leading-relaxed text-center">
             Ao encerrar outras sessões, o token de autenticação de todos os outros dispositivos é invalidado instantaneamente pelo servidor.
           </p>
         </section>
 
-        {/* Trilha de Auditoria Forense Section */}
-        <section>
-          <h2 className="flex items-center gap-2 text-[14px] font-bold text-ds-text mb-3">
-            <History className="w-4 h-4 text-ds-primary" />
-            Registro de atividades de segurança
+        {/* Trilha de Auditoria Forense */}
+        <section className="space-y-3">
+          <h2 className="flex items-center gap-2 text-[14px] font-extrabold text-ink">
+            <History className="w-4 h-4 text-brand" />
+            <span>Registro de atividades de segurança</span>
           </h2>
+
           {historico.length === 0 ? (
-            <div className="p-4 border border-ds-border rounded-[12px] bg-ds-card text-[12px] text-ds-dim text-center">
-              Nenhuma atividade crítica registrada recentemente nesta conta.
-            </div>
+            <ListCard>
+              <p className="text-[12px] text-dim text-center py-2">
+                Nenhuma atividade crítica registrada recentemente nesta conta.
+              </p>
+            </ListCard>
           ) : (
             <div className="space-y-2.5">
               {historico.slice(0, 6).map((item) => (
-                <div key={item.id} className="p-3.5 border border-ds-border rounded-[12px] bg-ds-card shadow-sm flex flex-col gap-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[12.5px] font-bold text-ds-text">{formatarEvento(item.evento)}</span>
-                    <span className={`font-mono text-[9px] font-bold px-2 py-0.5 rounded-full uppercase ${
-                      item.severidade === 'CRITICO' ? 'bg-ds-danger-dim text-ds-danger' :
-                      item.severidade === 'ALERTA' ? 'bg-ds-warning-dim text-ds-warning' :
-                      'bg-ds-success-dim text-ds-success'
-                    }`}>
-                      {item.severidade}
+                <ListCard key={item.id}>
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="text-[12.5px] font-bold text-ink">
+                      {formatarEvento(item.evento)}
                     </span>
+                    <Badge
+                      tone={
+                        item.severidade === 'CRITICO'
+                          ? 'bad'
+                          : item.severidade === 'ALERTA'
+                          ? 'warn'
+                          : 'ok'
+                      }
+                    >
+                      {item.severidade}
+                    </Badge>
                   </div>
-                  <p className="text-[11.5px] text-ds-dim leading-snug">{item.detalhes}</p>
-                  <div className="flex items-center justify-between text-[10.5px] text-ds-dim/80 font-mono mt-1 pt-1 border-t border-ds-border/60">
+                  <p className="text-[11.5px] text-dim leading-snug">{item.detalhes}</p>
+                  <div className="flex items-center justify-between text-[10.5px] text-faint font-mono mt-2 pt-1.5 border-t border-line">
                     <span>IP: {item.ipOrigem}</span>
                     <span>{new Date(item.criadoEm).toLocaleString('pt-BR')}</span>
                   </div>
-                </div>
+                </ListCard>
               ))}
             </div>
           )}
         </section>
-
       </main>
 
-      {/* Toast Notification */}
-      <div 
-        className={`fixed bottom-[24px] left-1/2 -translate-x-1/2 bg-ds-text text-ds-bg font-bold text-[13px] px-[18px] py-[11px] rounded-[10px] shadow-lg transition-all duration-300 z-50 whitespace-nowrap
-          ${showToast ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-[80px] pointer-events-none'}
-        `}
-      >
-        {toastMessage}
-      </div>
-
+      <Toast message={toastMsg} hasBottomNav={false} />
     </div>
   );
 }

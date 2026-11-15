@@ -1,21 +1,30 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from '../../../services/api';
-import { 
-  UserCircle2, 
-  Car, 
-  Users, 
-  Bell, 
-  ShieldCheck, 
-  HelpCircle, 
-  LogOut, 
+import {
+  UserCircle2,
+  Car,
+  Users,
+  Bell,
+  ShieldCheck,
+  HelpCircle,
+  LogOut,
   ChevronRight,
   PawPrint,
   Moon,
   QrCode,
-  FileText
+  FileText,
 } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
+import {
+  Avatar,
+  Badge,
+  Button,
+  GroupedList,
+  IconChip,
+  ListRow,
+  PageHead,
+} from '../../../components/ui';
 
 export function MoradorPerfil() {
   const navigate = useNavigate();
@@ -36,7 +45,7 @@ export function MoradorPerfil() {
         setFoto(res.data.foto || '');
       } catch (err) {
         console.error(err);
-        setNome('Carlos Silva'); // Mock fallback matching HTML
+        setNome('Carlos Silva');
         setApto('01');
         setBloco('AMORGOS');
       }
@@ -55,145 +64,180 @@ export function MoradorPerfil() {
     navigate('/login');
   };
 
-  const getInitials = (name: string) => {
-    if (name === 'Carregando...') return '...';
-    const parts = name.split(' ');
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return name.substring(0, 2).toUpperCase();
-  };
-
-  const menuGroups = [
-    {
-      title: 'Minha unidade',
-      items: [
-        { icon: <UserCircle2 className="w-[18px] h-[18px]" strokeWidth={2.5} />, label: 'Dados pessoais', route: '/app/perfil/dados' },
-        { icon: <Users className="w-[18px] h-[18px]" strokeWidth={2.5} />, label: 'Moradores adicionais', route: '/app/perfil/adicionais' },
-        { icon: <PawPrint className="w-[18px] h-[18px]" strokeWidth={2.5} />, label: 'Meus pets', route: '/app/perfil/pets' },
-        { icon: <Car className="w-[18px] h-[18px]" strokeWidth={2.5} />, label: 'Meus veículos', route: '/app/perfil/veiculos' },
-      ]
-    },
-    {
-      title: 'Configurações',
-      items: [
-        { 
-          icon: <Moon className="w-[18px] h-[18px]" strokeWidth={2.5} />, 
-          label: 'Modo escuro', 
-          isToggle: true, 
-          isActive: theme === 'dark',
-          onClick: toggleTheme 
-        },
-        { icon: <Bell className="w-[18px] h-[18px]" strokeWidth={2.5} />, label: 'Notificações', route: '/app/perfil/notificacoes' },
-        { icon: <ShieldCheck className="w-[18px] h-[18px]" strokeWidth={2.5} />, label: 'Segurança e senha', route: '/app/perfil/seguranca' },
-      ]
-    },
-    {
-      title: 'Suporte e Privacidade',
-      items: [
-        { icon: <HelpCircle className="w-[18px] h-[18px]" strokeWidth={2.5} />, label: 'Central de ajuda', route: '/app/perfil/ajuda' },
-        { icon: <FileText className="w-[18px] h-[18px]" strokeWidth={2.5} />, label: 'Termos e Privacidade (LGPD)', route: '/app/perfil/privacidade' },
-      ]
-    }
-  ];
-
   return (
-    <div className="bg-ds-bg min-h-screen flex flex-col pb-6 text-ds-text animate-in fade-in duration-300">
-      
-      {/* Header com os cards de Perfil e QR Code */}
-      <header className="px-5 pt-8 pb-4">
-        
-        {/* Profile Card */}
-        <div className="bg-ds-card border border-ds-border rounded-[20px] p-5 shadow-sm mb-4 flex flex-col items-center justify-center relative">
-          <div className="relative mb-3">
-            <div className="w-[68px] h-[68px] bg-ds-primary text-ds-primary-ink rounded-full flex items-center justify-center text-xl font-bold font-mono tracking-wider overflow-hidden">
-              {foto ? <img src={foto} alt="Avatar" className="w-full h-full object-cover" /> : getInitials(nome)}
-            </div>
-            <div className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-ds-success rounded-full border-2 border-ds-card z-10"></div>
+    <div className="bg-canvas min-h-full flex flex-col pb-6 text-ink">
+      <PageHead eyebrow="Conta" title="Perfil" />
+
+      <div className="px-[18px] space-y-5">
+        {/* Card do Perfil */}
+        <div className="bg-surface border border-line rounded-[16px] p-5 flex flex-col items-center text-center">
+          <Avatar name={nome === 'Carregando...' ? 'Morador' : nome} src={foto || null} size="xl" online />
+          <div className="text-[17px] font-extrabold tracking-tight text-ink mt-3">{nome}</div>
+          <div className="mt-1.5">
+            <Badge tone="brand">Morador</Badge>
           </div>
-          <div className="text-[17px] font-bold tracking-tight text-ds-text text-center">{nome}</div>
-          <span className="text-[9px] font-bold tracking-widest text-ds-primary uppercase bg-ds-primary-dim px-2 py-0.5 rounded-full mt-1.5 mb-1">
-            Morador
-          </span>
-          <div className="text-[11px] font-mono text-ds-dim uppercase tracking-wider mt-1.5">
-            BLOCO-{bloco || 'UNICO'} • APTO-{apto}
+          <div className="font-mono text-[11px] font-semibold text-dim uppercase tracking-[0.05em] mt-2">
+            BLOCO-{bloco || 'UNICO'} • APTO-{apto || 'S/N'}
           </div>
         </div>
 
-        {/* QR Card */}
-        <div 
+        {/* Cartão Meu QR de Acesso */}
+        <button
+          type="button"
           onClick={() => navigate('/app/qr')}
-          className="bg-ds-primary/10 rounded-[16px] p-4 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform"
+          className="w-full text-left bg-brand-soft border border-brand/25 rounded-[14px] p-3.5 flex items-center justify-between gap-3 cursor-pointer hover:brightness-98 active:translate-y-[1px] transition-all focus-visible:outline-2 focus-visible:outline-brand"
         >
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-[14px] bg-black/40 dark:bg-black/60 flex items-center justify-center">
-              <QrCode className="w-5 h-5 text-ds-primary" strokeWidth={2.5} />
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 rounded-[12px] bg-brand text-brand-ink flex items-center justify-center shrink-0">
+              <QrCode className="w-5 h-5" />
             </div>
-            <div>
-              <div className="text-[15px] font-bold text-ds-primary tracking-tight mb-0.5">Meu QR de acesso</div>
-              <div className="text-[12px] font-medium text-ds-primary/70">Mostrar na portaria</div>
+            <div className="min-w-0">
+              <div className="text-[14.5px] font-extrabold text-brand truncate">
+                Meu QR de acesso
+              </div>
+              <div className="text-[12px] text-dim truncate">Mostrar na portaria</div>
             </div>
           </div>
-          <ChevronRight className="w-5 h-5 text-ds-primary/70" strokeWidth={2.5} />
-        </div>
+          <ChevronRight className="w-5 h-5 text-brand shrink-0" />
+        </button>
 
-      </header>
+        {/* Grupo: Minha unidade */}
+        <section>
+          <p className="text-[11px] font-bold text-faint uppercase tracking-[0.06em] mb-2 pl-1">
+            Minha unidade
+          </p>
+          <GroupedList>
+            <ListRow
+              icon={
+                <IconChip tone="neutral">
+                  <UserCircle2 className="w-[18px] h-[18px]" />
+                </IconChip>
+              }
+              title="Dados pessoais"
+              showChevron
+              onClick={() => navigate('/app/perfil/dados')}
+            />
+            <ListRow
+              icon={
+                <IconChip tone="neutral">
+                  <Users className="w-[18px] h-[18px]" />
+                </IconChip>
+              }
+              title="Moradores adicionais"
+              showChevron
+              onClick={() => navigate('/app/perfil/adicionais')}
+            />
+            <ListRow
+              icon={
+                <IconChip tone="neutral">
+                  <PawPrint className="w-[18px] h-[18px]" />
+                </IconChip>
+              }
+              title="Meus pets"
+              showChevron
+              onClick={() => navigate('/app/perfil/pets')}
+            />
+            <ListRow
+              icon={
+                <IconChip tone="neutral">
+                  <Car className="w-[18px] h-[18px]" />
+                </IconChip>
+              }
+              title="Meus veículos"
+              showChevron
+              onClick={() => navigate('/app/perfil/veiculos')}
+            />
+          </GroupedList>
+        </section>
 
-      {/* Menu Options */}
-      <main className="px-5 space-y-6">
-        {menuGroups.map((group, index) => (
-          <section key={index}>
-            <p className="text-[11px] font-bold text-ds-dim uppercase tracking-widest mb-3 pl-1">
-              {group.title}
-            </p>
-            <div className="bg-ds-card border border-ds-border rounded-[18px] overflow-hidden shadow-sm">
-              {group.items.map((item, idx) => {
-                const isLast = idx === group.items.length - 1;
-                return (
-                  <div 
-                    key={idx}
-                    onClick={() => {
-                      if (item.onClick) item.onClick();
-                      else if (item.route) navigate(item.route);
-                    }}
-                    className={`flex items-center justify-between p-4 ${!item.isToggle ? 'cursor-pointer active:bg-ds-bg/50 transition-colors' : ''} ${!isLast ? 'border-b border-ds-border/50' : ''}`}
-                  >
-                    <div className="flex items-center gap-3.5">
-                      <div className="text-ds-text bg-ds-bg p-2 rounded-xl border border-ds-border/30 shadow-sm">
-                        {item.icon}
-                      </div>
-                      <span className="text-[14px] font-bold tracking-tight text-ds-text">{item.label}</span>
-                    </div>
-                    
-                    {item.isToggle ? (
-                      <label className="relative inline-flex items-center cursor-pointer" onClick={(e) => e.stopPropagation()}>
-                        <input 
-                          type="checkbox" 
-                          className="sr-only peer"
-                          checked={item.isActive}
-                          onChange={() => item.onClick && item.onClick()}
-                        />
-                        <div className="w-11 h-6 bg-ds-bg border border-ds-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-ds-dim after:border-ds-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-ds-primary peer-checked:after:bg-white peer-checked:border-ds-primary"></div>
-                      </label>
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-ds-dim" strokeWidth={2.5} />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        ))}
+        {/* Grupo: Configurações */}
+        <section>
+          <p className="text-[11px] font-bold text-faint uppercase tracking-[0.06em] mb-2 pl-1">
+            Configurações
+          </p>
+          <GroupedList>
+            <ListRow
+              icon={
+                <IconChip tone="neutral">
+                  <Moon className="w-[18px] h-[18px]" />
+                </IconChip>
+              }
+              title="Modo escuro"
+              onClick={toggleTheme}
+              right={
+                <span
+                  role="switch"
+                  aria-checked={theme === 'dark'}
+                  className={`w-[40px] h-[23px] rounded-full p-[2.5px] transition-colors inline-flex items-center ${
+                    theme === 'dark' ? 'bg-brand' : 'bg-line'
+                  }`}
+                >
+                  <span
+                    className={`block w-[18px] h-[18px] rounded-full bg-white transition-transform duration-150 ${
+                      theme === 'dark' ? 'translate-x-[17px]' : 'translate-x-0'
+                    }`}
+                  />
+                </span>
+              }
+            />
+            <ListRow
+              icon={
+                <IconChip tone="neutral">
+                  <Bell className="w-[18px] h-[18px]" />
+                </IconChip>
+              }
+              title="Notificações"
+              showChevron
+              onClick={() => navigate('/app/perfil/notificacoes')}
+            />
+            <ListRow
+              icon={
+                <IconChip tone="neutral">
+                  <ShieldCheck className="w-[18px] h-[18px]" />
+                </IconChip>
+              }
+              title="Segurança e senha"
+              showChevron
+              onClick={() => navigate('/app/perfil/seguranca')}
+            />
+          </GroupedList>
+        </section>
 
-        {/* Botão Sair - Usando o estilo vermelho clean da screenshot */}
-        <div 
-          onClick={handleLogout}
-          className="bg-ds-card border border-ds-danger/30 rounded-[16px] p-4 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-transform shadow-sm text-ds-danger font-bold text-[14px]"
-        >
-          <LogOut className="w-[18px] h-[18px]" strokeWidth={2.5} />
-          Sair do aplicativo
-        </div>
+        {/* Grupo: Suporte e Privacidade */}
+        <section>
+          <p className="text-[11px] font-bold text-faint uppercase tracking-[0.06em] mb-2 pl-1">
+            Suporte e Privacidade
+          </p>
+          <GroupedList>
+            <ListRow
+              icon={
+                <IconChip tone="neutral">
+                  <HelpCircle className="w-[18px] h-[18px]" />
+                </IconChip>
+              }
+              title="Central de ajuda"
+              showChevron
+              onClick={() => navigate('/app/perfil/ajuda')}
+            />
+            <ListRow
+              icon={
+                <IconChip tone="neutral">
+                  <FileText className="w-[18px] h-[18px]" />
+                </IconChip>
+              }
+              title="Termos e Privacidade (LGPD)"
+              showChevron
+              onClick={() => navigate('/app/perfil/privacidade')}
+            />
+          </GroupedList>
+        </section>
 
-      </main>
-
+        {/* Sair */}
+        <Button variant="ghost-danger" fullWidth onClick={handleLogout}>
+          <LogOut className="w-[18px] h-[18px]" />
+          <span>Sair do aplicativo</span>
+        </Button>
+      </div>
     </div>
   );
 }

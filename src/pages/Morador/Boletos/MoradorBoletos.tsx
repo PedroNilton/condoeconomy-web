@@ -1,7 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Copy, CheckCircle2, Download, ArrowLeft } from 'lucide-react';
+import { Loader2, Copy, CheckCircle2, Download, Receipt } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  FilterChips,
+  IconButton,
+  ListCard,
+  PageHead,
+  Toast,
+} from '../../../components/ui';
 
 interface Boleto {
   id: string;
@@ -11,14 +21,22 @@ interface Boleto {
   linhaDigitavel: string;
 }
 
+const FILTER_OPTIONS = [
+  { id: 'Todos' as const, label: 'Todos' },
+  { id: 'Pendentes' as const, label: 'Pendentes' },
+  { id: 'Pagos' as const, label: 'Pagos' },
+  { id: 'Atrasados' as const, label: 'Atrasados' },
+];
+
 export function MoradorBoletos() {
   const navigate = useNavigate();
   const [boletos, setBoletos] = useState<Boleto[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  
-  const [filter, setFilter] = useState<'Todos'|'Pendentes'|'Pagos'|'Atrasados'>('Todos');
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const [filter, setFilter] = useState<'Todos' | 'Pendentes' | 'Pagos' | 'Atrasados'>('Todos');
 
   useEffect(() => {
     carregarBoletos();
@@ -28,7 +46,10 @@ export function MoradorBoletos() {
     try {
       const response = await api.get('/api/v1/boletos/meus');
       const data = response.data;
-      data.sort((a: Boleto, b: Boleto) => new Date(b.dataVencimento).getTime() - new Date(a.dataVencimento).getTime());
+      data.sort(
+        (a: Boleto, b: Boleto) =>
+          new Date(b.dataVencimento).getTime() - new Date(a.dataVencimento).getTime(),
+      );
       setBoletos(data);
     } catch (error) {
       console.error('Erro ao carregar boletos:', error);
@@ -43,27 +64,32 @@ export function MoradorBoletos() {
 
   const isVencido = (vencimento: string) => {
     const hoje = new Date();
-    hoje.setHours(0,0,0,0);
+    hoje.setHours(0, 0, 0, 0);
     return new Date(vencimento) < hoje;
-  };
-
-  const getBadgeClass = (status: string, vencimento: string) => {
-    const base = "inline-flex items-center font-mono text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap";
-    if (status === 'PAGO') return `${base} bg-ds-success-dim text-ds-success`;
-    if (isVencido(vencimento)) return `${base} bg-ds-danger-dim text-ds-danger`;
-    return `${base} bg-ds-warning-dim text-ds-warning`;
   };
 
   const handleCopy = (e: React.MouseEvent, id: string, text: string) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(
+      text || '00190.00009 01234.567890 12345.678901 1 98760000065000',
+    );
     setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    setToastMsg('Código copiado para a área de transferência');
+    setTimeout(() => {
+      setCopiedId(null);
+      setToastMsg(null);
+    }, 2200);
   };
 
   const toggleExpand = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     setExpandedId(expandedId === id ? null : id);
+  };
+
+  const getMonthName = (dateString: string) => {
+    const date = new Date(dateString);
+    const month = date.toLocaleString('pt-BR', { month: 'long' });
+    return month.charAt(0).toUpperCase() + month.slice(1);
   };
 
   const handleDownloadBoleto = (e: React.MouseEvent, boleto: Boleto) => {
@@ -73,12 +99,15 @@ export function MoradorBoletos() {
     const mes = getMonthName(boleto.dataVencimento);
     const valorFmt = formatCurrency(boleto.valor);
     const dataVencFmt = new Date(boleto.dataVencimento).toLocaleDateString('pt-BR');
-    const linha = boleto.linhaDigitavel || '34191.09008 63571.277308 71444.640008 3 955300000' + String(boleto.valor).replace('.', '');
-    
+    const linha =
+      boleto.linhaDigitavel ||
+      '34191.09008 63571.277308 71444.640008 3 955300000' + String(boleto.valor).replace('.', '');
+
     printWindow.document.write(`
       <!DOCTYPE html>
-      <html>
+      <html lang="pt-BR">
       <head>
+        <meta charset="utf-8" />
         <title>Boleto Condominial - ${mes}</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; color: #1e293b; max-width: 680px; margin: 0 auto; }
@@ -96,7 +125,7 @@ export function MoradorBoletos() {
       </head>
       <body>
         <div class="header">
-          <div class="logo">HabitOS CondoEconomy</div>
+          <div class="logo">CondoEconomy</div>
           <div class="title">Boleto / Comprovante Digital</div>
         </div>
         <div class="grid">
@@ -110,7 +139,7 @@ export function MoradorBoletos() {
         <div style="text-align: center; margin: 30px 0;">
           <p style="font-size: 13px; color: #64748b;">Efetue o pagamento pelo aplicativo do seu banco via código de barras ou PIX Copia e Cola.</p>
         </div>
-        <div class="footer">Documento gerado eletronicamente pelo HabitOS • Condomínio Mar Egeu</div>
+        <div class="footer">Documento gerado eletronicamente pelo CondoEconomy</div>
         <script>window.onload = function() { window.print(); };</script>
       </body>
       </html>
@@ -118,23 +147,25 @@ export function MoradorBoletos() {
     printWindow.document.close();
   };
 
-  // Metrics calculation
   const getEmAberto = () => {
     return boletos
-      .filter(b => b.status === 'PENDENTE')
+      .filter((b) => b.status === 'PENDENTE')
       .reduce((acc, curr) => acc + curr.valor, 0);
   };
 
   const getProximoVencimento = () => {
-    const pendentes = boletos.filter(b => b.status === 'PENDENTE' && !isVencido(b.dataVencimento));
+    const pendentes = boletos.filter(
+      (b) => b.status === 'PENDENTE' && !isVencido(b.dataVencimento),
+    );
     if (pendentes.length === 0) return '-';
-    // Order asc
-    pendentes.sort((a, b) => new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime());
+    pendentes.sort(
+      (a, b) => new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime(),
+    );
     const date = new Date(pendentes[0].dataVencimento);
-    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.','');
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '');
   };
 
-  const filteredBoletos = boletos.filter(b => {
+  const filteredBoletos = boletos.filter((b) => {
     const venc = isVencido(b.dataVencimento);
     if (filter === 'Pendentes') return b.status === 'PENDENTE' && !venc;
     if (filter === 'Pagos') return b.status === 'PAGO';
@@ -142,163 +173,161 @@ export function MoradorBoletos() {
     return true;
   });
 
-  const getMonthName = (dateString: string) => {
-    const date = new Date(dateString);
-    const month = date.toLocaleString('pt-BR', { month: 'long' });
-    return month.charAt(0).toUpperCase() + month.slice(1);
-  };
-
   return (
-    <div className="flex flex-col min-h-full bg-ds-bg text-ds-text font-sans">
-      
-      {/* Header fixo no topo */}
-      <header className="sticky top-0 z-10 bg-ds-bg px-[18px] pt-8 pb-1">
-        
-        <div className="flex items-center gap-[10px] mb-4">
-          <button 
-            onClick={() => navigate('/app')}
-            className="w-[34px] h-[34px] rounded-[10px] border border-ds-border bg-ds-card flex items-center justify-center text-ds-text hover:brightness-95 transition-all"
-            aria-label="Voltar"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <h1 className="text-[17px] font-extrabold m-0">Meus boletos</h1>
-        </div>
-
-        {/* Summary Card */}
-        <div className="bg-ds-card border border-ds-border rounded-[14px] p-3.5 flex justify-between items-center mb-3.5 shadow-sm">
-          <div>
-            <div className="text-[11.5px] text-ds-dim mb-[3px] font-medium">Em aberto</div>
-            <div className="text-[19px] font-extrabold text-ds-danger">
-              {formatCurrency(getEmAberto())}
+    <div className="flex flex-col min-h-full bg-canvas text-ink pb-8">
+      <PageHead eyebrow="Financeiro" title="Meus boletos" onBack={() => navigate('/app')}>
+        <ListCard className="mb-3.5">
+          <div className="flex justify-between items-center gap-3">
+            <div>
+              <div className="text-[11.5px] text-dim font-semibold">Em aberto</div>
+              <div className="font-mono text-[19px] font-extrabold text-bad tabular-nums mt-0.5">
+                {formatCurrency(getEmAberto())}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-[11.5px] text-dim font-semibold">Próximo vencimento</div>
+              <div className="font-mono text-[19px] font-extrabold text-ink mt-0.5">
+                {getProximoVencimento()}
+              </div>
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-[11.5px] text-ds-dim mb-[3px] font-medium">Próximo vencimento</div>
-            <div className="text-[19px] font-extrabold text-ds-text">
-              {getProximoVencimento()}
-            </div>
-          </div>
-        </div>
+        </ListCard>
 
-        {/* Filters Scrollable */}
-        <div className="flex gap-[7px] overflow-x-auto pb-3.5 no-scrollbar">
-          {['Todos', 'Pendentes', 'Pagos', 'Atrasados'].map(f => (
-            <button 
-              key={f}
-              onClick={() => setFilter(f as any)}
-              className={`flex-none text-[12.5px] font-bold px-[13px] py-[7px] rounded-full border transition-colors ${
-                filter === f 
-                  ? 'bg-ds-primary border-ds-primary text-ds-primary-ink' 
-                  : 'bg-ds-card border-ds-border text-ds-dim hover:text-ds-text'
-              }`}
-            >
-              {f}
-            </button>
-          ))}
+        <div className="pb-3">
+          <FilterChips
+            items={FILTER_OPTIONS}
+            value={filter}
+            onChange={(v) => setFilter(v)}
+          />
         </div>
-      </header>
+      </PageHead>
 
-      {/* Lista de Boletos */}
-      <main className="flex-1 px-[18px] pb-32 flex flex-col gap-2.5">
+      <main className="flex-1 px-[18px] flex flex-col gap-2.5">
         {loading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-ds-dim" />
+            <Loader2 className="w-7 h-7 animate-spin text-brand" />
           </div>
         ) : filteredBoletos.length === 0 ? (
-          <div className="bg-ds-card rounded-[14px] p-8 border border-ds-border text-center shadow-sm">
-            <h3 className="text-ds-text font-bold mb-1">Tudo limpo por aqui</h3>
-            <p className="text-ds-dim text-sm">Nenhum boleto encontrado para este filtro.</p>
-          </div>
+          <EmptyState
+            icon={<Receipt className="w-6 h-6" />}
+            title="Tudo limpo por aqui"
+            description="Nenhum boleto encontrado para este filtro."
+            tone="ok"
+          />
         ) : (
-          filteredBoletos.map(boleto => {
+          filteredBoletos.map((boleto) => {
             const vencido = boleto.status === 'PENDENTE' && isVencido(boleto.dataVencimento);
             const isExpanded = expandedId === boleto.id;
-            
+
             let statusText = boleto.status;
-            let dateText = `VENCE EM ${new Date(boleto.dataVencimento).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}`;
-            
+            let tone: 'ok' | 'warn' | 'bad' = 'warn';
+            let dateText = `VENCE EM ${new Date(boleto.dataVencimento).toLocaleDateString('pt-BR', {
+              day: '2-digit',
+              month: '2-digit',
+            })}`;
+
             if (boleto.status === 'PENDENTE' && vencido) {
               statusText = 'VENCIDO';
-              dateText = `VENCIDO EM ${new Date(boleto.dataVencimento).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}`;
+              tone = 'bad';
+              dateText = `VENCIDO EM ${new Date(boleto.dataVencimento).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+              })}`;
             } else if (boleto.status === 'PENDENTE') {
-              const diffTime = Math.ceil((new Date(boleto.dataVencimento).getTime() - new Date().getTime()) / (1000 * 3600 * 24));
+              const diffTime = Math.ceil(
+                (new Date(boleto.dataVencimento).getTime() - new Date().getTime()) /
+                  (1000 * 3600 * 24),
+              );
               statusText = diffTime <= 3 ? `VENCE EM ${diffTime} DIAS` : 'A VENCER';
+              tone = 'warn';
             } else if (boleto.status === 'PAGO') {
               statusText = 'PAGO';
-              dateText = `PAGO EM ${new Date(boleto.dataVencimento).toLocaleDateString('pt-BR', {day:'2-digit', month:'2-digit'})}`;
+              tone = 'ok';
+              dateText = `PAGO EM ${new Date(boleto.dataVencimento).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+              })}`;
             }
 
             return (
-              <div 
-                key={boleto.id} 
-                onClick={(e) => toggleExpand(e, boleto.id)}
-                className={`bg-ds-card rounded-[14px] border transition-all cursor-pointer shadow-sm ${vencido ? 'border-ds-danger' : 'border-ds-border'}`}
+              <ListCard
+                key={boleto.id}
+                tone={vencido ? 'bad' : 'default'}
+                className="cursor-pointer transition-colors"
               >
-                <div className="p-3.5 flex flex-col gap-2.5">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="text-[14px] font-bold text-ds-text">{getMonthName(boleto.dataVencimento)} - condomínio</div>
-                      <div className="text-[11.5px] text-ds-dim font-mono mt-[2px]">{dateText}</div>
+                <div onClick={(e) => toggleExpand(e, boleto.id)} className="flex flex-col gap-2.5">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="min-w-0">
+                      <div className="text-[14px] font-extrabold text-ink truncate">
+                        {getMonthName(boleto.dataVencimento)} — condomínio
+                      </div>
+                      <div className="font-mono text-[11px] text-dim mt-0.5">{dateText}</div>
                     </div>
-                    <span className={getBadgeClass(boleto.status, boleto.dataVencimento)}>
-                      {statusText}
-                    </span>
+                    <Badge tone={tone}>{statusText}</Badge>
                   </div>
-                  
-                  <div className="flex justify-between items-center mt-1">
-                    <span className="text-[17px] font-extrabold text-ds-text">{formatCurrency(boleto.valor)}</span>
-                    <button 
+
+                  <div className="flex justify-between items-center">
+                    <span className="font-mono text-[17px] font-extrabold text-ink tabular-nums">
+                      {formatCurrency(boleto.valor)}
+                    </span>
+                    <button
+                      type="button"
                       onClick={(e) => handleDownloadBoleto(e, boleto)}
-                      className="bg-transparent border-none text-ds-primary font-bold text-[12.5px] cursor-pointer p-0 hover:underline"
+                      className="text-brand font-bold text-[12.5px] cursor-pointer hover:underline bg-transparent border-0 p-0"
                     >
-                      {boleto.status === 'PAGO' ? 'Ver recibo' : vencido ? 'Pagar agora' : 'Ver boleto'}
+                      {boleto.status === 'PAGO'
+                        ? 'Ver recibo'
+                        : vencido
+                        ? 'Pagar agora'
+                        : 'Ver boleto'}
                     </button>
                   </div>
                 </div>
 
-                {/* Área Expandida (PIX/Copia e Cola) */}
                 {isExpanded && boleto.status === 'PENDENTE' && (
-                  <div className="px-3.5 pb-4 pt-1 animate-in slide-in-from-top-2 duration-200">
-                    <div className="bg-ds-bg border border-ds-border rounded-xl p-3 mb-3">
-                      <p className="font-mono text-[11.5px] text-ds-text break-all leading-relaxed">
-                        {boleto.linhaDigitavel || '00190.00009 01234.567890 12345.678901 1 98760000065000'}
+                  <div className="pt-3 mt-3 border-t border-line space-y-2.5">
+                    <div className="bg-canvas border border-line rounded-[10px] p-2.5">
+                      <p className="font-mono text-[11.5px] text-ink break-all leading-relaxed m-0">
+                        {boleto.linhaDigitavel ||
+                          '00190.00009 01234.567890 12345.678901 1 98760000065000'}
                       </p>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <button 
+                      <Button
+                        variant="secondary"
+                        size="card"
+                        className="flex-1"
                         onClick={(e) => handleCopy(e, boleto.id, boleto.linhaDigitavel)}
-                        className="flex-1 bg-ds-bg hover:brightness-95 transition-all border border-ds-border rounded-[10px] flex items-center justify-center gap-2 py-2.5 text-[12.5px] font-bold text-ds-text"
                       >
                         {copiedId === boleto.id ? (
                           <>
-                            <CheckCircle2 className="w-4 h-4 text-ds-success" />
-                            Copiado!
+                            <CheckCircle2 className="w-4 h-4 text-ok" />
+                            <span>Copiado!</span>
                           </>
                         ) : (
                           <>
-                            <Copy className="w-4 h-4 text-ds-dim" />
-                            Copiar código
+                            <Copy className="w-4 h-4 text-dim" />
+                            <span>Copiar código</span>
                           </>
                         )}
-                      </button>
-                      <button 
+                      </Button>
+                      <IconButton
+                        label="Baixar 2ª via / Comprovante"
                         onClick={(e) => handleDownloadBoleto(e, boleto)}
-                        title="Baixar 2ª via / Comprovante"
-                        className="w-10 h-10 bg-ds-bg hover:brightness-95 transition-all border border-ds-border rounded-[10px] flex items-center justify-center text-ds-dim"
                       >
                         <Download className="w-4 h-4" />
-                      </button>
+                      </IconButton>
                     </div>
                   </div>
                 )}
-              </div>
+              </ListCard>
             );
           })
         )}
       </main>
 
+      <Toast message={toastMsg} />
     </div>
   );
 }

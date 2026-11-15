@@ -1,8 +1,9 @@
-import { ChevronLeft, Loader2, Pencil, Lock } from 'lucide-react';
+import { Loader2, Pencil, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from '../../../services/api';
 import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
+import { Avatar, Button, Field, GroupedList, PageHead, Toast } from '../../../components/ui';
 
 export function MoradorDadosPessoais() {
   const navigate = useNavigate();
@@ -12,9 +13,15 @@ export function MoradorDadosPessoais() {
   const [apartamento, setApartamento] = useState('');
   const [bloco, setBloco] = useState('');
   const [foto, setFoto] = useState('');
-  
+
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 2600);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -45,11 +52,11 @@ export function MoradorDadosPessoais() {
     if (file) {
       const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
       if (!allowedTypes.includes(file.type)) {
-        alert('Formato de imagem inválido. Escolha um arquivo JPG, PNG ou WebP.');
+        showToast('Formato inválido. Escolha JPG, PNG ou WebP.');
         return;
       }
       if (file.size > 2 * 1024 * 1024) {
-        alert('A imagem é muito grande. O tamanho máximo permitido é 2MB.');
+        showToast('Imagem muito grande. Máximo permitido: 2MB.');
         return;
       }
       const reader = new FileReader();
@@ -76,7 +83,7 @@ export function MoradorDadosPessoais() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (contemAmeacas(nome) || contemAmeacas(telefone)) {
-      alert('Entrada contém caracteres ou padrões não permitidos.');
+      showToast('Entrada contém caracteres não permitidos.');
       return;
     }
     setLoading(true);
@@ -84,133 +91,106 @@ export function MoradorDadosPessoais() {
       await api.put('/api/v1/perfil/dados', {
         nome: sanitizarEntrada(nome),
         telefone: sanitizarEntrada(telefone),
-        foto
+        foto,
       });
-      alert('Dados salvos com sucesso!');
-      navigate(-1);
+      showToast('Dados salvos com sucesso!');
+      setTimeout(() => navigate(-1), 600);
     } catch (err) {
       console.error(err);
-      alert('Erro ao salvar os dados.');
+      showToast('Erro ao salvar os dados.');
     } finally {
       setLoading(false);
     }
   };
 
-  const getInitials = (name: string) => {
-    if (!name) return 'CS';
-    const parts = name.split(' ');
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return name.substring(0, 2).toUpperCase();
-  };
-
   return (
-    <div className="bg-ds-bg min-h-screen flex flex-col text-ds-text animate-in slide-in-from-right-full duration-300">
-      
-      {/* Header */}
-      <header className="px-5 py-6 flex items-center gap-4">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="w-10 h-10 rounded-[12px] bg-ds-card border border-ds-border flex items-center justify-center text-ds-text active:scale-95 transition-transform shadow-sm"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-[19px] font-bold tracking-tight text-ds-text">Dados pessoais</h1>
-      </header>
+    <div className="bg-canvas min-h-full flex flex-col text-ink pb-8">
+      <PageHead title="Dados pessoais" onBack={() => navigate(-1)} />
 
-      <main className="px-5 pb-8 flex-1 overflow-y-auto">
+      <main className="px-[18px] flex-1">
         {fetching ? (
-           <div className="flex justify-center mt-12"><Loader2 className="w-8 h-8 animate-spin text-ds-primary" /></div>
+          <div className="flex justify-center mt-12">
+            <Loader2 className="w-7 h-7 animate-spin text-brand" />
+          </div>
         ) : (
-          <form onSubmit={handleSave} className="space-y-6">
-            
-            {/* Foto Profile Editor */}
-            <div className="flex flex-col items-center mb-4 mt-2">
+          <form onSubmit={handleSave} className="space-y-5">
+            {/* Avatar + botão lápis */}
+            <div className="flex flex-col items-center my-2">
               <div className="relative">
-                <div className="w-[84px] h-[84px] rounded-full bg-ds-primary/20 flex items-center justify-center text-ds-primary text-3xl font-bold tracking-wide overflow-hidden shadow-inner">
-                  {foto ? (
-                    <img src={foto} alt="Perfil" className="w-full h-full object-cover" />
-                  ) : (
-                    getInitials(nome)
-                  )}
-                </div>
-                <label className="absolute bottom-0 right-0 w-[26px] h-[26px] bg-ds-primary text-white rounded-full flex items-center justify-center cursor-pointer shadow-md border-[2.5px] border-ds-bg active:scale-95 transition-transform">
+                <Avatar name={nome || 'Carlos Silva'} src={foto || null} size="xl" />
+                <label
+                  title="Alterar foto"
+                  className="absolute bottom-0 right-0 w-[26px] h-[26px] bg-brand text-brand-ink rounded-full flex items-center justify-center cursor-pointer border-2 border-canvas hover:bg-brand-hover transition-colors"
+                >
                   <Pencil className="w-[12px] h-[12px]" strokeWidth={2.5} />
                   <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
                 </label>
               </div>
-              <p className="text-[12px] text-ds-dim mt-3.5">Toque no ícone para alterar a foto</p>
+              <p className="text-[12px] text-dim mt-3">Toque no ícone para alterar a foto</p>
             </div>
 
-            {/* Editable Fields */}
-            <div>
-              <label className="block text-[11px] font-bold text-ds-dim uppercase tracking-wider mb-2">Nome completo</label>
-              <input 
-                type="text" 
-                required
-                value={nome}
-                onChange={e => setNome(e.target.value)}
-                className="w-full bg-ds-card border border-ds-border rounded-[12px] px-4 py-3.5 text-[15px] font-medium text-ds-text focus:ring-2 focus:ring-ds-primary focus:border-transparent focus:outline-none placeholder:text-ds-dim/40 transition-shadow shadow-sm"
-                placeholder="Seu nome"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-[11px] font-bold text-ds-dim uppercase tracking-wider mb-2">Telefone (WhatsApp)</label>
-              <input 
-                type="text" 
-                required
-                value={telefone}
-                onChange={handleTelefoneChange}
-                className="w-full bg-ds-card border border-ds-border rounded-[12px] px-4 py-3.5 text-[15px] font-medium text-ds-text focus:ring-2 focus:ring-ds-primary focus:border-transparent focus:outline-none placeholder:text-ds-dim/40 transition-shadow shadow-sm"
-                placeholder="(00) 00000-0000"
-              />
-            </div>
-            
-            {/* Readonly Unidade Info */}
-            <div className="pt-2">
-              <label className="block text-[11px] font-bold text-ds-dim uppercase tracking-wider mb-3">Vinculado à Unidade</label>
-              
-              <div className="bg-ds-card border border-ds-border rounded-[16px] overflow-hidden shadow-sm">
-                
-                <div className="flex items-center justify-between p-4 border-b border-ds-border/50">
-                  <span className="text-[14px] text-ds-dim">E-mail</span>
-                  <span className="text-[13px] font-mono font-black text-slate-900 dark:text-white">{email}</span>
-                </div>
-                
-                <div className="flex items-center justify-between p-4 border-b border-ds-border/50">
-                  <span className="text-[14px] text-ds-dim">Apartamento</span>
-                  <span className="text-[14px] font-mono font-black text-slate-900 dark:text-white">{apartamento}</span>
-                </div>
-                
-                <div className="flex items-center justify-between p-4">
-                  <span className="text-[14px] text-ds-dim">Bloco</span>
-                  <span className="text-[14px] font-mono font-black text-slate-900 dark:text-white">{bloco}</span>
-                </div>
+            <Field
+              label="Nome completo"
+              type="text"
+              required
+              surface="surface"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              placeholder="Seu nome"
+            />
 
-              </div>
-              
-              <div className="flex items-start gap-2 mt-3.5 text-ds-dim px-1">
-                <Lock className="w-[14px] h-[14px] flex-shrink-0 mt-0.5" strokeWidth={2} />
+            <Field
+              label="Telefone (WhatsApp)"
+              type="text"
+              required
+              mono
+              surface="surface"
+              value={telefone}
+              onChange={handleTelefoneChange}
+              placeholder="(00) 00000-0000"
+            />
+
+            {/* Informações da unidade (somente leitura) */}
+            <div className="pt-1">
+              <p className="text-[11px] font-bold text-faint uppercase tracking-[0.06em] mb-2 pl-1">
+                Vinculado à Unidade
+              </p>
+
+              <GroupedList>
+                <div className="flex items-center justify-between px-4 py-3.5">
+                  <span className="text-[13.5px] text-dim">E-mail</span>
+                  <span className="font-mono text-[13px] font-bold text-ink truncate max-w-[220px]">
+                    {email}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-3.5">
+                  <span className="text-[13.5px] text-dim">Apartamento</span>
+                  <span className="font-mono text-[13.5px] font-bold text-ink">{apartamento}</span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-3.5">
+                  <span className="text-[13.5px] text-dim">Bloco</span>
+                  <span className="font-mono text-[13.5px] font-bold text-ink">{bloco}</span>
+                </div>
+              </GroupedList>
+
+              <div className="flex items-start gap-2 mt-3 text-dim px-1">
+                <Lock className="w-[14px] h-[14px] shrink-0 mt-0.5" />
                 <p className="text-[11.5px] leading-relaxed">
                   E-mail, apartamento e bloco são definidos pela administração. Pra mudar algo aqui, fale com a Central de Ajuda.
                 </p>
               </div>
             </div>
 
-            <div className="pt-6">
-              <button 
-                type="submit" 
-                disabled={loading}
-                className="w-full bg-ds-primary text-ds-primary-ink font-bold py-4 rounded-[12px] active:scale-95 transition-transform flex items-center justify-center gap-2 shadow-md disabled:opacity-70 text-[15px]"
-              >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Salvar alterações'}
-              </button>
+            <div className="pt-2">
+              <Button type="submit" variant="primary" fullWidth disabled={loading}>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar alterações'}
+              </Button>
             </div>
-
           </form>
         )}
       </main>
 
+      <Toast message={toastMsg} hasBottomNav={false} />
     </div>
   );
 }
