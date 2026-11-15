@@ -1,27 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Eye, EyeOff, ShieldCheck, AlertCircle, Mail, X, CheckCircle2, HelpCircle } from 'lucide-react';
+import { Loader2, Eye, EyeOff, AlertCircle, Mail, X, CheckCircle2, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { sanitizarEntrada, contemAmeacas, EMAIL_SECURITY_REGEX } from '../../utils/security';
 
-type Role = 'sindico' | 'portaria' | 'morador';
-
-const roleSubtitles = {
-  sindico: 'Painel da administração — financeiro, reservas e ouvidoria.',
-  portaria: 'Encomendas, visitantes e prestadores de serviço.',
-  morador: 'Seus boletos, reservas e chamados em um só lugar.'
-};
-
-const demoCredentials = {
-  sindico: 'sindico@condominio.com',
-  portaria: 'porteiro@condominio.com',
-  morador: 'carlos.silva@email.com'
-};
-
 export function Login() {
-  const [activeRole, setActiveRole] = useState<Role>('sindico');
-  const [email, setEmail] = useState(demoCredentials.sindico);
-  const [senha, setSenha] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -57,40 +42,28 @@ export function Login() {
     return () => clearInterval(interval);
   }, [lockoutTimer]);
 
-  // Preenchimento de conveniência em desenvolvimento
-  useEffect(() => {
-    setEmail(demoCredentials[activeRole]);
-    setSenha('123456');
-    setError('');
-  }, [activeRole]);
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading || lockoutTimer > 0) return;
 
-    // 1. Sanitização e remoção de caracteres de controle e bytes nulos
     const emailSanitizado = sanitizarEntrada(email).toLowerCase();
     const senhaSanitizada = sanitizarEntrada(senha);
 
-    // 2. Detecção ativa de injeções (SQLi, XSS, scripts ou caracteres maliciosos)
     if (contemAmeacas(email) || contemAmeacas(senha)) {
       setError('Entrada inválida. Caracteres ou comandos proibidos detectados.');
       return;
     }
 
-    // 3. Validação de formato de e-mail (Prevenção contra requisições malformadas)
     if (!emailSanitizado || !EMAIL_SECURITY_REGEX.test(emailSanitizado)) {
       setError('Por favor, informe um endereço de e-mail válido.');
       return;
     }
 
-    // 4. Validação de tamanho mínimo de senha
     if (!senhaSanitizada || senhaSanitizada.length < 6) {
       setError('A senha deve conter no mínimo 6 caracteres.');
       return;
     }
 
-    // 5. Validação de tamanho máximo (Proteção contra payload excessivo/DoS)
     if (senhaSanitizada.length > 128) {
       setError('A senha excede o limite máximo permitido.');
       return;
@@ -100,25 +73,22 @@ export function Login() {
     setError('');
 
     try {
-      const response = await api.post('/api/v1/auth/login', { 
-        email: emailSanitizado, 
-        senha: senhaSanitizada 
+      const response = await api.post('/api/v1/auth/login', {
+        email: emailSanitizado,
+        senha: senhaSanitizada,
       });
       const { token, papel, nome } = response.data;
-      
-      // Limpeza de tokens ou perfis anteriores para prevenir contaminação de sessão
+
       localStorage.removeItem('@HabitOS:token');
       localStorage.removeItem('@HabitOS:user');
       localStorage.removeItem('@HabitOS:nome');
 
-      // Persistência segura e consistente do estado de autenticação
       localStorage.setItem('@HabitOS:token', token);
       if (nome) localStorage.setItem('@HabitOS:nome', nome);
       localStorage.setItem('@HabitOS:user', JSON.stringify({ nome, papel, email: emailSanitizado }));
-      
+
       setTentativasFalhas(0);
 
-      // Redirecionamento por privilégio verificado
       if (papel === 'ROLE_PORTEIRO') {
         navigate('/portaria');
       } else if (papel === 'ROLE_ADMIN' || papel === 'ROLE_SINDICO' || papel === 'ROLE_SUPER_ADMIN') {
@@ -126,7 +96,6 @@ export function Login() {
       } else {
         navigate('/app');
       }
-      
     } catch (err: any) {
       const novasTentativas = tentativasFalhas + 1;
       setTentativasFalhas(novasTentativas);
@@ -139,7 +108,7 @@ export function Login() {
           setLockoutTimer(30);
           setError('Múltiplas tentativas incorretas. Bloqueio temporário de 30 segundos ativado.');
         } else {
-          setError(err.response?.data?.message || 'E-mail ou senha inválidos.');
+          setError(err.response?.data?.message || 'E-mail ou senha incorretos.');
         }
       } else {
         setError('Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.');
@@ -215,7 +184,7 @@ export function Login() {
       await api.post('/api/v1/auth/redefinir-senha', {
         email: emailLimpo,
         codigo: codigoLimpo,
-        novaSenha: resetNovaSenha
+        novaSenha: resetNovaSenha,
       });
       setEmail(emailLimpo);
       setSenha('');
@@ -230,86 +199,72 @@ export function Login() {
   };
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center p-4 font-sans text-ds-text"
+    <div
+      className="min-h-screen min-h-[100dvh] flex items-center justify-center px-[18px] py-8 font-sans text-ink"
       style={{
-        backgroundColor: 'var(--color-ds-bg)',
-        backgroundImage: `linear-gradient(var(--color-ds-card) 1px, transparent 1px), linear-gradient(90deg, var(--color-ds-card) 1px, transparent 1px)`,
-        backgroundSize: '34px 34px'
+        backgroundColor: 'var(--bg)',
+        backgroundImage:
+          'linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px)',
+        backgroundSize: '34px 34px',
       }}
     >
       <main className="w-full max-w-[392px]">
-        
         {/* Brand */}
-        <div className="flex items-center gap-2 mb-7">
-          <div className="w-[26px] h-[26px] rounded-[7px] bg-ds-primary grid place-items-center flex-none">
+        <div className="flex items-center gap-[9px] mb-7">
+          <div className="w-[26px] h-[26px] rounded-[7px] bg-brand grid place-items-center flex-none">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="1" y="6" width="4.5" height="9" fill="white"/>
-              <rect x="6.2" y="1" width="4.5" height="14" fill="white" fillOpacity=".85"/>
-              <rect x="11.4" y="4" width="3.6" height="11" fill="white" fillOpacity=".7"/>
+              <rect x="1" y="6" width="4.5" height="9" fill="white" />
+              <rect x="6.2" y="1" width="4.5" height="14" fill="white" fillOpacity=".85" />
+              <rect x="11.4" y="4" width="3.6" height="11" fill="white" fillOpacity=".7" />
             </svg>
           </div>
-          <span className="font-extrabold text-[16px] tracking-tight text-ds-text">HabitOS</span>
+          <span className="font-extrabold text-[16px] tracking-[-0.01em] text-ink">CondoEconomy</span>
         </div>
 
         {/* Card */}
-        <div className="bg-ds-card border border-ds-border rounded-[16px] p-7 shadow-[0_1px_2px_rgba(0,0,0,0.1),0_20px_40px_-28px_rgba(0,0,0,0.3)]">
-          <h1 className="text-[19px] font-bold m-0 mb-1 tracking-tight text-ds-text">Entrar</h1>
-          <p className="text-ds-dim text-[13.5px] m-0 mb-5 min-h-[20px] leading-relaxed">
-            {roleSubtitles[activeRole]}
+        <div className="bg-surface border border-line rounded-[16px] pt-7 px-[26px] pb-6 shadow-[0_1px_2px_rgba(16,17,20,0.04),0_20px_40px_-28px_rgba(16,17,20,0.18)]">
+          <h1 className="text-[19px] font-bold m-0 mb-1 tracking-[-0.01em] text-ink">Entrar</h1>
+          <p className="text-dim text-[13.5px] m-0 mb-[22px] min-h-[20px] leading-relaxed">
+            Acesse sua conta com e-mail e senha.
           </p>
 
           <form onSubmit={handleLogin} noValidate>
-            
-            {/* Roles Picker */}
-            <div className="grid grid-cols-3 bg-ds-bg border border-ds-border rounded-[10px] p-[3px] gap-[3px] mb-6">
-              {(['sindico', 'portaria', 'morador'] as Role[]).map((role) => (
-                <button
-                  key={role}
-                  type="button"
-                  onClick={() => setActiveRole(role)}
-                  className={`flex items-center justify-center text-[12.5px] font-semibold py-2 px-1 rounded-lg transition-colors capitalize ${
-                    activeRole === role 
-                      ? 'bg-ds-primary-dim text-ds-primary' 
-                      : 'text-ds-dim hover:text-ds-text'
-                  }`}
-                >
-                  {role}
-                </button>
-              ))}
-            </div>
-
             {error && (
-              <div className="bg-ds-danger-dim border border-ds-danger/20 text-ds-danger p-3 rounded-lg text-xs font-semibold mb-4 flex items-start gap-2">
+              <div className="bg-bad-soft text-bad p-3 rounded-[10px] text-[12px] font-semibold mb-4 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 flex-none mt-0.5" />
                 <span>{error}</span>
               </div>
             )}
 
             {/* Fields */}
-            <div className="mb-4">
-              <label className="block text-[12.5px] font-semibold mb-1.5 text-ds-text">E-mail</label>
-              <input 
-                type="email" 
+            <div className="mb-[15px]">
+              <label htmlFor="login-email" className="block text-[12.5px] font-semibold mb-[6px] text-ink">
+                E-mail
+              </label>
+              <input
+                id="login-email"
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                autoComplete="username"
+                autoComplete="email"
                 maxLength={255}
-                spellCheck="false"
+                spellCheck={false}
                 disabled={loading || lockoutTimer > 0}
-                className="w-full px-3 py-2.5 rounded-lg border border-ds-border bg-ds-bg text-ds-text text-[14px] focus:outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim transition-shadow disabled:opacity-60"
+                className="w-full px-3 py-[10.5px] rounded-[9px] border border-line bg-canvas text-ink text-[14px] placeholder:text-dim focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-1 focus-visible:border-transparent disabled:opacity-60"
                 required
               />
             </div>
 
-            <div className="mb-5">
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-[12.5px] font-semibold text-ds-text">Senha</label>
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-[6px]">
+                <label htmlFor="login-senha" className="block text-[12.5px] font-semibold text-ink">
+                  Senha
+                </label>
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="text-ds-dim hover:text-ds-text text-[11px] font-medium flex items-center gap-1 focus:outline-none cursor-pointer"
+                  className="text-dim hover:text-ink text-[11px] font-medium flex items-center gap-1 cursor-pointer"
                   tabIndex={-1}
                 >
                   {showPassword ? (
@@ -325,24 +280,25 @@ export function Login() {
                   )}
                 </button>
               </div>
-              <input 
-                type={showPassword ? "text" : "password"} 
+              <input
+                id="login-senha"
+                type={showPassword ? 'text' : 'password'}
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
                 placeholder="••••••••"
                 autoComplete="current-password"
                 maxLength={128}
                 disabled={loading || lockoutTimer > 0}
-                className="w-full px-3 py-2.5 rounded-lg border border-ds-border bg-ds-bg text-ds-text text-[14px] focus:outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim transition-shadow disabled:opacity-60"
+                className="w-full px-3 py-[10.5px] rounded-[9px] border border-line bg-canvas text-ink text-[14px] placeholder:text-dim focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-1 focus-visible:border-transparent disabled:opacity-60"
                 required
               />
             </div>
 
             {/* Remember & Forgot */}
-            <div className="flex items-center justify-between mt-0.5 mb-5 text-[12.5px]">
-              <label className="flex items-center gap-2 text-ds-dim cursor-pointer">
-                <input type="checkbox" defaultChecked className="accent-ds-primary w-3.5 h-3.5 rounded-sm" /> 
-                <span className="mt-[1px]">Lembrar de mim</span>
+            <div className="flex items-center justify-between mt-[2px] mb-5 text-[12.5px]">
+              <label className="flex items-center gap-[7px] text-dim cursor-pointer">
+                <input type="checkbox" defaultChecked className="accent-brand w-3.5 h-3.5 rounded-sm" />
+                <span>Lembrar de mim</span>
               </label>
               <button
                 type="button"
@@ -355,17 +311,17 @@ export function Login() {
                   setResetConfirmacao('');
                   setIsForgotModalOpen(true);
                 }}
-                className="text-ds-primary font-semibold hover:underline bg-transparent border-0 p-0 cursor-pointer"
+                className="text-brand font-semibold hover:underline bg-transparent border-0 p-0 cursor-pointer"
               >
                 Esqueci minha senha
               </button>
             </div>
 
             {/* Submit */}
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={loading || lockoutTimer > 0}
-              className="w-full p-3 border-none rounded-lg bg-ds-primary text-ds-primary-ink font-bold text-[14.5px] cursor-pointer hover:brightness-110 active:translate-y-[1px] transition-all flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full p-[11.5px] border-none rounded-[9px] bg-brand text-brand-ink font-bold text-[14.5px] cursor-pointer hover:brightness-108 active:translate-y-[1px] transition-all flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-2"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -377,20 +333,19 @@ export function Login() {
             </button>
 
             {/* Footer Status */}
-            <div className="mt-5 pt-4 border-t border-ds-border flex items-center justify-between font-mono text-[11px] text-ds-dim">
-              <div className="flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-ds-success" />
-                <span>Ambiente Seguro HabitOS</span>
-              </div>
+            <div className="mt-5 pt-4 border-t border-line flex items-center justify-between font-mono text-[11px] text-dim">
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-ok portaria-live-dot" />
+                <span>Sincronização em tempo real ativa</span>
+              </span>
               <button
                 type="button"
                 onClick={() => setIsHelpModalOpen(true)}
-                className="hover:text-ds-text transition-colors bg-transparent border-0 p-0 cursor-pointer text-left"
+                className="hover:text-ink transition-colors bg-transparent border-0 p-0 cursor-pointer text-left"
               >
                 Precisa de ajuda?
               </button>
             </div>
-
           </form>
         </div>
 
@@ -613,7 +568,7 @@ export function Login() {
                 </div>
                 <div>
                   <h2 className="text-base font-bold text-ds-text m-0">Central de Acesso e Ajuda</h2>
-                  <p className="text-xs text-ds-dim m-0">Como funciona o acesso ao HabitOS</p>
+                  <p className="text-xs text-ds-dim m-0">Como funciona o acesso ao CondoEconomy</p>
                 </div>
               </div>
 

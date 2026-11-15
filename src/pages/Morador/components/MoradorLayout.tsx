@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Home, CalendarDays, Receipt, Car, User } from 'lucide-react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { usePushNotifications } from '../../../hooks/usePushNotifications';
+import { MobileFrame } from '../../../components/ui';
 
 export function MoradorLayout() {
   const navigate = useNavigate();
@@ -16,64 +17,80 @@ export function MoradorLayout() {
     }
   }, [navigate]);
 
+  const isVeiculos = location.pathname.includes('/veiculos');
+  const isPerfil = location.pathname.includes('/perfil') && !isVeiculos;
+
   return (
-    <div className="min-h-screen bg-black flex justify-center font-sans selection:bg-ds-primary-dim">
-      {/* Container que simula a tela do celular (Max Width) */}
-      <div className="w-full max-w-[390px] bg-ds-bg h-screen shadow-[0_0_50px_-15px_rgba(0,0,0,0.5)] flex flex-col relative overflow-hidden border-x border-ds-border">
-        
-        {/* Conteúdo Principal (scrollável) */}
-        <main className="flex-1 overflow-y-auto pb-24 no-scrollbar">
-          <Outlet />
-        </main>
+    <MobileFrame className="h-screen overflow-hidden">
+      <main className="flex-1 overflow-y-auto pb-24 no-scrollbar">
+        <Outlet />
+      </main>
 
-        {/* Bottom Navigation Bar (OLED Style) */}
-        <div className="absolute bottom-0 w-full z-50">
-          <nav className="bg-ds-bg border-t border-ds-border flex justify-around items-center h-[88px] px-2 pb-6 pt-2">
-            
-            <NavLink 
-              to="/app" 
-              end
-              className={({ isActive }) => `flex flex-col items-center justify-center w-full gap-1 transition-all ${isActive ? 'text-ds-primary' : 'text-ds-dim hover:text-ds-text'}`}
-            >
-              <Home className={`w-6 h-6 ${location.pathname === '/app' ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-              <span className="text-[10px] font-bold tracking-wide">Início</span>
-            </NavLink>
+      <nav
+        aria-label="Navegação principal"
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[412px] bg-surface border-t border-line pt-[9px] px-1 pb-[calc(9px+env(safe-area-inset-bottom,0px))] grid grid-cols-5 z-40"
+      >
+        <NavLink
+          to="/app"
+          end
+          className={({ isActive }) =>
+            `flex flex-col items-center gap-1 text-[9.5px] transition-colors ${
+              isActive ? 'text-brand font-bold' : 'text-faint font-semibold hover:text-ink'
+            }`
+          }
+        >
+          <Home className="w-5 h-5" />
+          <span>Início</span>
+        </NavLink>
 
-            <NavLink 
-              to="/app/boletos" 
-              className={({ isActive }) => `flex flex-col items-center justify-center w-full gap-1 transition-all ${isActive ? 'text-ds-primary' : 'text-ds-dim hover:text-ds-text'}`}
-            >
-              <Receipt className={`w-6 h-6 ${location.pathname.includes('/boletos') ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-              <span className="text-[10px] font-bold tracking-wide">Boletos</span>
-            </NavLink>
+        <NavLink
+          to="/app/boletos"
+          className={({ isActive }) =>
+            `flex flex-col items-center gap-1 text-[9.5px] transition-colors ${
+              isActive ? 'text-brand font-bold' : 'text-faint font-semibold hover:text-ink'
+            }`
+          }
+        >
+          <Receipt className="w-5 h-5" />
+          <span>Boletos</span>
+        </NavLink>
 
-            <NavLink 
-              to="/app/reservas" 
-              className={({ isActive }) => `flex flex-col items-center justify-center w-full gap-1 transition-all ${isActive ? 'text-ds-primary' : 'text-ds-dim hover:text-ds-text'}`}
-            >
-              <CalendarDays className={`w-6 h-6 ${location.pathname.includes('/reservas') ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-              <span className="text-[10px] font-bold tracking-wide">Reservas</span>
-            </NavLink>
+        <NavLink
+          to="/app/reservas"
+          className={({ isActive }) =>
+            `flex flex-col items-center gap-1 text-[9.5px] transition-colors ${
+              isActive ? 'text-brand font-bold' : 'text-faint font-semibold hover:text-ink'
+            }`
+          }
+        >
+          <CalendarDays className="w-5 h-5" />
+          <span>Reservas</span>
+        </NavLink>
 
-            <NavLink 
-              to="/app/perfil/veiculos" 
-              className={({ isActive }) => `flex flex-col items-center justify-center w-full gap-1 transition-all ${isActive ? 'text-ds-primary' : 'text-ds-dim hover:text-ds-text'}`}
-            >
-              <Car className={`w-6 h-6 ${location.pathname.includes('/veiculos') ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-              <span className="text-[10px] font-bold tracking-wide">Veículos</span>
-            </NavLink>
+        <NavLink
+          to="/app/perfil/veiculos"
+          className={() =>
+            `flex flex-col items-center gap-1 text-[9.5px] transition-colors ${
+              isVeiculos ? 'text-brand font-bold' : 'text-faint font-semibold hover:text-ink'
+            }`
+          }
+        >
+          <Car className="w-5 h-5" />
+          <span>Veículos</span>
+        </NavLink>
 
-            <NavLink 
-              to="/app/perfil" 
-              className={() => `flex flex-col items-center justify-center w-full gap-1 transition-all ${(location.pathname.includes('/perfil') && !location.pathname.includes('/veiculos')) ? 'text-ds-primary' : 'text-ds-dim hover:text-ds-text'}`}
-            >
-              <User className={`w-6 h-6 ${(location.pathname.includes('/perfil') && !location.pathname.includes('/veiculos')) ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-              <span className="text-[10px] font-bold tracking-wide">Perfil</span>
-            </NavLink>
-
-          </nav>
-        </div>
-      </div>
-    </div>
+        <NavLink
+          to="/app/perfil"
+          className={() =>
+            `flex flex-col items-center gap-1 text-[9.5px] transition-colors ${
+              isPerfil ? 'text-brand font-bold' : 'text-faint font-semibold hover:text-ink'
+            }`
+          }
+        >
+          <User className="w-5 h-5" />
+          <span>Perfil</span>
+        </NavLink>
+      </nav>
+    </MobileFrame>
   );
 }
