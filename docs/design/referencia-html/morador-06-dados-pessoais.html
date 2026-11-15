@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CondoEconomy — Dados Pessoais</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FAFAFA; --card:#FFFFFF; --border:#E4E4E8;
+    --text:#16181D; --dim:#75767E; --faint:#A9AAB1;
+    --primary:#4338CA; --primary-dim:#EEF0FF; --primary-ink:#FFFFFF;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0E0F12; --card:#17181D; --border:#262832;
+      --text:#ECEDF0; --dim:#90919A; --faint:#5D5E67;
+      --primary:#6C63F5; --primary-dim:#201E3A; --primary-ink:#FFFFFF;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#0E0F12; --card:#17181D; --border:#262832;
+    --text:#ECEDF0; --dim:#90919A; --faint:#5D5E67;
+    --primary:#6C63F5; --primary-dim:#201E3A; --primary-ink:#FFFFFF;
+  }
+  * { box-sizing:border-box; }
+  html, body { height:100%; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:'Manrope',system-ui,sans-serif; display:flex; justify-content:center; }
+  .phone { width:100%; max-width:412px; min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; }
+
+  header.top { padding:calc(16px + env(safe-area-inset-top,0px)) 18px 8px; display:flex; align-items:center; gap:10px; }
+  .back-btn { width:34px; height:34px; border-radius:10px; border:1px solid var(--border); background:var(--card); display:grid; place-items:center; color:var(--text); flex:none; }
+  .back-btn svg { width:16px; height:16px; }
+  h1 { font-size:17px; font-weight:800; margin:0; }
+
+  main { flex:1; padding:8px 18px 40px; display:flex; flex-direction:column; gap:22px; }
+
+  .avatar-block { display:flex; flex-direction:column; align-items:center; gap:8px; padding:8px 0 4px; }
+  .avatar-wrap { position:relative; width:76px; height:76px; }
+  .avatar { width:76px; height:76px; border-radius:50%; background:var(--primary-dim); color:var(--primary); display:grid; place-items:center; font-size:26px; font-weight:800; }
+  .edit-fab { position:absolute; bottom:-2px; right:-2px; width:26px; height:26px; border-radius:50%; background:var(--primary); color:var(--primary-ink); border:2px solid var(--bg); display:grid; place-items:center; cursor:pointer; }
+  .edit-fab svg { width:12px; height:12px; }
+  .avatar-name { font-size:11.5px; color:var(--dim); }
+
+  .field-label { font-size:12px; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px; display:block; }
+  input[type="text"], input[type="tel"] {
+    width:100%; padding:11px 13px; border-radius:10px; border:1px solid var(--border);
+    background:var(--card); color:var(--text); font-family:inherit; font-size:14px;
+  }
+  input:focus-visible { outline:2px solid var(--primary); outline-offset:1px; }
+
+  .info-group { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .info-row { display:flex; justify-content:space-between; align-items:center; padding:13px 14px; border-bottom:1px solid var(--border); }
+  .info-row:last-child { border-bottom:none; }
+  .info-row .ik { font-size:12.5px; color:var(--dim); }
+  .info-row .iv { font-size:13px; font-weight:700; font-family:'IBM Plex Mono',monospace; }
+  .locked-note { display:flex; gap:8px; align-items:flex-start; font-size:11.5px; color:var(--faint); margin-top:9px; line-height:1.5; }
+  .locked-note svg { width:13px; height:13px; flex:none; margin-top:2px; }
+
+  .btn { font-family:inherit; font-size:14.5px; font-weight:700; padding:12px; border-radius:10px; border:none; cursor:pointer; width:100%; }
+  .btn-primary { background:var(--primary); color:var(--primary-ink); }
+
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--text); color:var(--bg); font-size:13px; font-weight:600; padding:11px 18px; border-radius:10px; opacity:0; transition:transform .25s, opacity .25s; }
+  .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <header class="top">
+    <button class="back-btn" aria-label="Voltar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <h1>Dados pessoais</h1>
+  </header>
+
+  <main>
+    <div class="avatar-block">
+      <div class="avatar-wrap">
+        <div class="avatar">CS</div>
+        <button class="edit-fab" aria-label="Alterar foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+      </div>
+      <span class="avatar-name">Toque no ícone para alterar a foto</span>
+    </div>
+
+    <div>
+      <span class="field-label">Nome completo</span>
+      <input type="text" value="Carlos Silva">
+    </div>
+
+    <div>
+      <span class="field-label">Telefone (WhatsApp)</span>
+      <input type="tel" value="(79) 99692-1016">
+    </div>
+
+    <div>
+      <span class="field-label">Vinculado à unidade</span>
+      <div class="info-group">
+        <div class="info-row"><span class="ik">E-mail</span><span class="iv">c.silva@email.com</span></div>
+        <div class="info-row"><span class="ik">Apartamento</span><span class="iv">01</span></div>
+        <div class="info-row"><span class="ik">Bloco</span><span class="iv">Amorgos</span></div>
+      </div>
+      <div class="locked-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        E-mail, apartamento e bloco são definidos pela administração. Pra mudar algo aqui, fale com a Central de Ajuda.
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="saveBtn">Salvar alterações</button>
+  </main>
+
+  <div class="toast" id="toast">Alterações salvas</div>
+</div>
+
+<script>
+  document.getElementById('saveBtn').addEventListener('click', function () {
+    var t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(function () { t.classList.remove('show'); }, 2200);
+  });
+</script>
+</body>
+</html>

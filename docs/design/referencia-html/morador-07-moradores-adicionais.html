@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CondoEconomy — Moradores Adicionais</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FAFAFA; --card:#FFFFFF; --border:#E4E4E8;
+    --text:#16181D; --dim:#75767E; --faint:#A9AAB1;
+    --primary:#4338CA; --primary-dim:#EEF0FF; --primary-ink:#FFFFFF;
+    --success:#16A34A; --success-dim:#EAF8EF;
+    --danger:#DC2626; --danger-dim:#FDECEC;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0E0F12; --card:#17181D; --border:#262832;
+      --text:#ECEDF0; --dim:#90919A; --faint:#5D5E67;
+      --primary:#6C63F5; --primary-dim:#201E3A; --primary-ink:#FFFFFF;
+      --success:#34D399; --success-dim:#122A22;
+      --danger:#F87171; --danger-dim:#331A1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#0E0F12; --card:#17181D; --border:#262832;
+    --text:#ECEDF0; --dim:#90919A; --faint:#5D5E67;
+    --primary:#6C63F5; --primary-dim:#201E3A; --primary-ink:#FFFFFF;
+    --success:#34D399; --success-dim:#122A22;
+    --danger:#F87171; --danger-dim:#331A1A;
+  }
+  * { box-sizing:border-box; }
+  html, body { height:100%; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:'Manrope',system-ui,sans-serif; display:flex; justify-content:center; }
+  .phone { width:100%; max-width:412px; min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; position:relative; overflow:hidden; }
+
+  header.top { padding:calc(16px + env(safe-area-inset-top,0px)) 18px 4px; display:flex; align-items:center; gap:10px; }
+  .back-btn { width:34px; height:34px; border-radius:10px; border:1px solid var(--border); background:var(--card); display:grid; place-items:center; color:var(--text); flex:none; }
+  .back-btn svg { width:16px; height:16px; }
+  h1 { font-size:17px; font-weight:800; margin:0; flex:1; }
+  .fab { width:38px; height:38px; border-radius:11px; background:var(--primary); color:var(--primary-ink); border:none; display:grid; place-items:center; cursor:pointer; flex:none; }
+  .fab svg { width:18px; height:18px; }
+
+  main { flex:1; padding:14px 18px 40px; display:flex; flex-direction:column; gap:10px; }
+  .section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--faint); margin:0 0 2px; }
+
+  .row-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; }
+  .row-main { display:flex; align-items:center; gap:12px; }
+  .r-icon { width:38px; height:38px; border-radius:10px; background:var(--bg); border:1px solid var(--border); display:grid; place-items:center; flex:none; color:var(--dim); }
+  .r-icon svg { width:17px; height:17px; }
+  .r-body { flex:1; min-width:0; }
+  .r-name { font-size:13.5px; font-weight:700; }
+  .r-rel { font-size:11.5px; color:var(--dim); margin-top:1px; }
+  .r-badge { font-family:'IBM Plex Mono',monospace; font-size:9.5px; font-weight:700; padding:3px 7px; border-radius:999px; background:var(--success-dim); color:var(--success); white-space:nowrap; margin-top:4px; display:inline-block; }
+  .r-del { width:32px; height:32px; border-radius:9px; border:none; background:none; color:var(--faint); display:grid; place-items:center; cursor:pointer; flex:none; }
+  .r-del svg { width:16px; height:16px; }
+  .r-del:hover { color:var(--danger); }
+
+  .confirm-row { display:none; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+  .confirm-row.show { display:flex; }
+  .confirm-row .ctext { font-size:12px; color:var(--dim); }
+  .confirm-actions { display:flex; gap:8px; flex:none; }
+  .mini-btn { font-family:inherit; font-size:12px; font-weight:700; padding:7px 12px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text); cursor:pointer; }
+  .mini-btn.danger { background:var(--danger); border-color:var(--danger); color:#fff; }
+
+  .empty { text-align:center; padding:50px 20px; color:var(--dim); }
+  .empty svg { width:40px; height:40px; color:var(--faint); margin-bottom:10px; }
+  .empty .e-title { font-weight:700; color:var(--text); font-size:14px; margin-bottom:4px; }
+  .empty .e-sub { font-size:12.5px; }
+
+  /* Bottom sheet */
+  .overlay { position:fixed; inset:0; background:rgba(10,10,14,.45); opacity:0; pointer-events:none; transition:opacity .2s; z-index:10; }
+  .overlay.show { opacity:1; pointer-events:auto; }
+  .sheet {
+    position:fixed; left:50%; bottom:0; transform:translate(-50%, 100%); width:100%; max-width:412px;
+    background:var(--card); border-radius:20px 20px 0 0; padding:20px 20px calc(24px + env(safe-area-inset-bottom,0px));
+    z-index:11; transition:transform .25s ease; box-shadow:0 -10px 40px rgba(0,0,0,.15);
+  }
+  .sheet.show { transform:translate(-50%, 0); }
+  .sheet h2 { font-size:16.5px; font-weight:800; margin:0 0 16px; }
+  .field-label { font-size:12px; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px; display:block; }
+  input[type="text"], input[type="email"] {
+    width:100%; padding:11px 13px; border-radius:10px; border:1px solid var(--border);
+    background:var(--bg); color:var(--text); font-family:inherit; font-size:14px; margin-bottom:16px;
+  }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+  .chip { border:1px solid var(--border); background:var(--bg); color:var(--text); font-size:12.5px; font-weight:600; padding:8px 12px; border-radius:9px; cursor:pointer; }
+  .chip.selected { border-color:var(--primary); background:var(--primary-dim); color:var(--primary); }
+
+  .access-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:13px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin-bottom:16px; }
+  .access-text .at-title { font-size:13.5px; font-weight:700; }
+  .access-text .at-sub { font-size:11.5px; color:var(--dim); margin-top:3px; line-height:1.5; }
+  .switch { position:relative; width:40px; height:23px; flex:none; margin-top:2px; }
+  .switch input { opacity:0; width:0; height:0; }
+  .switch .track { position:absolute; inset:0; background:var(--border); border-radius:999px; transition:background .15s; }
+  .switch .thumb { position:absolute; top:2.5px; left:2.5px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform .15s; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+  .switch input:checked + .track { background:var(--primary); }
+  .switch input:checked + .track .thumb { transform:translateX(17px); }
+
+  .sheet-actions { display:flex; gap:10px; }
+  .btn { font-family:inherit; font-size:14.5px; font-weight:700; padding:12px; border-radius:10px; border:none; cursor:pointer; flex:1; }
+  .btn-ghost { background:var(--bg); border:1px solid var(--border); color:var(--text); }
+  .btn-primary { background:var(--primary); color:var(--primary-ink); }
+
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--text); color:var(--bg); font-size:13px; font-weight:600; padding:11px 18px; border-radius:10px; opacity:0; transition:transform .25s, opacity .25s; z-index:12; }
+  .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <header class="top">
+    <button class="back-btn" aria-label="Voltar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <h1>Moradores adicionais</h1>
+    <button class="fab" id="openSheet" aria-label="Adicionar morador"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  </header>
+
+  <main id="list">
+    <p class="section-title">Quem mais mora no apartamento</p>
+
+    <div class="row-card" data-id="1">
+      <div class="row-main">
+        <div class="r-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+        <div class="r-body">
+          <div class="r-name">Janice Maria</div>
+          <div class="r-rel">Mãe</div>
+        </div>
+        <button class="r-del" data-del><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg></button>
+      </div>
+      <div class="confirm-row">
+        <span class="ctext">Remover Janice Maria?</span>
+        <div class="confirm-actions">
+          <button class="mini-btn" data-cancel>Cancelar</button>
+          <button class="mini-btn danger" data-confirm>Remover</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row-card" data-id="2">
+      <div class="row-main">
+        <div class="r-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+        <div class="r-body">
+          <div class="r-name">Pedro Jr.</div>
+          <div class="r-rel">Filho(a)</div>
+          <span class="r-badge">COM ACESSO AO APP</span>
+        </div>
+        <button class="r-del" data-del><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg></button>
+      </div>
+      <div class="confirm-row">
+        <span class="ctext">Remover Pedro Jr.?</span>
+        <div class="confirm-actions">
+          <button class="mini-btn" data-cancel>Cancelar</button>
+          <button class="mini-btn danger" data-confirm>Remover</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="overlay" id="overlay"></div>
+  <div class="sheet" id="sheet">
+    <h2>Novo morador</h2>
+
+    <span class="field-label">Nome completo</span>
+    <input type="text" id="nomeInput" placeholder="Ex: Maria Souza">
+
+    <span class="field-label">Grau de parentesco</span>
+    <div class="chips" id="relChips">
+      <button type="button" class="chip selected" data-rel="Cônjuge">Cônjuge</button>
+      <button type="button" class="chip" data-rel="Filho(a)">Filho(a)</button>
+      <button type="button" class="chip" data-rel="Pai">Pai</button>
+      <button type="button" class="chip" data-rel="Mãe">Mãe</button>
+      <button type="button" class="chip" data-rel="Outro">Outro</button>
+    </div>
+    <input type="text" id="relCustom" placeholder="Especifique o parentesco" style="display:none">
+
+    <div class="access-row">
+      <div class="access-text">
+        <div class="at-title">Dar acesso ao aplicativo</div>
+        <div class="at-sub">Enviamos um convite por e-mail pra essa pessoa criar o próprio login e ver boletos, reservas etc.</div>
+      </div>
+      <label class="switch"><input type="checkbox" id="accessToggle"><span class="track"><span class="thumb"></span></span></label>
+    </div>
+    <input type="email" id="emailInput" placeholder="E-mail do morador" style="display:none">
+
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" id="cancelSheet">Cancelar</button>
+      <button class="btn btn-primary" id="saveSheet">Salvar</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Morador adicionado</div>
+</div>
+
+<script>
+  var list = document.getElementById('list');
+
+  function wireRow(row) {
+    row.querySelector('[data-del]').addEventListener('click', function () {
+      row.querySelector('.confirm-row').classList.add('show');
+    });
+    row.querySelector('[data-cancel]').addEventListener('click', function () {
+      row.querySelector('.confirm-row').classList.remove('show');
+    });
+    row.querySelector('[data-confirm]').addEventListener('click', function () {
+      row.remove();
+    });
+  }
+  document.querySelectorAll('.row-card').forEach(wireRow);
+
+  var overlay = document.getElementById('overlay');
+  var sheet = document.getElementById('sheet');
+  function openSheet() { overlay.classList.add('show'); sheet.classList.add('show'); }
+  function closeSheet() { overlay.classList.remove('show'); sheet.classList.remove('show'); }
+  document.getElementById('openSheet').addEventListener('click', openSheet);
+  document.getElementById('cancelSheet').addEventListener('click', closeSheet);
+  overlay.addEventListener('click', closeSheet);
+
+  var selectedRel = 'Cônjuge';
+  document.querySelectorAll('#relChips .chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      document.querySelectorAll('#relChips .chip').forEach(function (c) { c.classList.remove('selected'); });
+      chip.classList.add('selected');
+      selectedRel = chip.dataset.rel;
+      document.getElementById('relCustom').style.display = selectedRel === 'Outro' ? 'block' : 'none';
+    });
+  });
+
+  document.getElementById('accessToggle').addEventListener('change', function (e) {
+    document.getElementById('emailInput').style.display = e.target.checked ? 'block' : 'none';
+  });
+
+  document.getElementById('saveSheet').addEventListener('click', function () {
+    var nome = document.getElementById('nomeInput').value.trim() || 'Novo morador';
+    var rel = selectedRel === 'Outro' ? (document.getElementById('relCustom').value.trim() || 'Outro') : selectedRel;
+    var hasAccess = document.getElementById('accessToggle').checked;
+
+    var row = document.createElement('div');
+    row.className = 'row-card';
+    row.innerHTML =
+      '<div class="row-main">' +
+        '<div class="r-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>' +
+        '<div class="r-body"><div class="r-name">' + nome + '</div><div class="r-rel">' + rel + '</div>' +
+        (hasAccess ? '<span class="r-badge">COM ACESSO AO APP</span>' : '') + '</div>' +
+        '<button class="r-del" data-del><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"/></svg></button>' +
+      '</div>' +
+      '<div class="confirm-row"><span class="ctext">Remover ' + nome + '?</span>' +
+      '<div class="confirm-actions"><button class="mini-btn" data-cancel>Cancelar</button><button class="mini-btn danger" data-confirm>Remover</button></div></div>';
+    list.appendChild(row);
+    wireRow(row);
+
+    closeSheet();
+    document.getElementById('nomeInput').value = '';
+    var t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(function () { t.classList.remove('show'); }, 2200);
+  });
+</script>
+</body>
+</html>

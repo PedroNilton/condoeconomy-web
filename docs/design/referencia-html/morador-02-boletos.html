@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CondoEconomy — Meus Boletos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FAFAFA; --card:#FFFFFF; --border:#E4E4E8;
+    --text:#16181D; --dim:#75767E; --faint:#A9AAB1;
+    --primary:#4338CA; --primary-dim:#EEF0FF; --primary-ink:#FFFFFF;
+    --success:#16A34A; --success-dim:#EAF8EF;
+    --warning:#B45309; --warning-dim:#FEF3E2;
+    --danger:#DC2626; --danger-dim:#FDECEC;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0E0F12; --card:#17181D; --border:#262832;
+      --text:#ECEDF0; --dim:#90919A; --faint:#5D5E67;
+      --primary:#6C63F5; --primary-dim:#201E3A; --primary-ink:#FFFFFF;
+      --success:#34D399; --success-dim:#122A22;
+      --warning:#F5A855; --warning-dim:#2E2214;
+      --danger:#F87171; --danger-dim:#331A1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#0E0F12; --card:#17181D; --border:#262832;
+    --text:#ECEDF0; --dim:#90919A; --faint:#5D5E67;
+    --primary:#6C63F5; --primary-dim:#201E3A; --primary-ink:#FFFFFF;
+    --success:#34D399; --success-dim:#122A22;
+    --warning:#F5A855; --warning-dim:#2E2214;
+    --danger:#F87171; --danger-dim:#331A1A;
+  }
+  * { box-sizing:border-box; }
+  html, body { height:100%; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:'Manrope',system-ui,sans-serif; display:flex; justify-content:center; }
+  .phone { width:100%; max-width:412px; min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; }
+
+  header.top {
+    position:sticky; top:0; z-index:5; background:var(--bg);
+    padding:calc(16px + env(safe-area-inset-top,0px)) 18px 4px;
+  }
+  .top-row { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .back-btn { width:34px; height:34px; border-radius:10px; border:1px solid var(--border); background:var(--card); display:grid; place-items:center; color:var(--text); flex:none; }
+  .back-btn svg { width:16px; height:16px; }
+  h1 { font-size:17px; font-weight:800; margin:0; }
+
+  .summary { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+  .summary .label { font-size:11.5px; color:var(--dim); margin-bottom:3px; }
+  .summary .value { font-size:19px; font-weight:800; }
+  .summary .value.danger { color:var(--danger); }
+
+  .filters { display:flex; gap:7px; overflow-x:auto; padding-bottom:14px; }
+  .chip {
+    flex:none; font-size:12.5px; font-weight:700; padding:7px 13px; border-radius:999px;
+    border:1px solid var(--border); background:var(--card); color:var(--dim); cursor:pointer;
+  }
+  .chip.active { background:var(--primary); border-color:var(--primary); color:var(--primary-ink); }
+
+  main { flex:1; padding:0 18px 40px; display:flex; flex-direction:column; gap:10px; }
+
+  .boleto {
+    background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:14px 16px; display:flex; flex-direction:column; gap:10px;
+  }
+  .boleto-head { display:flex; justify-content:space-between; align-items:flex-start; }
+  .boleto-head .mes { font-size:14px; font-weight:700; }
+  .boleto-head .venc { font-size:11.5px; color:var(--dim); font-family:'IBM Plex Mono',monospace; margin-top:2px; }
+  .badge { display:inline-flex; align-items:center; font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700; padding:4px 8px; border-radius:999px; white-space:nowrap; }
+  .badge-success { background:var(--success-dim); color:var(--success); }
+  .badge-warning { background:var(--warning-dim); color:var(--warning); }
+  .badge-danger { background:var(--danger-dim); color:var(--danger); }
+  .boleto-foot { display:flex; justify-content:space-between; align-items:center; }
+  .boleto-foot .valor { font-size:17px; font-weight:800; }
+  .link-btn { background:none; border:none; color:var(--primary); font-family:inherit; font-weight:700; font-size:12.5px; cursor:pointer; padding:0; }
+  .boleto.vencido { border-color:var(--danger); }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <header class="top">
+    <div class="top-row">
+      <button class="back-btn" aria-label="Voltar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+      <h1>Meus boletos</h1>
+    </div>
+
+    <div class="summary">
+      <div>
+        <div class="label">Em aberto</div>
+        <div class="value danger">R$ 980,00</div>
+      </div>
+      <div>
+        <div class="label">Próximo vencimento</div>
+        <div class="value">10 out</div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <button class="chip active">Todos</button>
+      <button class="chip">Pendentes</button>
+      <button class="chip">Pagos</button>
+      <button class="chip">Atrasados</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="boleto vencido">
+      <div class="boleto-head">
+        <div><div class="mes">Agosto · condomínio</div><div class="venc">VENCIDO EM 10/08</div></div>
+        <span class="badge badge-danger">VENCIDO</span>
+      </div>
+      <div class="boleto-foot"><span class="valor">R$ 480,00</span><button class="link-btn">Pagar agora</button></div>
+    </div>
+
+    <div class="boleto">
+      <div class="boleto-head">
+        <div><div class="mes">Setembro · condomínio</div><div class="venc">VENCE EM 10/09</div></div>
+        <span class="badge badge-warning">VENCE EM 3 DIAS</span>
+      </div>
+      <div class="boleto-foot"><span class="valor">R$ 480,00</span><button class="link-btn">Ver boleto</button></div>
+    </div>
+
+    <div class="boleto">
+      <div class="boleto-head">
+        <div><div class="mes">Outubro · condomínio</div><div class="venc">VENCE EM 10/10</div></div>
+        <span class="badge badge-warning">A VENCER</span>
+      </div>
+      <div class="boleto-foot"><span class="valor">R$ 480,00</span><button class="link-btn">Ver boleto</button></div>
+    </div>
+
+    <div class="boleto">
+      <div class="boleto-head">
+        <div><div class="mes">Julho · condomínio</div><div class="venc">PAGO EM 08/07</div></div>
+        <span class="badge badge-success">PAGO</span>
+      </div>
+      <div class="boleto-foot"><span class="valor">R$ 465,00</span><button class="link-btn">Ver recibo</button></div>
+    </div>
+
+    <div class="boleto">
+      <div class="boleto-head">
+        <div><div class="mes">Junho · condomínio</div><div class="venc">PAGO EM 09/06</div></div>
+        <span class="badge badge-success">PAGO</span>
+      </div>
+      <div class="boleto-foot"><span class="valor">R$ 465,00</span><button class="link-btn">Ver recibo</button></div>
+    </div>
+  </main>
+</div>
+
+<script>
+  document.querySelectorAll('.chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      document.querySelectorAll('.chip').forEach(function (c) { c.classList.remove('active'); });
+      chip.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,59 +1,137 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
 
 @layer base {
   :root {
-    --ds-bg: #FAFAFA;
-    --ds-card: #FFFFFF;
-    --ds-border: #E4E4E8;
-    --ds-border-strong: #D3D3D9;
-    --ds-text: #16181D;
-    --ds-dim: #75767E;
-    --ds-faint: #A9AAB1;
-    --ds-primary: #4338CA;
-    --ds-primary-hover: #372CB0;
-    --ds-primary-dim: #EEF0FF;
-    --ds-primary-ink: #FFFFFF;
-    --ds-success: #16A34A;
-    --ds-success-dim: #EAF8EF;
-    --ds-warning: #B45309;
-    --ds-warning-dim: #FEF3E2;
-    --ds-danger: #DC2626;
-    --ds-danger-dim: #FDECEC;
-    --ds-disabled-bg: #F1F1F3;
-    --ds-disabled-text: #B4B5BC;
+    --bg: #FAFAFA;
+    --card: #FFFFFF;
+    --border: #E4E4E8;
+    --border-strong: #D3D3D9;
+    --text: #16181D;
+    --dim: #75767E;
+    --faint: #A9AAB1;
+    --primary: #4338CA;
+    --primary-hover: #372CB0;
+    --primary-dim: #EEF0FF;
+    --primary-ink: #FFFFFF;
+    --success: #16A34A;
+    --success-dim: #EAF8EF;
+    --warning: #B45309;
+    --warning-dim: #FEF3E2;
+    --danger: #DC2626;
+    --danger-dim: #FDECEC;
+    --disabled-bg: #F1F1F3;
+    --disabled-text: #B4B5BC;
+    --grid-line: #ECECEE;
+
+    /* Aliases de compatibilidade (--ds-*) */
+    --ds-bg: var(--bg);
+    --ds-card: var(--card);
+    --ds-border: var(--border);
+    --ds-border-strong: var(--border-strong);
+    --ds-text: var(--text);
+    --ds-dim: var(--dim);
+    --ds-faint: var(--faint);
+    --ds-primary: var(--primary);
+    --ds-primary-hover: var(--primary-hover);
+    --ds-primary-dim: var(--primary-dim);
+    --ds-primary-ink: var(--primary-ink);
+    --ds-success: var(--success);
+    --ds-success-dim: var(--success-dim);
+    --ds-warning: var(--warning);
+    --ds-warning-dim: var(--warning-dim);
+    --ds-danger: var(--danger);
+    --ds-danger-dim: var(--danger-dim);
+    --ds-disabled-bg: var(--disabled-bg);
+    --ds-disabled-text: var(--disabled-text);
   }
 
-  .dark {
-    --ds-bg: #0E0F12;
-    --ds-card: #17181D;
-    --ds-border: #262832;
-    --ds-border-strong: #33353F;
-    --ds-text: #ECEDF0;
-    --ds-dim: #90919A;
-    --ds-faint: #5D5E67;
-    --ds-primary: #6C63F5;
-    --ds-primary-hover: #8079F7;
-    --ds-primary-dim: #201E3A;
-    --ds-primary-ink: #FFFFFF;
-    --ds-success: #34D399;
-    --ds-success-dim: #122A22;
-    --ds-warning: #F5A855;
-    --ds-warning-dim: #2E2214;
-    --ds-danger: #F87171;
-    --ds-danger-dim: #331A1A;
-    --ds-disabled-bg: #1D1E24;
-    --ds-disabled-text: #4A4B54;
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]):not(.light) {
+      --bg: #0E0F12;
+      --card: #17181D;
+      --border: #262832;
+      --border-strong: #33353F;
+      --text: #ECEDF0;
+      --dim: #90919A;
+      --faint: #5D5E67;
+      --primary: #6C63F5;
+      --primary-hover: #8079F7;
+      --primary-dim: #201E3A;
+      --primary-ink: #FFFFFF;
+      --success: #34D399;
+      --success-dim: #122A22;
+      --warning: #F5A855;
+      --warning-dim: #2E2214;
+      --danger: #F87171;
+      --danger-dim: #331A1A;
+      --disabled-bg: #1D1E24;
+      --disabled-text: #4A4B54;
+      --grid-line: #17181D;
+    }
+  }
+
+  .dark,
+  :root[data-theme="dark"] {
+    --bg: #0E0F12;
+    --card: #17181D;
+    --border: #262832;
+    --border-strong: #33353F;
+    --text: #ECEDF0;
+    --dim: #90919A;
+    --faint: #5D5E67;
+    --primary: #6C63F5;
+    --primary-hover: #8079F7;
+    --primary-dim: #201E3A;
+    --primary-ink: #FFFFFF;
+    --success: #34D399;
+    --success-dim: #122A22;
+    --warning: #F5A855;
+    --warning-dim: #2E2214;
+    --danger: #F87171;
+    --danger-dim: #331A1A;
+    --disabled-bg: #1D1E24;
+    --disabled-text: #4A4B54;
+    --grid-line: #17181D;
   }
 }
 
-@theme {
-  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+@theme inline {
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
 
-  /* Custom Colors injected from Design System */
+  /* Tokens canônicos do Design System (seção 2.7) */
+  --color-canvas: var(--bg);
+  --color-surface: var(--card);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-ink: var(--text);
+  --color-dim: var(--dim);
+  --color-faint: var(--faint);
+  --color-brand: var(--primary);
+  --color-brand-hover: var(--primary-hover);
+  --color-brand-soft: var(--primary-dim);
+  --color-brand-ink: var(--primary-ink);
+  --color-ok: var(--success);
+  --color-ok-soft: var(--success-dim);
+  --color-warn: var(--warning);
+  --color-warn-soft: var(--warning-dim);
+  --color-bad: var(--danger);
+  --color-bad-soft: var(--danger-dim);
+  --color-disabled: var(--disabled-bg);
+  --color-disabled-ink: var(--disabled-text);
+  --color-grid-line: var(--grid-line);
+
+  --radius-card: 14px;
+  --radius-hero: 16px;
+  --radius-control: 12px;
+  --radius-field: 10px;
+  --radius-sheet: 20px;
+  --spacing-page: 18px;
+
+  /* Aliases legados (--color-ds-*) */
   --color-ds-bg: var(--ds-bg);
   --color-ds-card: var(--ds-card);
   --color-ds-border: var(--ds-border);
@@ -73,8 +151,7 @@
   --color-ds-danger-dim: var(--ds-danger-dim);
   --color-ds-disabled-bg: var(--ds-disabled-bg);
   --color-ds-disabled-text: var(--ds-disabled-text);
-  
-  /* Keep existing animations */
+
   --animate-fade-in-up: fade-in-up 0.6s ease-out forwards;
   --animate-fade-in: fade-in 0.6s ease-out forwards;
 
@@ -105,15 +182,28 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .portaria-live-dot {
-    animation: none;
+  .portaria-live-dot,
+  .animate-pulse {
+    animation: none !important;
   }
 }
 
 @layer base {
+  html, body {
+    min-height: 100%;
+  }
+
   body {
-    @apply bg-ds-bg text-ds-text font-sans;
+    @apply bg-canvas text-ink font-sans;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

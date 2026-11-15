@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CondoEconomy — Configurar Notificações</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FAFAFA; --card:#FFFFFF; --border:#E4E4E8;
+    --text:#16181D; --dim:#75767E; --faint:#A9AAB1;
+    --primary:#4338CA; --primary-dim:#EEF0FF; --primary-ink:#FFFFFF;
+    --warning:#B45309; --warning-dim:#FEF3E2;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0E0F12; --card:#17181D; --border:#262832;
+      --text:#ECEDF0; --dim:#90919A; --faint:#5D5E67;
+      --primary:#6C63F5; --primary-dim:#201E3A; --primary-ink:#FFFFFF;
+      --warning:#F5A855; --warning-dim:#2E2214;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#0E0F12; --card:#17181D; --border:#262832;
+    --text:#ECEDF0; --dim:#90919A; --faint:#5D5E67;
+    --primary:#6C63F5; --primary-dim:#201E3A; --primary-ink:#FFFFFF;
+    --warning:#F5A855; --warning-dim:#2E2214;
+  }
+  * { box-sizing:border-box; }
+  html, body { height:100%; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:'Manrope',system-ui,sans-serif; display:flex; justify-content:center; }
+  .phone { width:100%; max-width:412px; min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; }
+
+  header.top { padding:calc(16px + env(safe-area-inset-top,0px)) 18px 8px; display:flex; align-items:center; gap:10px; }
+  .back-btn { width:34px; height:34px; border-radius:10px; border:1px solid var(--border); background:var(--card); display:grid; place-items:center; color:var(--text); flex:none; }
+  .back-btn svg { width:16px; height:16px; }
+  h1 { font-size:16.5px; font-weight:800; margin:0; }
+
+  main { flex:1; padding:6px 18px 40px; display:flex; flex-direction:column; gap:18px; }
+  .lede { font-size:13px; color:var(--dim); line-height:1.55; margin:0; }
+
+  .table-card { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .col-head { display:grid; grid-template-columns:1fr 52px 52px; align-items:center; padding:10px 14px 8px; }
+  .col-head span { font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--faint); text-align:center; }
+  .col-head span:first-child { text-align:left; }
+
+  .n-row { display:grid; grid-template-columns:1fr 52px 52px; align-items:center; padding:12px 14px; border-top:1px solid var(--border); }
+  .n-label { display:flex; align-items:center; gap:10px; }
+  .n-icon { width:32px; height:32px; border-radius:9px; background:var(--bg); border:1px solid var(--border); display:grid; place-items:center; flex:none; color:var(--dim); }
+  .n-icon svg { width:15px; height:15px; }
+  .n-title { font-size:13px; font-weight:700; }
+  .n-sub { font-size:10.5px; color:var(--dim); margin-top:1px; }
+  .n-cell { display:flex; justify-content:center; }
+  .dash { color:var(--faint); font-size:13px; }
+
+  .switch { position:relative; width:36px; height:21px; flex:none; }
+  .switch input { opacity:0; width:0; height:0; }
+  .switch .track { position:absolute; inset:0; background:var(--border); border-radius:999px; transition:background .15s; }
+  .switch .thumb { position:absolute; top:2.5px; left:2.5px; width:16px; height:16px; background:#fff; border-radius:50%; transition:transform .15s; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+  .switch input:checked + .track { background:var(--primary); }
+  .switch input:checked + .track .thumb { transform:translateX(15px); }
+
+  .lock-icon { width:18px; height:18px; color:var(--faint); }
+
+  .warning-note { display:flex; gap:9px; align-items:flex-start; background:var(--warning-dim); color:var(--warning); border-radius:12px; padding:12px 13px; font-size:12px; line-height:1.5; }
+  .warning-note svg { width:16px; height:16px; flex:none; margin-top:1px; }
+
+  .btn { font-family:inherit; font-size:14.5px; font-weight:700; padding:12px; border-radius:10px; border:none; cursor:pointer; width:100%; }
+  .btn-primary { background:var(--primary); color:var(--primary-ink); }
+
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--text); color:var(--bg); font-size:13px; font-weight:600; padding:11px 18px; border-radius:10px; opacity:0; transition:transform .25s, opacity .25s; }
+  .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <header class="top">
+    <button class="back-btn" aria-label="Voltar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <h1>Configurar notificações</h1>
+  </header>
+
+  <main>
+    <p class="lede">Escolha como quer ser avisado — cada tipo de aviso tem o canal que faz mais sentido pra ele.</p>
+
+    <div class="table-card">
+      <div class="col-head"><span>Tipo de aviso</span><span>Push</span><span>E-mail</span></div>
+
+      <div class="n-row">
+        <div class="n-label">
+          <div class="n-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5"/></svg></div>
+          <div><div class="n-title">Encomendas</div><div class="n-sub">Chegou algo na portaria</div></div>
+        </div>
+        <div class="n-cell"><label class="switch"><input type="checkbox" checked><span class="track"><span class="thumb"></span></span></label></div>
+        <div class="n-cell"><span class="dash">—</span></div>
+      </div>
+
+      <div class="n-row">
+        <div class="n-label">
+          <div class="n-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l3 3v17H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></div>
+          <div><div class="n-title">Boletos</div><div class="n-sub">Emissão e vencimento próximo</div></div>
+        </div>
+        <div class="n-cell"><label class="switch"><input type="checkbox" checked><span class="track"><span class="thumb"></span></span></label></div>
+        <div class="n-cell"><label class="switch"><input type="checkbox" checked><span class="track"><span class="thumb"></span></span></label></div>
+      </div>
+
+      <div class="n-row">
+        <div class="n-label">
+          <div class="n-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg></div>
+          <div><div class="n-title">Reservas</div><div class="n-sub">Aprovação ou recusa do síndico</div></div>
+        </div>
+        <div class="n-cell"><label class="switch"><input type="checkbox" checked><span class="track"><span class="thumb"></span></span></label></div>
+        <div class="n-cell"><span class="dash">—</span></div>
+      </div>
+
+      <div class="n-row">
+        <div class="n-label">
+          <div class="n-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8-8-2Z"/></svg></div>
+          <div><div class="n-title">Comunicados do síndico</div><div class="n-sub">Avisos oficiais do condomínio</div></div>
+        </div>
+        <div class="n-cell"><label class="switch"><input type="checkbox" checked><span class="track"><span class="thumb"></span></span></label></div>
+        <div class="n-cell"><label class="switch"><input type="checkbox" checked><span class="track"><span class="thumb"></span></span></label></div>
+      </div>
+
+      <div class="n-row">
+        <div class="n-label">
+          <div class="n-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="m4 6 8 6 8-6"/></svg></div>
+          <div><div class="n-title">Resumo semanal</div><div class="n-sub">Um e-mail por semana com tudo</div></div>
+        </div>
+        <div class="n-cell"><span class="dash">—</span></div>
+        <div class="n-cell"><label class="switch"><input type="checkbox" checked><span class="track"><span class="thumb"></span></span></label></div>
+      </div>
+
+      <div class="n-row">
+        <div class="n-label">
+          <div class="n-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div>
+          <div><div class="n-title">Emergência</div><div class="n-sub">Pânico e avisos urgentes</div></div>
+        </div>
+        <div class="n-cell"><svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+        <div class="n-cell"><svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+      </div>
+    </div>
+
+    <div class="warning-note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      Avisos de emergência (pânico, comunicados urgentes) ficam sempre ativos em todos os canais — não é possível desativar.
+    </div>
+
+    <button class="btn btn-primary" id="saveBtn">Salvar preferências</button>
+  </main>
+
+  <div class="toast" id="toast">Preferências salvas</div>
+</div>
+
+<script>
+  document.getElementById('saveBtn').addEventListener('click', function () {
+    var t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(function () { t.classList.remove('show'); }, 2200);
+  });
+</script>
+</body>
+</html>

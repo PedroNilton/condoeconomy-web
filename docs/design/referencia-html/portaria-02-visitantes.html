@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CondoEconomy — Visitantes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FAFAFA; --card:#FFFFFF; --border:#E4E4E8;
+    --text:#16181D; --dim:#75767E; --faint:#A9AAB1;
+    --primary:#4338CA; --primary-dim:#EEF0FF; --primary-ink:#FFFFFF;
+    --success:#16A34A; --success-dim:#EAF8EF;
+    --warning:#B45309; --warning-dim:#FEF3E2;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0E0F12; --card:#17181D; --border:#262832;
+      --text:#ECEDF0; --dim:#90919A; --faint:#5D5E67;
+      --primary:#6C63F5; --primary-dim:#201E3A; --primary-ink:#FFFFFF;
+      --success:#34D399; --success-dim:#122A22;
+      --warning:#F5A855; --warning-dim:#2E2214;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#0E0F12; --card:#17181D; --border:#262832;
+    --text:#ECEDF0; --dim:#90919A; --faint:#5D5E67;
+    --primary:#6C63F5; --primary-dim:#201E3A; --primary-ink:#FFFFFF;
+    --success:#34D399; --success-dim:#122A22;
+    --warning:#F5A855; --warning-dim:#2E2214;
+  }
+  * { box-sizing:border-box; }
+  html, body { height:100%; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:'Manrope',system-ui,sans-serif; display:flex; justify-content:center; }
+  .phone { width:100%; max-width:412px; min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; }
+
+  header.top { padding:calc(16px + env(safe-area-inset-top,0px)) 18px 6px; display:flex; justify-content:space-between; align-items:center; }
+  .h-title { font-size:19px; font-weight:800; letter-spacing:-.01em; }
+  .h-sub { font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--primary); font-weight:600; margin-top:2px; text-transform:uppercase; }
+  .h-actions { display:flex; gap:8px; }
+  .icon-btn { width:40px; height:40px; border-radius:11px; border:1px solid var(--border); background:var(--card); display:grid; place-items:center; color:var(--text); cursor:pointer; }
+  .icon-btn svg { width:18px; height:18px; }
+
+  .page-head { padding:10px 18px 0; }
+  .eyebrow { font-size:11px; font-weight:700; color:var(--faint); text-transform:uppercase; letter-spacing:.06em; }
+  h1 { font-size:21px; font-weight:800; margin:3px 0 14px; letter-spacing:-.01em; }
+  .cta-row { display:grid; grid-template-columns:1fr 1.3fr; gap:10px; margin-bottom:14px; }
+  .btn { font-family:inherit; font-size:14px; font-weight:700; height:50px; border-radius:12px; border:1px solid var(--border); background:var(--card); color:var(--text); display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; }
+  .btn svg { width:18px; height:18px; }
+  .btn.primary { background:var(--primary); border-color:var(--primary); color:var(--primary-ink); }
+
+  .search { position:relative; margin-bottom:12px; }
+  .search svg { position:absolute; left:13px; top:50%; transform:translateY(-50%); width:16px; height:16px; color:var(--faint); }
+  .search input { width:100%; height:46px; padding:0 13px 0 38px; border-radius:12px; border:1px solid var(--border); background:var(--card); color:var(--text); font-family:inherit; font-size:14px; }
+  .search input:focus-visible { outline:2px solid var(--primary); outline-offset:1px; }
+
+  .tabs { display:grid; grid-template-columns:repeat(4,1fr); gap:3px; padding:3px; background:var(--card); border:1px solid var(--border); border-radius:12px; }
+  .tab { border:none; background:none; font-family:inherit; font-size:12px; font-weight:700; color:var(--dim); padding:9px 2px; border-radius:9px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .tab b { font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:600; color:var(--text); }
+  .tab.active { background:var(--primary-dim); color:var(--primary); }
+  .tab.active b { color:var(--primary); }
+
+  main { flex:1; padding:14px 18px 110px; display:flex; flex-direction:column; gap:10px; }
+
+  .v-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; }
+  .v-card.wait-long { border-color:var(--warning); }
+  .v-top { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .v-name { font-size:14.5px; font-weight:700; }
+  .v-type { font-size:11.5px; color:var(--dim); margin-top:2px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .tag { font-family:'IBM Plex Mono',monospace; font-size:9px; font-weight:700; padding:2px 6px; border-radius:999px; background:var(--primary-dim); color:var(--primary); }
+  .badge { font-family:'IBM Plex Mono',monospace; font-size:9.5px; font-weight:700; padding:4px 8px; border-radius:999px; white-space:nowrap; flex:none; }
+  .b-espera { background:var(--warning-dim); color:var(--warning); }
+  .b-local { background:var(--success-dim); color:var(--success); }
+  .b-saiu { background:var(--bg); color:var(--dim); border:1px solid var(--border); }
+  .v-dest { font-family:'IBM Plex Mono',monospace; font-size:12.5px; font-weight:600; margin-top:10px; }
+  .v-meta { font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--dim); margin-top:5px; display:flex; gap:10px; flex-wrap:wrap; }
+  .v-meta .warn { color:var(--warning); font-weight:600; }
+  .v-action { margin-top:12px; width:100%; height:46px; border-radius:11px; font-family:inherit; font-size:13.5px; font-weight:700; cursor:pointer; border:1px solid var(--border); background:var(--card); color:var(--text); }
+  .v-action.go { background:var(--primary); border-color:var(--primary); color:var(--primary-ink); }
+
+  .empty { text-align:center; padding:44px 20px; background:var(--card); border:1px solid var(--border); border-radius:14px; }
+  .empty .e-t { font-size:14px; font-weight:700; margin-bottom:4px; }
+  .empty .e-s { font-size:12.5px; color:var(--dim); line-height:1.5; }
+
+  nav.bottom {
+    position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:412px;
+    background:var(--card); border-top:1px solid var(--border);
+    padding:9px 4px calc(9px + env(safe-area-inset-bottom,0px)); display:grid; grid-template-columns:repeat(6,1fr); z-index:5;
+  }
+  nav.bottom a { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; color:var(--faint); font-size:9.5px; font-weight:600; position:relative; }
+  nav.bottom a svg { width:20px; height:20px; }
+  nav.bottom a.active { color:var(--primary); }
+  .nav-badge { position:absolute; top:-5px; left:calc(50% + 4px); background:var(--primary); color:#fff; font-size:9px; font-weight:700; min-width:15px; height:15px; border-radius:999px; display:grid; place-items:center; padding:0 4px; }
+
+  .overlay { position:fixed; inset:0; background:rgba(10,10,14,.45); opacity:0; pointer-events:none; transition:opacity .2s; z-index:10; }
+  .overlay.show { opacity:1; pointer-events:auto; }
+  .sheet { position:fixed; left:50%; bottom:0; transform:translate(-50%,100%); width:100%; max-width:412px; background:var(--card); border-radius:20px 20px 0 0; padding:20px 20px calc(24px + env(safe-area-inset-bottom,0px)); z-index:11; transition:transform .25s ease; max-height:90vh; overflow-y:auto; }
+  .sheet.show { transform:translate(-50%,0); }
+  .sheet h2 { font-size:17px; font-weight:800; margin:0 0 16px; }
+  .lbl { font-size:12px; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.04em; margin-bottom:8px; display:block; }
+  .sheet input[type="text"] { width:100%; height:46px; padding:0 13px; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text); font-family:inherit; font-size:14px; margin-bottom:16px; }
+  .sheet input.mono { font-family:'IBM Plex Mono',monospace; font-weight:600; letter-spacing:.04em; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+  .chip { border:1px solid var(--border); background:var(--bg); color:var(--text); font-family:inherit; font-size:12.5px; font-weight:600; padding:10px 13px; border-radius:10px; cursor:pointer; }
+  .chip.sel { border-color:var(--primary); background:var(--primary-dim); color:var(--primary); }
+  .sheet-actions { display:grid; grid-template-columns:1fr 1.4fr; gap:10px; }
+
+  .toast { position:fixed; bottom:84px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--text); color:var(--bg); font-size:13px; font-weight:600; padding:11px 18px; border-radius:10px; opacity:0; transition:transform .25s, opacity .25s; z-index:12; white-space:nowrap; }
+  .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <header class="top">
+    <div><div class="h-title">Portaria</div><div class="h-sub">Condomínio Mar Egeu</div></div>
+    <div class="h-actions">
+      <button class="icon-btn" id="themeBtn" aria-label="Alternar tema"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></button>
+      <button class="icon-btn" aria-label="Sair"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg></button>
+    </div>
+  </header>
+
+  <div class="page-head">
+    <div class="eyebrow">Controle de acesso</div>
+    <h1>Visitantes hoje</h1>
+    <div class="cta-row">
+      <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z"/></svg>Ler QR</button>
+      <button class="btn primary" id="openSheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Registrar</button>
+    </div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="q" placeholder="Buscar visitante, apto ou placa">
+    </div>
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-f="todos">Todos<b id="c-todos">0</b></button>
+      <button class="tab" data-f="espera">Espera<b id="c-espera">0</b></button>
+      <button class="tab" data-f="local">No local<b id="c-local">0</b></button>
+      <button class="tab" data-f="saiu">Saíram<b id="c-saiu">0</b></button>
+    </div>
+  </div>
+
+  <main id="list"></main>
+
+  <nav class="bottom">
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10 12 3l9 7"/><path d="M5 9v11h14V9"/></svg>Início</a>
+    <a href="#" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/></svg>Visitantes</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Encomendas<span class="nav-badge">4</span></a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>Reservas</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Ouvidoria</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-5a2 2 0 0 1 2-1.3h10a2 2 0 0 1 2 1.3l2 5v5H3z"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/></svg>Veículos</a>
+  </nav>
+
+  <div class="overlay" id="overlay"></div>
+  <div class="sheet" id="sheet">
+    <h2>Registrar visitante</h2>
+    <span class="lbl">Nome</span>
+    <input type="text" id="fNome" placeholder="Nome completo">
+    <span class="lbl">Tipo</span>
+    <div class="chips" id="fTipo">
+      <button type="button" class="chip sel" data-v="Visitante">Visitante</button>
+      <button type="button" class="chip" data-v="Prestador">Prestador</button>
+      <button type="button" class="chip" data-v="Entregador">Entregador</button>
+      <button type="button" class="chip" data-v="Motorista de app">Motorista de app</button>
+    </div>
+    <span class="lbl">Destino</span>
+    <div class="two">
+      <input type="text" class="mono" id="fBloco" placeholder="Bloco">
+      <input type="text" class="mono" id="fApto" placeholder="Apto">
+    </div>
+    <span class="lbl">Placa (opcional)</span>
+    <input type="text" class="mono" id="fPlaca" placeholder="ABC-1D23" maxlength="8">
+    <div class="sheet-actions">
+      <button class="btn" id="cancelSheet">Cancelar</button>
+      <button class="btn primary" id="saveSheet">Registrar</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function now() { return new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); }
+
+  var visitors = [
+    {id:1, name:'Fernanda Lima', type:'Visitante', dest:'Bloco 03 · Apto 102', status:'espera', wait:6},
+    {id:2, name:'Rafael (entregador)', type:'Entregador', dest:'Bloco 05 · Apto 201', status:'espera', wait:1},
+    {id:3, name:'Maria Souza', type:'Visitante', dest:'Bloco 03 · Apto 102', status:'local', inAt:'13:58', stay:'42 min', invite:true},
+    {id:4, name:'Jorge (eletricista)', type:'Prestador', dest:'Bloco 08 · Apto 011', status:'local', inAt:'13:10', stay:'1h 30', plate:'QRS-4F28'},
+    {id:5, name:'João Lima', type:'Visitante', dest:'Bloco 07 · Apto 302', status:'saiu', inAt:'12:41', outAt:'13:25'}
+  ];
+  var nextId = 6, filter = 'todos';
+  var labels = {espera:'EM ESPERA', local:'NO LOCAL', saiu:'SAIU'};
+  var order = {espera:0, local:1, saiu:2};
+
+  function render() {
+    var q = document.getElementById('q').value.trim().toLowerCase();
+    ['espera','local','saiu'].forEach(function (s) {
+      document.getElementById('c-' + s).textContent = visitors.filter(function (v) { return v.status === s; }).length;
+    });
+    document.getElementById('c-todos').textContent = visitors.length;
+
+    var shown = visitors.filter(function (v) {
+      var okF = filter === 'todos' || v.status === filter;
+      var hay = (v.name + ' ' + v.dest + ' ' + (v.plate || '')).toLowerCase();
+      return okF && (!q || hay.indexOf(q) > -1);
+    }).sort(function (a, b) { return order[a.status] - order[b.status]; });
+
+    var list = document.getElementById('list');
+    if (!shown.length) {
+      var msg = q ? ['Nada encontrado', 'Confira o nome, o apartamento ou a placa digitados.']
+        : filter === 'espera' ? ['Ninguém na espera', 'Quando alguém chegar, ele aparece aqui até ser liberado.']
+        : filter === 'local' ? ['Ninguém no local agora', 'Visitantes liberados ficam aqui até registrar a saída.']
+        : filter === 'saiu' ? ['Nenhuma saída hoje', 'As saídas registradas aparecem aqui.']
+        : ['Nenhum visitante hoje', 'Registre entradas na hora ou leia o QR de convite.'];
+      list.innerHTML = '<div class="empty"><div class="e-t">' + msg[0] + '</div><div class="e-s">' + msg[1] + '</div></div>';
+      return;
+    }
+    list.innerHTML = shown.map(function (v) {
+      var long = v.status === 'espera' && v.wait >= 5;
+      var meta = '';
+      if (v.status === 'espera') meta = '<span class="' + (long ? 'warn' : '') + '">Aguardando há ' + v.wait + ' min</span>';
+      if (v.status === 'local') meta = '<span>Entrada ' + v.inAt + '</span><span>' + v.stay + ' no local</span>';
+      if (v.status === 'saiu') meta = '<span>Entrada ' + v.inAt + '</span><span>Saída ' + v.outAt + '</span>';
+      if (v.plate) meta += '<span>' + esc(v.plate) + '</span>';
+      var action = v.status === 'espera' ? '<button class="v-action go" data-id="' + v.id + '">Liberar entrada</button>'
+                 : v.status === 'local' ? '<button class="v-action" data-id="' + v.id + '">Registrar saída</button>' : '';
+      return '<div class="v-card' + (long ? ' wait-long' : '') + '">' +
+        '<div class="v-top"><div><div class="v-name">' + esc(v.name) + '</div>' +
+        '<div class="v-type">' + esc(v.type) + (v.invite ? '<span class="tag">CONVITE QR</span>' : '') + '</div></div>' +
+        '<span class="badge b-' + v.status + '">' + labels[v.status] + '</span></div>' +
+        '<div class="v-dest">' + esc(v.dest) + '</div>' +
+        '<div class="v-meta">' + meta + '</div>' + action + '</div>';
+    }).join('');
+  }
+
+  function toast(t) {
+    var el = document.getElementById('toast');
+    el.textContent = t; el.classList.add('show');
+    setTimeout(function () { el.classList.remove('show'); }, 2200);
+  }
+
+  document.getElementById('list').addEventListener('click', function (e) {
+    var btn = e.target.closest('.v-action');
+    if (!btn) return;
+    var v = visitors.filter(function (x) { return x.id === +btn.dataset.id; })[0];
+    if (v.status === 'espera') { v.status = 'local'; v.inAt = now(); v.stay = 'agora'; toast('Entrada liberada'); }
+    else if (v.status === 'local') { v.status = 'saiu'; v.outAt = now(); toast('Saída registrada'); }
+    render();
+  });
+
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      document.querySelectorAll('.tab').forEach(function (x) { x.classList.remove('active'); });
+      t.classList.add('active'); filter = t.dataset.f; render();
+    });
+  });
+  document.getElementById('q').addEventListener('input', render);
+
+  var overlay = document.getElementById('overlay'), sheet = document.getElementById('sheet');
+  function openSheet() { overlay.classList.add('show'); sheet.classList.add('show'); }
+  function closeSheet() { overlay.classList.remove('show'); sheet.classList.remove('show'); }
+  document.getElementById('openSheet').addEventListener('click', openSheet);
+  document.getElementById('cancelSheet').addEventListener('click', closeSheet);
+  overlay.addEventListener('click', closeSheet);
+
+  var tipo = 'Visitante';
+  document.querySelectorAll('#fTipo .chip').forEach(function (c) {
+    c.addEventListener('click', function () {
+      document.querySelectorAll('#fTipo .chip').forEach(function (x) { x.classList.remove('sel'); });
+      c.classList.add('sel'); tipo = c.dataset.v;
+    });
+  });
+  document.getElementById('fPlaca').addEventListener('input', function (e) { e.target.value = e.target.value.toUpperCase(); });
+
+  document.getElementById('saveSheet').addEventListener('click', function () {
+    var nome = document.getElementById('fNome').value.trim() || 'Visitante sem nome';
+    var bloco = document.getElementById('fBloco').value.trim() || '—';
+    var apto = document.getElementById('fApto').value.trim() || '—';
+    var placa = document.getElementById('fPlaca').value.trim();
+    visitors.push({id:nextId++, name:nome, type:tipo, dest:'Bloco ' + bloco + ' · Apto ' + apto, status:'espera', wait:0, plate:placa});
+    ['fNome','fBloco','fApto','fPlaca'].forEach(function (id) { document.getElementById(id).value = ''; });
+    closeSheet(); filter = 'espera';
+    document.querySelectorAll('.tab').forEach(function (x) { x.classList.toggle('active', x.dataset.f === 'espera'); });
+    render(); toast('Visitante registrado na espera');
+  });
+
+  document.getElementById('themeBtn').addEventListener('click', function () {
+    var root = document.documentElement, cur = root.getAttribute('data-theme');
+    var isDark = cur ? cur === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  });
+
+  render();
+</script>
+</body>
+</html>

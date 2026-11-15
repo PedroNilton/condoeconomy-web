@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CondoEconomy — Perfil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FAFAFA; --card:#FFFFFF; --border:#E4E4E8;
+    --text:#16181D; --dim:#75767E; --faint:#A9AAB1;
+    --primary:#4338CA; --primary-dim:#EEF0FF; --primary-ink:#FFFFFF;
+    --success:#16A34A; --success-dim:#EAF8EF;
+    --danger:#DC2626; --danger-dim:#FDECEC;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0E0F12; --card:#17181D; --border:#262832;
+      --text:#ECEDF0; --dim:#90919A; --faint:#5D5E67;
+      --primary:#6C63F5; --primary-dim:#201E3A; --primary-ink:#FFFFFF;
+      --success:#34D399; --success-dim:#122A22;
+      --danger:#F87171; --danger-dim:#331A1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#0E0F12; --card:#17181D; --border:#262832;
+    --text:#ECEDF0; --dim:#90919A; --faint:#5D5E67;
+    --primary:#6C63F5; --primary-dim:#201E3A; --primary-ink:#FFFFFF;
+    --success:#34D399; --success-dim:#122A22;
+    --danger:#F87171; --danger-dim:#331A1A;
+  }
+  * { box-sizing:border-box; }
+  html, body { height:100%; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:'Manrope',system-ui,sans-serif; display:flex; justify-content:center; }
+  .phone { width:100%; max-width:412px; min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; }
+
+  header.top { padding:calc(16px + env(safe-area-inset-top,0px)) 18px 0; }
+
+  .profile-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:20px 18px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; }
+  .avatar-wrap { position:relative; }
+  .avatar { width:64px; height:64px; border-radius:50%; background:var(--primary-dim); color:var(--primary); display:grid; place-items:center; font-size:22px; font-weight:800; }
+  .sync-dot { position:absolute; bottom:1px; right:1px; width:14px; height:14px; border-radius:50%; background:var(--success); border:2.5px solid var(--card); }
+  .p-name { font-size:16.5px; font-weight:800; }
+  .p-role { display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600; color:var(--primary); background:var(--primary-dim); padding:2px 9px; border-radius:999px; }
+  .p-unit { font-size:12.5px; color:var(--dim); font-family:'IBM Plex Mono',monospace; }
+
+  .qr-card { margin-top:14px; background:var(--primary-dim); border-radius:16px; padding:16px; display:flex; align-items:center; gap:14px; }
+  .qr-card .qi { width:44px; height:44px; border-radius:11px; background:var(--card); color:var(--primary); display:grid; place-items:center; flex:none; }
+  .qr-card .qi svg { width:22px; height:22px; }
+  .qr-card .qt { flex:1; }
+  .qr-card .qt-title { font-size:13.5px; font-weight:700; color:var(--primary); }
+  .qr-card .qt-sub { font-size:11px; color:var(--primary); opacity:.75; margin-top:1px; }
+  .qr-card .qc { color:var(--primary); }
+  .qr-card .qc svg { width:16px; height:16px; }
+
+  main { flex:1; padding:18px 18px 100px; display:flex; flex-direction:column; gap:22px; }
+  .section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--faint); margin:0 0 10px; }
+  .group { background:var(--card); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+  .item { display:flex; align-items:center; gap:12px; padding:13px 14px; border-bottom:1px solid var(--border); }
+  .item:last-child { border-bottom:none; }
+  .item .i-icon { width:32px; height:32px; border-radius:9px; background:var(--bg); border:1px solid var(--border); display:grid; place-items:center; flex:none; color:var(--dim); }
+  .item .i-icon svg { width:15px; height:15px; }
+  .item .i-label { flex:1; font-size:13.5px; font-weight:600; }
+  .item .chev { color:var(--faint); }
+  .item .chev svg { width:16px; height:16px; }
+  .item.clickable { cursor:pointer; }
+
+  .switch { position:relative; width:40px; height:23px; flex:none; }
+  .switch input { opacity:0; width:0; height:0; }
+  .switch .track { position:absolute; inset:0; background:var(--border); border-radius:999px; transition:background .15s; }
+  .switch .thumb { position:absolute; top:2.5px; left:2.5px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform .15s; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+  .switch input:checked + .track { background:var(--primary); }
+  .switch input:checked + .track .thumb { transform:translateX(17px); }
+
+  .logout-row { display:flex; align-items:center; justify-content:center; gap:8px; padding:14px; color:var(--danger); font-weight:700; font-size:13.5px; cursor:pointer; border-radius:12px; }
+  .logout-row svg { width:16px; height:16px; }
+
+  nav.bottom {
+    position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:412px;
+    background:var(--card); border-top:1px solid var(--border);
+    padding:10px 8px calc(10px + env(safe-area-inset-bottom,0px)); display:grid; grid-template-columns:repeat(5,1fr);
+  }
+  nav.bottom a { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; color:var(--faint); font-size:10px; font-weight:600; }
+  nav.bottom a svg { width:19px; height:19px; }
+  nav.bottom a.active { color:var(--primary); }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <header class="top">
+    <div class="profile-card">
+      <div class="avatar-wrap">
+        <div class="avatar">CS</div>
+        <div class="sync-dot"></div>
+      </div>
+      <div class="p-name">Carlos Silva</div>
+      <span class="p-role">MORADOR</span>
+      <div class="p-unit">BLOCO-AMORGOS · APTO-01</div>
+    </div>
+
+    <div class="qr-card">
+      <div class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z"/></svg></div>
+      <div class="qt"><div class="qt-title">Meu QR de acesso</div><div class="qt-sub">Mostrar na portaria</div></div>
+      <div class="qc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <p class="section-title">Minha unidade</p>
+      <div class="group">
+        <div class="item clickable">
+          <div class="i-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+          <div class="i-label">Dados pessoais</div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
+        </div>
+        <div class="item clickable">
+          <div class="i-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div class="i-label">Moradores adicionais</div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
+        </div>
+        <div class="item clickable">
+          <div class="i-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="4" cy="8" r="2"/><circle cx="7" cy="15" r="2"/><circle cx="16" cy="15" r="2"/><path d="M8.5 16.5c1-3 6-3 7 0 .8 2.2-.5 4-3.5 4s-4.3-1.8-3.5-4Z"/></svg></div>
+          <div class="i-label">Meus pets</div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
+        </div>
+        <div class="item clickable">
+          <div class="i-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-5a2 2 0 0 1 2-1.3h10a2 2 0 0 1 2 1.3l2 5v5H3z"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/></svg></div>
+          <div class="i-label">Meus veículos</div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <p class="section-title">Configurações</p>
+      <div class="group">
+        <div class="item">
+          <div class="i-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg></div>
+          <div class="i-label">Modo escuro</div>
+          <label class="switch"><input type="checkbox" id="themeToggle"><span class="track"><span class="thumb"></span></span></label>
+        </div>
+        <div class="item clickable">
+          <div class="i-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+          <div class="i-label">Notificações</div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
+        </div>
+        <div class="item clickable">
+          <div class="i-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6z"/></svg></div>
+          <div class="i-label">Segurança e senha</div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <p class="section-title">Suporte</p>
+      <div class="group">
+        <div class="item clickable">
+          <div class="i-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2-3 4"/><path d="M12 17h.01"/></svg></div>
+          <div class="i-label">Central de ajuda</div>
+          <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="logout-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      Sair do aplicativo
+    </div>
+  </main>
+
+  <nav class="bottom">
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10 12 3l9 7"/><path d="M5 9v11h14V9"/></svg>Início</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l3 3v17H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>Boletos</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>Reservas</a>
+    <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-5a2 2 0 0 1 2-1.3h10a2 2 0 0 1 2 1.3l2 5v5H3z"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/></svg>Veículos</a>
+    <a href="#" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Perfil</a>
+  </nav>
+</div>
+
+<script>
+  var checkbox = document.getElementById('themeToggle');
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  checkbox.checked = document.documentElement.getAttribute('data-theme')
+    ? document.documentElement.getAttribute('data-theme') === 'dark'
+    : prefersDark;
+  checkbox.addEventListener('change', function () {
+    document.documentElement.setAttribute('data-theme', checkbox.checked ? 'dark' : 'light');
+  });
+</script>
+</body>
+</html>

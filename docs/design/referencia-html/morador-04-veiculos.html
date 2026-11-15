@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CondoEconomy — Veículos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FAFAFA; --card:#FFFFFF; --border:#E4E4E8;
+    --text:#16181D; --dim:#75767E; --faint:#A9AAB1;
+    --primary:#4338CA; --primary-dim:#EEF0FF; --primary-ink:#FFFFFF;
+    --success:#16A34A; --success-dim:#EAF8EF;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0E0F12; --card:#17181D; --border:#262832;
+      --text:#ECEDF0; --dim:#90919A; --faint:#5D5E67;
+      --primary:#6C63F5; --primary-dim:#201E3A; --primary-ink:#FFFFFF;
+      --success:#34D399; --success-dim:#122A22;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#0E0F12; --card:#17181D; --border:#262832;
+    --text:#ECEDF0; --dim:#90919A; --faint:#5D5E67;
+    --primary:#6C63F5; --primary-dim:#201E3A; --primary-ink:#FFFFFF;
+    --success:#34D399; --success-dim:#122A22;
+  }
+  * { box-sizing:border-box; }
+  html, body { height:100%; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:'Manrope',system-ui,sans-serif; display:flex; justify-content:center; }
+  .phone { width:100%; max-width:412px; min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; }
+  .view { display:flex; flex-direction:column; flex:1; }
+
+  /* ---- List view ---- */
+  header.top { padding:calc(16px + env(safe-area-inset-top,0px)) 18px 4px; }
+  .top-row { display:flex; justify-content:space-between; align-items:flex-start; }
+  .eyebrow { font-size:11px; font-weight:700; color:var(--faint); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; }
+  h1 { font-size:22px; font-weight:800; margin:0; }
+  .fab { width:42px; height:42px; border-radius:12px; background:var(--primary); color:var(--primary-ink); border:none; display:grid; place-items:center; cursor:pointer; flex:none; }
+  .fab svg { width:19px; height:19px; }
+
+  main { flex:1; padding:20px 18px 100px; display:flex; flex-direction:column; gap:10px; }
+  .section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--faint); margin:0 0 4px; }
+
+  .vcard { background:var(--card); border:1px solid var(--border); border-radius:14px; display:flex; align-items:center; gap:12px; padding:14px; }
+  .vcard .v-color { width:38px; height:38px; border-radius:10px; flex:none; display:grid; place-items:center; }
+  .vcard .v-color svg { width:19px; height:19px; }
+  .vcard .v-body { flex:1; min-width:0; }
+  .vcard .v-plate { font-family:'IBM Plex Mono',monospace; font-size:13.5px; font-weight:700; letter-spacing:.03em; }
+  .vcard .v-sub { font-size:11.5px; color:var(--dim); margin-top:2px; }
+  .badge-slot { font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700; padding:4px 8px; border-radius:999px; background:var(--primary-dim); color:var(--primary); white-space:nowrap; }
+
+  nav.bottom {
+    position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:412px;
+    background:var(--card); border-top:1px solid var(--border);
+    padding:10px 8px calc(10px + env(safe-area-inset-bottom,0px)); display:grid; grid-template-columns:repeat(5,1fr);
+  }
+  nav.bottom a { display:flex; flex-direction:column; align-items:center; gap:4px; text-decoration:none; color:var(--faint); font-size:10px; font-weight:600; }
+  nav.bottom a svg { width:19px; height:19px; }
+  nav.bottom a.active { color:var(--primary); }
+
+  /* ---- Form view ---- */
+  .back-btn { width:34px; height:34px; border-radius:10px; border:1px solid var(--border); background:var(--card); display:grid; place-items:center; color:var(--text); flex:none; }
+  .back-btn svg { width:16px; height:16px; }
+  .form-header { display:flex; align-items:center; gap:10px; }
+  .form-header h1 { font-size:17px; }
+
+  .field-label { font-size:12px; font-weight:700; color:var(--dim); text-transform:uppercase; letter-spacing:.04em; margin-bottom:10px; display:block; }
+  input[type="text"] {
+    width:100%; padding:11px 13px; border-radius:10px; border:1px solid var(--border);
+    background:var(--card); color:var(--text); font-family:inherit; font-size:14px;
+  }
+  #placaInput { font-family:'IBM Plex Mono',monospace; font-weight:600; letter-spacing:.06em; text-transform:uppercase; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+  .color-grid { display:flex; gap:10px; flex-wrap:wrap; }
+  .color-opt { width:38px; height:38px; border-radius:50%; cursor:pointer; border:2px solid transparent; position:relative; }
+  .color-opt input { position:absolute; opacity:0; }
+  .color-opt.selected { border-color:var(--primary); }
+  .color-opt.selected::after { content:'✓'; position:absolute; inset:0; display:grid; place-items:center; color:#fff; font-size:14px; font-weight:800; text-shadow:0 0 2px rgba(0,0,0,.4); }
+
+  .btn { font-family:inherit; font-size:14.5px; font-weight:700; padding:12px; border-radius:10px; border:none; cursor:pointer; width:100%; }
+  .btn-primary { background:var(--primary); color:var(--primary-ink); }
+
+  /* ---- Confirm view ---- */
+  #confirm-view { text-align:center; padding:40px 18px 32px; }
+  .check { width:56px; height:56px; border-radius:50%; background:var(--success-dim); color:var(--success); display:grid; place-items:center; margin:0 auto 18px; }
+  .check svg { width:26px; height:26px; }
+  #confirm-view h2 { font-size:18px; font-weight:800; margin:0 0 6px; }
+  #confirm-view p.msg { font-size:13px; color:var(--dim); margin:0 0 22px; line-height:1.5; }
+  .summary-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; text-align:left; margin-bottom:22px; }
+  .summary-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .summary-row:last-child { border-bottom:none; }
+  .summary-row .k { color:var(--dim); }
+  .summary-row .v { font-weight:700; text-align:right; }
+  .v-plate-lg { font-family:'IBM Plex Mono',monospace; letter-spacing:.05em; }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- LIST VIEW -->
+  <div class="view" id="list-view">
+    <header class="top">
+      <div class="top-row">
+        <div><div class="eyebrow">Garagem</div><h1>Veículos</h1></div>
+        <button class="fab" id="openForm" aria-label="Cadastrar veículo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      </div>
+    </header>
+    <main>
+      <p class="section-title">Meus veículos cadastrados</p>
+      <div class="vcard">
+        <div class="v-color" style="background:#DFE3E8"><svg viewBox="0 0 24 24" fill="none" stroke="#4B4E58" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-5a2 2 0 0 1 2-1.3h10a2 2 0 0 1 2 1.3l2 5v5H3z"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/></svg></div>
+        <div class="v-body"><div class="v-plate">ABC-1D23</div><div class="v-sub">Fiat Argo · Prata</div></div>
+        <span class="badge-slot">VAGA G-14</span>
+      </div>
+      <div class="vcard">
+        <div class="v-color" style="background:#1C1D22"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-5a2 2 0 0 1 2-1.3h10a2 2 0 0 1 2 1.3l2 5v5H3z"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/></svg></div>
+        <div class="v-body"><div class="v-plate">RDX-9F41</div><div class="v-sub">Honda Civic · Preto</div></div>
+        <span class="badge-slot">VAGA G-15</span>
+      </div>
+      <div class="vcard">
+        <div class="v-color" style="background:#4B5320"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-5a2 2 0 0 1 2-1.3h10a2 2 0 0 1 2 1.3l2 5v5H3z"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/></svg></div>
+        <div class="v-body"><div class="v-plate">JQP-4C21</div><div class="v-sub">Jeep Renegade · Verde musgo</div></div>
+        <span class="badge-slot">VAGA G-16</span>
+      </div>
+    </main>
+    <nav class="bottom">
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10 12 3l9 7"/><path d="M5 9v11h14V9"/></svg>Início</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l3 3v17H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>Boletos</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>Reservas</a>
+      <a href="#" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-5a2 2 0 0 1 2-1.3h10a2 2 0 0 1 2 1.3l2 5v5H3z"/><circle cx="7.5" cy="18" r="1.5"/><circle cx="16.5" cy="18" r="1.5"/></svg>Veículos</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Perfil</a>
+    </nav>
+  </div>
+
+  <!-- FORM VIEW -->
+  <div class="view" id="form-view" style="display:none">
+    <header class="top">
+      <div class="form-header">
+        <button class="back-btn" id="closeForm" aria-label="Voltar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <h1>Cadastrar veículo</h1>
+      </div>
+    </header>
+    <main>
+      <div>
+        <span class="field-label">Placa</span>
+        <input type="text" id="placaInput" placeholder="ABC-1D23" maxlength="8">
+      </div>
+
+      <div class="two-col">
+        <div><span class="field-label">Marca</span><input type="text" id="marcaInput" placeholder="Ex: Fiat"></div>
+        <div><span class="field-label">Modelo</span><input type="text" id="modeloInput" placeholder="Ex: Argo"></div>
+      </div>
+
+      <div>
+        <span class="field-label">Cor</span>
+        <div class="color-grid">
+          <label class="color-opt selected" style="background:#DFE3E8" data-name="Prata" title="Prata"><input type="radio" name="cor" checked></label>
+          <label class="color-opt" style="background:#1C1D22" data-name="Preto" title="Preto"><input type="radio" name="cor"></label>
+          <label class="color-opt" style="background:#F5F5F5;border:1px solid #D8D8DC" data-name="Branco" title="Branco"><input type="radio" name="cor"></label>
+          <label class="color-opt" style="background:#6B7280" data-name="Cinza" title="Cinza"><input type="radio" name="cor"></label>
+          <label class="color-opt" style="background:#B91C1C" data-name="Vermelho" title="Vermelho"><input type="radio" name="cor"></label>
+          <label class="color-opt" style="background:#1D4ED8" data-name="Azul" title="Azul"><input type="radio" name="cor"></label>
+          <label class="color-opt" style="background:#4B5320" data-name="Verde musgo" title="Verde musgo"><input type="radio" name="cor"></label>
+          <label class="color-opt" style="background:#166534" data-name="Verde" title="Verde"><input type="radio" name="cor"></label>
+          <label class="color-opt" style="background:#EAB308" data-name="Amarelo" title="Amarelo"><input type="radio" name="cor"></label>
+          <label class="color-opt" style="background:#EA580C" data-name="Laranja" title="Laranja"><input type="radio" name="cor"></label>
+          <label class="color-opt" style="background:#78350F" data-name="Marrom" title="Marrom"><input type="radio" name="cor"></label>
+          <label class="color-opt" style="background:#7C2D92" data-name="Vinho" title="Vinho"><input type="radio" name="cor"></label>
+        </div>
+        <p style="font-size:11px;color:var(--dim);margin:8px 0 0">Passe o dedo/mouse para ver o nome de cada cor.</p>
+      </div>
+
+      <div>
+        <span class="field-label">Vaga na garagem (opcional)</span>
+        <input type="text" id="vagaInput" placeholder="Ex: G-14">
+      </div>
+
+      <button class="btn btn-primary" id="submitBtn">Cadastrar veículo</button>
+    </main>
+  </div>
+
+  <!-- CONFIRM VIEW -->
+  <div id="confirm-view" style="display:none">
+    <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+    <h2>Veículo cadastrado!</h2>
+    <p class="msg">Ele já aparece na sua lista e a portaria consegue identificá-lo na entrada.</p>
+    <div class="summary-card">
+      <div class="summary-row"><span class="k">Placa</span><span class="v v-plate-lg" id="s-placa">—</span></div>
+      <div class="summary-row"><span class="k">Marca / Modelo</span><span class="v" id="s-modelo">—</span></div>
+      <div class="summary-row"><span class="k">Cor</span><span class="v" id="s-cor">—</span></div>
+      <div class="summary-row"><span class="k">Vaga</span><span class="v" id="s-vaga">—</span></div>
+    </div>
+    <button class="btn btn-primary" id="backBtn">Ver meus veículos</button>
+  </div>
+
+</div>
+
+<script>
+  document.querySelectorAll('.color-opt').forEach(function (opt) {
+    opt.addEventListener('click', function () {
+      document.querySelectorAll('.color-opt').forEach(function (o) { o.classList.remove('selected'); });
+      opt.classList.add('selected'); opt.querySelector('input').checked = true;
+    });
+  });
+  document.getElementById('placaInput').addEventListener('input', function (e) {
+    e.target.value = e.target.value.toUpperCase();
+  });
+
+  document.getElementById('openForm').addEventListener('click', function () {
+    document.getElementById('list-view').style.display = 'none';
+    document.getElementById('form-view').style.display = 'flex';
+  });
+  document.getElementById('closeForm').addEventListener('click', function () {
+    document.getElementById('form-view').style.display = 'none';
+    document.getElementById('list-view').style.display = 'flex';
+  });
+
+  document.getElementById('submitBtn').addEventListener('click', function () {
+    var placa = document.getElementById('placaInput').value || '—';
+    var marca = document.getElementById('marcaInput').value || '—';
+    var modelo = document.getElementById('modeloInput').value || '';
+    var cor = document.querySelector('.color-opt.selected').dataset.name;
+    var vaga = document.getElementById('vagaInput').value || 'Não informada';
+    document.getElementById('s-placa').textContent = placa;
+    document.getElementById('s-modelo').textContent = (marca + ' ' + modelo).trim();
+    document.getElementById('s-cor').textContent = cor;
+    document.getElementById('s-vaga').textContent = vaga;
+    document.getElementById('form-view').style.display = 'none';
+    document.getElementById('confirm-view').style.display = 'block';
+  });
+
+  document.getElementById('backBtn').addEventListener('click', function () {
+    document.getElementById('confirm-view').style.display = 'none';
+    document.getElementById('list-view').style.display = 'flex';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CondoEconomy — Entrar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAFAFA;
+    --grid-line: #ECECEE;
+    --card: #FFFFFF;
+    --border: #E4E4E8;
+    --text: #16181D;
+    --dim: #75767E;
+    --primary: #4338CA;
+    --primary-ink: #FFFFFF;
+    --primary-dim: #EEF0FF;
+    --live: #16A34A;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0E0F12; --grid-line: #17181D; --card: #17181D; --border: #262832;
+      --text: #ECEDF0; --dim: #90919A; --primary: #6C63F5; --primary-ink: #FFFFFF; --primary-dim: #201E3A;
+      --live: #34D399;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0E0F12; --grid-line: #17181D; --card: #17181D; --border: #262832;
+    --text: #ECEDF0; --dim: #90919A; --primary: #6C63F5; --primary-ink: #FFFFFF; --primary-dim: #201E3A;
+    --live: #34D399;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background-color: var(--bg);
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 34px 34px;
+    color: var(--text);
+    font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 18px 48px;
+  }
+  .stage { width: 100%; max-width: 392px; }
+
+  .brand { display: flex; align-items: center; gap: 9px; margin-bottom: 28px; }
+  .brand .mark {
+    width: 26px; height: 26px; border-radius: 7px; background: var(--primary);
+    display: grid; place-items: center; flex: none;
+  }
+  .brand .mark svg { width: 14px; height: 14px; }
+  .brand span { font-weight: 800; font-size: 16px; letter-spacing: -0.01em; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 26px 24px;
+    box-shadow: 0 1px 2px rgba(16,17,20,.04), 0 20px 40px -28px rgba(16,17,20,.18);
+  }
+  h1 { font-size: 19px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { color: var(--dim); font-size: 13.5px; margin: 0 0 22px; min-height: 20px; line-height: 1.5; }
+
+  .roles {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 3px; gap: 3px; margin-bottom: 22px;
+  }
+  .roles input { position: absolute; opacity: 0; pointer-events: none; }
+  .roles label {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12.5px; font-weight: 600; padding: 8px 4px; border-radius: 8px;
+    color: var(--dim); cursor: pointer; text-align: center; transition: background .15s, color .15s;
+  }
+  .roles input:checked + label { background: var(--primary-dim); color: var(--primary); }
+  .roles input:focus-visible + label { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+  .field { margin-bottom: 15px; }
+  .field label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px; }
+  .field input {
+    width: 100%; padding: 10.5px 12px; border-radius: 9px;
+    border: 1px solid var(--border); background: var(--bg);
+    color: var(--text); font-family: inherit; font-size: 14px;
+  }
+  .field input::placeholder { color: var(--dim); }
+  .field input:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; border-color: transparent; }
+
+  .row { display: flex; align-items: center; justify-content: space-between; margin: 2px 0 20px; font-size: 12.5px; }
+  .remember { display: flex; align-items: center; gap: 7px; color: var(--dim); }
+  .remember input { accent-color: var(--primary); }
+  .row a { color: var(--primary); text-decoration: none; font-weight: 600; }
+  .row a:hover, .row a:focus-visible { text-decoration: underline; }
+
+  button.submit {
+    width: 100%; padding: 11.5px; border: none; border-radius: 9px;
+    background: var(--primary); color: var(--primary-ink); font-weight: 700; font-size: 14.5px;
+    font-family: inherit; cursor: pointer; transition: filter .15s, transform .05s;
+  }
+  button.submit:hover { filter: brightness(1.08); }
+  button.submit:active { transform: translateY(1px); }
+  button.submit:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+  .foot {
+    margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dim);
+  }
+  .foot .status { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--live); animation: pulse 2.6s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+  .foot a { color: var(--dim); text-decoration: none; }
+  .foot a:hover, .foot a:focus-visible { color: var(--text); }
+</style>
+</head>
+<body>
+<main class="stage">
+  <div class="brand">
+    <span class="mark"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="6" width="4.5" height="9" fill="white"/><rect x="6.2" y="1" width="4.5" height="14" fill="white" fill-opacity=".85"/><rect x="11.4" y="4" width="3.6" height="11" fill="white" fill-opacity=".7"/></svg></span>
+    <span>CondoEconomy</span>
+  </div>
+
+  <form class="card" novalidate>
+    <h1>Entrar</h1>
+    <p class="sub" id="roleSub">Painel da administração — financeiro, reservas e ouvidoria.</p>
+
+    <div class="roles" role="radiogroup" aria-label="Tipo de acesso">
+      <input type="radio" name="role" id="r-sindico" checked>
+      <label for="r-sindico" data-sub="Painel da administração — financeiro, reservas e ouvidoria.">Síndico</label>
+      <input type="radio" name="role" id="r-portaria">
+      <label for="r-portaria" data-sub="Encomendas, visitantes e prestadores de serviço.">Portaria</label>
+      <input type="radio" name="role" id="r-morador">
+      <label for="r-morador" data-sub="Seus boletos, reservas e chamados em um só lugar.">Morador</label>
+    </div>
+
+    <div class="field">
+      <label for="email">E-mail</label>
+      <input type="email" id="email" placeholder="seu@email.com" autocomplete="email" required>
+    </div>
+    <div class="field">
+      <label for="senha">Senha</label>
+      <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password" required>
+    </div>
+
+    <div class="row">
+      <label class="remember"><input type="checkbox" checked> Lembrar de mim</label>
+      <a href="#">Esqueci minha senha</a>
+    </div>
+
+    <button type="submit" class="submit">Entrar</button>
+
+    <div class="foot">
+      <span class="status"><span class="dot"></span>Sincronização em tempo real ativa</span>
+      <a href="#">Precisa de ajuda?</a>
+    </div>
+  </form>
+</main>
+
+<script>
+  document.querySelectorAll('.roles label').forEach(function (label) {
+    label.addEventListener('click', function () {
+      document.getElementById('roleSub').textContent = label.getAttribute('data-sub');
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CondoEconomy — Segurança e Senha</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FAFAFA; --card:#FFFFFF; --border:#E4E4E8;
+    --text:#16181D; --dim:#75767E; --faint:#A9AAB1;
+    --primary:#4338CA; --primary-dim:#EEF0FF; --primary-ink:#FFFFFF;
+    --success:#16A34A; --success-dim:#EAF8EF;
+    --warning:#B45309;
+    --danger:#DC2626; --danger-dim:#FDECEC;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0E0F12; --card:#17181D; --border:#262832;
+      --text:#ECEDF0; --dim:#90919A; --faint:#5D5E67;
+      --primary:#6C63F5; --primary-dim:#201E3A; --primary-ink:#FFFFFF;
+      --success:#34D399; --success-dim:#122A22;
+      --warning:#F5A855;
+      --danger:#F87171; --danger-dim:#331A1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#0E0F12; --card:#17181D; --border:#262832;
+    --text:#ECEDF0; --dim:#90919A; --faint:#5D5E67;
+    --primary:#6C63F5; --primary-dim:#201E3A; --primary-ink:#FFFFFF;
+    --success:#34D399; --success-dim:#122A22;
+    --warning:#F5A855;
+    --danger:#F87171; --danger-dim:#331A1A;
+  }
+  * { box-sizing:border-box; }
+  html, body { height:100%; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:'Manrope',system-ui,sans-serif; display:flex; justify-content:center; }
+  .phone { width:100%; max-width:412px; min-height:100vh; min-height:100dvh; display:flex; flex-direction:column; }
+
+  header.top { padding:calc(16px + env(safe-area-inset-top,0px)) 18px 8px; display:flex; align-items:center; gap:10px; }
+  .back-btn { width:34px; height:34px; border-radius:10px; border:1px solid var(--border); background:var(--card); display:grid; place-items:center; color:var(--text); flex:none; }
+  .back-btn svg { width:16px; height:16px; }
+  h1 { font-size:17px; font-weight:800; margin:0; }
+
+  main { flex:1; padding:6px 18px 40px; display:flex; flex-direction:column; gap:22px; }
+
+  .info-banner { display:flex; gap:10px; align-items:flex-start; background:var(--primary-dim); color:var(--primary); border-radius:12px; padding:13px 14px; font-size:12px; line-height:1.55; }
+  .info-banner svg { width:16px; height:16px; flex:none; margin-top:1px; }
+
+  .section-title { font-size:12.5px; font-weight:700; margin:0 0 14px; display:flex; align-items:center; gap:7px; }
+  .section-title svg { width:15px; height:15px; color:var(--dim); }
+
+  .field { margin-bottom:14px; }
+  .field-label { font-size:12px; font-weight:600; color:var(--dim); margin-bottom:7px; display:block; }
+  .pw-wrap { position:relative; }
+  .pw-wrap input {
+    width:100%; padding:11px 40px 11px 13px; border-radius:10px; border:1px solid var(--border);
+    background:var(--card); color:var(--text); font-family:inherit; font-size:14px;
+  }
+  .pw-wrap input.mismatch { border-color:var(--danger); }
+  .pw-toggle { position:absolute; right:11px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--dim); cursor:pointer; padding:2px; }
+  .pw-toggle svg { width:17px; height:17px; }
+
+  .strength { display:flex; gap:4px; margin-top:8px; }
+  .strength .bar { height:4px; flex:1; border-radius:999px; background:var(--border); }
+  .strength-label { font-size:11px; color:var(--dim); margin-top:5px; }
+  .mismatch-text { font-size:11px; color:var(--danger); margin-top:6px; display:none; }
+  .mismatch-text.show { display:block; }
+
+  .btn { font-family:inherit; font-size:14.5px; font-weight:700; padding:12px; border-radius:10px; border:none; cursor:pointer; width:100%; }
+  .btn-primary { background:var(--primary); color:var(--primary-ink); }
+
+  .device-row { display:flex; align-items:center; gap:12px; padding:13px 14px; border:1px solid var(--border); border-radius:12px; margin-bottom:10px; background:var(--card); }
+  .device-row .d-icon { width:34px; height:34px; border-radius:9px; background:var(--bg); border:1px solid var(--border); display:grid; place-items:center; flex:none; color:var(--dim); }
+  .device-row .d-icon svg { width:16px; height:16px; }
+  .device-row .d-body { flex:1; min-width:0; }
+  .device-row .d-title { font-size:13px; font-weight:700; }
+  .device-row .d-sub { font-size:11px; color:var(--dim); margin-top:1px; }
+  .current-badge { font-family:'IBM Plex Mono',monospace; font-size:9px; font-weight:700; padding:3px 7px; border-radius:999px; background:var(--success-dim); color:var(--success); }
+  .end-btn { font-family:inherit; font-size:11.5px; font-weight:700; color:var(--danger); background:none; border:none; cursor:pointer; flex:none; }
+
+  .danger-zone-btn { width:100%; padding:12px; border-radius:10px; border:1px solid var(--danger); background:var(--danger-dim); color:var(--danger); font-weight:700; font-size:13.5px; cursor:pointer; margin-top:4px; }
+  .danger-note { font-size:11px; color:var(--dim); margin-top:8px; line-height:1.5; }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <header class="top">
+    <button class="back-btn" aria-label="Voltar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <h1>Segurança e senha</h1>
+  </header>
+
+  <main>
+    <div class="info-banner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      Sua senha nunca é armazenada em texto puro (usamos hash) e toda a conexão com o servidor é criptografada via HTTPS. Nunca compartilhe sua senha com terceiros ou com a portaria.
+    </div>
+
+    <section>
+      <p class="section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.5 12.5 19 4l3 3-2 2-2-2-2 2 2 2-3 3"/></svg>Alterar senha</p>
+
+      <div class="field">
+        <span class="field-label">Senha atual</span>
+        <div class="pw-wrap">
+          <input type="password" id="pwAtual" placeholder="Digite sua senha atual">
+          <button class="pw-toggle" data-target="pwAtual"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="field-label">Nova senha</span>
+        <div class="pw-wrap">
+          <input type="password" id="pwNova" placeholder="Mínimo de 8 caracteres">
+          <button class="pw-toggle" data-target="pwNova"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+        <div class="strength">
+          <div class="bar" id="bar1"></div><div class="bar" id="bar2"></div><div class="bar" id="bar3"></div>
+        </div>
+        <div class="strength-label" id="strengthLabel">Digite a nova senha</div>
+      </div>
+
+      <div class="field">
+        <span class="field-label">Confirmar nova senha</span>
+        <div class="pw-wrap">
+          <input type="password" id="pwConfirma" placeholder="Repita a nova senha">
+          <button class="pw-toggle" data-target="pwConfirma"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        </div>
+        <div class="mismatch-text" id="mismatchText">As senhas não coincidem.</div>
+      </div>
+
+      <button class="btn btn-primary">Atualizar senha</button>
+    </section>
+
+    <section>
+      <p class="section-title" style="color:var(--danger)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 2.5 17a2 2 0 0 0 1.7 3h15.6a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>Sessões ativas</p>
+
+      <div class="device-row">
+        <div class="d-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></div>
+        <div class="d-body"><div class="d-title">iPhone de Carlos</div><div class="d-sub">Aracaju, SE · agora</div></div>
+        <span class="current-badge">ESTE DISPOSITIVO</span>
+      </div>
+
+      <div class="device-row">
+        <div class="d-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+        <div class="d-body"><div class="d-title">Chrome · Windows</div><div class="d-sub">Aracaju, SE · há 3 dias</div></div>
+        <button class="end-btn">Encerrar</button>
+      </div>
+
+      <button class="danger-zone-btn">Encerrar todas as outras sessões</button>
+      <p class="danger-note">Isso desconecta qualquer dispositivo que não seja este, sem afetar sua sessão atual.</p>
+    </section>
+  </main>
+</div>
+
+<script>
+  document.querySelectorAll('.pw-toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var input = document.getElementById(btn.dataset.target);
+      input.type = input.type === 'password' ? 'text' : 'password';
+    });
+  });
+
+  var nova = document.getElementById('pwNova');
+  var confirma = document.getElementById('pwConfirma');
+  var bars = [document.getElementById('bar1'), document.getElementById('bar2'), document.getElementById('bar3')];
+  var label = document.getElementById('strengthLabel');
+  var colors = ['#DC2626', '#B45309', '#16A34A'];
+
+  function checkStrength(v) {
+    var score = 0;
+    if (v.length >= 8) score++;
+    if (/[A-Z]/.test(v) && /[0-9]/.test(v)) score++;
+    if (/[^A-Za-z0-9]/.test(v) && v.length >= 10) score++;
+    bars.forEach(function (b, i) { b.style.background = i < score ? colors[Math.max(score - 1, 0)] : 'var(--border)'; });
+    if (v.length === 0) label.textContent = 'Digite a nova senha';
+    else if (score <= 1) label.textContent = 'Senha fraca';
+    else if (score === 2) label.textContent = 'Senha média';
+    else label.textContent = 'Senha forte';
+  }
+  nova.addEventListener('input', function () { checkStrength(nova.value); });
+
+  function checkMatch() {
+    var mt = document.getElementById('mismatchText');
+    if (confirma.value.length === 0) { mt.classList.remove('show'); confirma.classList.remove('mismatch'); return; }
+    if (confirma.value !== nova.value) { mt.classList.add('show'); confirma.classList.add('mismatch'); }
+    else { mt.classList.remove('show'); confirma.classList.remove('mismatch'); }
+  }
+  confirma.addEventListener('input', checkMatch);
+  nova.addEventListener('input', checkMatch);
+</script>
+</body>
+</html>
