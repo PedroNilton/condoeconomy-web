@@ -7,6 +7,7 @@ import { AuthGuard } from './components/AuthGuard';
 
 // Carregamento sob demanda (Code-Splitting) — Público
 const AutoCheckin = lazy(() => import('./pages/Public/AutoCheckin').then(m => ({ default: m.AutoCheckin })));
+const DesignSystemShowcase = lazy(() => import('./pages/Dev/DesignSystemShowcase').then(m => ({ default: m.DesignSystemShowcase })));
 
 // Carregamento sob demanda — Módulo Portaria
 const DashboardLayout = lazy(() => import('./components/Layout').then(m => ({ default: m.DashboardLayout })));
@@ -91,6 +92,9 @@ export default function App() {
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/auto-checkin" element={<AutoCheckin />} />
+              {import.meta.env.DEV && (
+                <Route path="/dev/design-system" element={<DesignSystemShowcase />} />
+              )}
 
               {/* Rotas protegidas da Portaria */}
               <Route element={<AuthGuard allowedRoles={['ROLE_PORTEIRO', 'ROLE_SUPER_ADMIN']} />}>
