@@ -1,6 +1,23 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { Plus, DollarSign, FileText, ShieldCheck } from 'lucide-react';
 import api from '../../../services/api';
 import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
+import {
+  Badge,
+  BottomSheet,
+  Button,
+  ChoiceChips,
+  EmptyState,
+  Field,
+  FilterChips,
+  IconChip,
+  ListCard,
+  PageHead,
+  ProgressBar,
+  SearchInput,
+  SegmentedTabs,
+  Toast,
+} from '../../../components/ui';
 
 const DAY_MS = 86400000;
 const MULTA_PCT = 0.02;
@@ -821,884 +838,615 @@ export function FinancasAdminPanel() {
     }
   };
 
-  const anySheetOpen = Boolean(activeBoleto) || isNbOpen || isNeOpen;
-
   return (
-    <div className="flex flex-col min-h-full">
-      <style>{`
-        .fin-page-head { padding: 10px 18px 0; }
-        .fin-eyebrow { font-size: 11px; font-weight: 700; color: var(--ds-faint); text-transform: uppercase; letter-spacing: .06em; }
-        .fin-h1 { font-size: 21px; font-weight: 800; margin: 3px 0 14px; letter-spacing: -.01em; color: var(--ds-text); }
-        .fin-cta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .fin-btn { font-family: inherit; font-size: 13.5px; font-weight: 700; height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--ds-border); background: var(--ds-card); color: var(--ds-text); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px; transition: filter .15s, transform .1s; }
-        .fin-btn:active { transform: scale(.98); }
-        .fin-btn svg { width: 16px; height: 16px; flex: none; }
-        .fin-btn.primary { background: var(--ds-primary); border-color: var(--ds-primary); color: var(--ds-primary-ink); }
-        .fin-btn.primary:hover { filter: brightness(1.07); }
-        .fin-btn:disabled { opacity: .4; cursor: not-allowed; }
+    <div className="flex flex-col gap-4">
+      <PageHead eyebrow="Tesouraria" title="Painel financeiro" />
 
-        .fin-main { flex: 1; padding: 16px 18px 110px; display: flex; flex-direction: column; gap: 12px; }
-        .fin-card { background: var(--ds-card); border: 1px solid var(--ds-border); border-radius: 16px; padding: 16px; }
-        .fin-lab { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ds-faint); }
-        .fin-big { font-family: 'IBM Plex Mono', monospace; font-size: 30px; font-weight: 600; letter-spacing: -.02em; margin: 6px 0 14px; color: var(--ds-text); }
-        .fin-big.neg { color: var(--ds-danger); }
-        .fin-mini { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding-top: 14px; border-top: 1px solid var(--ds-border); }
-        .fin-mini div span { display: block; font-size: 10.5px; color: var(--ds-dim); margin-bottom: 3px; }
-        .fin-mini div b { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 600; color: var(--ds-text); }
-        .fin-mini .bad b { color: var(--ds-danger); }
-
-        .fin-arr-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 6px 0 10px; }
-        .fin-arr-top b { font-family: 'IBM Plex Mono', monospace; font-size: 15.5px; font-weight: 600; color: var(--ds-text); }
-        .fin-arr-top span { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--ds-success); font-weight: 600; }
-        .fin-stack { display: flex; height: 9px; border-radius: 999px; overflow: hidden; background: var(--ds-border); }
-        .fin-stack i { display: block; height: 100%; transition: width .25s ease; }
-        .fin-stack .s-ok { background: var(--ds-success); }
-        .fin-stack .s-bad { background: var(--ds-danger); }
-        .fin-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 11.5px; color: var(--ds-dim); }
-        .fin-legend span { display: inline-flex; align-items: center; }
-        .fin-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
-
-        .fin-alert { background: var(--ds-danger-dim); border: 1px solid var(--ds-danger-dim); border-radius: 16px; padding: 14px 16px; }
-        .fin-alert .a-t { font-size: 14px; font-weight: 800; color: var(--ds-danger); }
-        .fin-alert .a-s { font-size: 12.5px; color: var(--ds-danger); opacity: .92; margin-top: 3px; line-height: 1.5; }
-        .fin-alert .a-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
-        .fin-alert .fin-btn { height: 40px; font-size: 12.5px; background: var(--ds-card); }
-
-        .fin-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 3px; background: var(--ds-card); border: 1px solid var(--ds-border); border-radius: 12px; margin-top: 4px; }
-        .fin-tab { border: none; background: none; font-family: inherit; font-size: 12px; font-weight: 700; color: var(--ds-dim); padding: 9px 2px; border-radius: 9px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; transition: all .15s; }
-        .fin-tab b { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; color: var(--ds-text); }
-        .fin-tab.active { background: var(--ds-primary-dim); color: var(--ds-primary); }
-        .fin-tab.active b { color: var(--ds-primary); }
-
-        .fin-search { position: relative; margin-bottom: 10px; }
-        .fin-search svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--ds-faint); pointer-events: none; }
-        .fin-search input { width: 100%; height: 44px; padding: 0 13px 0 38px; border-radius: 12px; border: 1px solid var(--ds-border); background: var(--ds-card); color: var(--ds-text); font-family: inherit; font-size: 14px; outline: none; }
-        .fin-search input:focus-visible { outline: 2px solid var(--ds-primary); outline-offset: 1px; }
-
-        .fin-fchips { display: flex; gap: 7px; overflow-x: auto; margin-bottom: 10px; padding-bottom: 2px; }
-        .fin-fchips::-webkit-scrollbar { display: none; }
-        .fin-fc { flex: none; border: 1px solid var(--ds-border); background: var(--ds-card); color: var(--ds-dim); font-family: inherit; font-size: 12px; font-weight: 700; padding: 8px 12px; border-radius: 999px; cursor: pointer; }
-        .fin-fc b { font-family: 'IBM Plex Mono', monospace; font-weight: 600; margin-left: 4px; color: var(--ds-text); }
-        .fin-fc.active { background: var(--ds-primary-dim); border-color: var(--ds-primary); color: var(--ds-primary); }
-        .fin-fc.active b { color: var(--ds-primary); }
-
-        .fin-list { background: var(--ds-card); border: 1px solid var(--ds-border); border-radius: 14px; overflow: hidden; }
-        .fin-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--ds-border); cursor: pointer; transition: background .12s; }
-        .fin-row:hover { background: var(--ds-bg); }
-        .fin-row.static { cursor: default; }
-        .fin-row.static:hover { background: transparent; }
-        .fin-row:last-child { border-bottom: none; }
-
-        .fin-rico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; flex: none; background: var(--ds-bg); color: var(--ds-dim); border: 1px solid var(--ds-border); }
-        .fin-rico svg { width: 17px; height: 17px; }
-        .fin-rico.bad { background: var(--ds-danger-dim); color: var(--ds-danger); border-color: var(--ds-danger-dim); }
-        .fin-rico.ok { background: var(--ds-success-dim); color: var(--ds-success); border-color: var(--ds-success-dim); }
-
-        .fin-rbody { flex: 1; min-width: 0; }
-        .fin-rt { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 600; color: var(--ds-text); }
-        .fin-rt-sans { font-size: 13.5px; font-weight: 700; color: var(--ds-text); }
-        .fin-rn { font-size: 12px; color: var(--ds-dim); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .fin-rd { font-size: 11px; color: var(--ds-dim); margin-top: 2px; }
-        .fin-rd.bad { color: var(--ds-danger); font-weight: 600; }
-
-        .fin-rright { text-align: right; flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
-        .fin-rv { font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; font-weight: 600; color: var(--ds-text); }
-        .fin-badge { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 3px 7px; border-radius: 999px; letter-spacing: .04em; text-transform: uppercase; }
-        .fin-badge.ok { background: var(--ds-success-dim); color: var(--ds-success); }
-        .fin-badge.bad { background: var(--ds-danger-dim); color: var(--ds-danger); }
-        .fin-badge.open { background: var(--ds-warning-dim); color: var(--ds-warning); }
-        .fin-mini-btn { font-family: inherit; font-size: 11px; font-weight: 700; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--ds-border); background: var(--ds-bg); color: var(--ds-text); cursor: pointer; }
-        .fin-mini-btn:hover { border-color: var(--ds-primary); color: var(--ds-primary); }
-
-        .fin-sum-line { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--ds-dim); margin-bottom: 10px; }
-        .fin-more-btn { width: 100%; height: 42px; margin-top: 10px; border-radius: 12px; border: 1px solid var(--ds-border); background: var(--ds-card); color: var(--ds-primary); font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
-        .fin-audit-note { font-size: 11.5px; color: var(--ds-dim); text-align: center; margin-top: 10px; line-height: 1.5; padding: 0 8px; }
-
-        .fin-empty { text-align: center; padding: 32px 18px; background: var(--ds-card); border: 1px solid var(--ds-border); border-radius: 14px; }
-        .fin-empty-t { font-size: 14.5px; font-weight: 800; color: var(--ds-text); }
-        .fin-empty-s { font-size: 12.5px; color: var(--ds-dim); margin-top: 4px; }
-
-        .fin-overlay { position: fixed; inset: 0; background: rgba(10,10,14,.48); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 50; }
-        .fin-overlay.show { opacity: 1; pointer-events: auto; }
-        .fin-sheet { position: fixed; left: 50%; bottom: 0; transform: translate(-50%, 100%); width: 100%; max-width: 412px; background: var(--ds-card); border-radius: 20px 20px 0 0; padding: 20px 20px calc(22px + env(safe-area-inset-bottom, 0px)); z-index: 51; transition: transform .25s ease; max-height: 92vh; overflow-y: auto; border-top: 1px solid var(--ds-border); }
-        .fin-sheet.show { transform: translate(-50%, 0); }
-
-        .fin-sh-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 4px; }
-        .fin-sh-head h2 { font-size: 17px; font-weight: 800; margin: 0; color: var(--ds-text); }
-        .fin-close-btn { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--ds-border); background: var(--ds-bg); color: var(--ds-text); display: grid; place-items: center; cursor: pointer; flex: none; }
-        .fin-close-btn svg { width: 15px; height: 15px; }
-        .fin-sh-sub { font-size: 12.5px; color: var(--ds-dim); margin-bottom: 14px; }
-
-        .fin-kv-box { background: var(--ds-bg); border: 1px solid var(--ds-border); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
-        .fin-kv { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 12.5px; color: var(--ds-dim); }
-        .fin-kv b { font-family: 'IBM Plex Mono', monospace; color: var(--ds-text); font-weight: 600; }
-        .fin-kv.total { padding-top: 8px; border-top: 1px solid var(--ds-border); font-weight: 700; color: var(--ds-text); }
-        .fin-kv.total b { font-size: 15px; }
-        .fin-kv b.bad { color: var(--ds-danger); }
-        .fin-kv b.ok { color: var(--ds-success); }
-
-        .fin-lbl { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ds-dim); margin-bottom: 6px; }
-        .fin-input { width: 100%; height: 44px; padding: 0 12px; border-radius: 11px; border: 1px solid var(--ds-border); background: var(--ds-bg); color: var(--ds-text); font-family: inherit; font-size: 14px; outline: none; margin-bottom: 12px; }
-        .fin-input.mono { font-family: 'IBM Plex Mono', monospace; }
-        .fin-input:focus { border-color: var(--ds-primary); }
-
-        .fin-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .fin-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
-        .fin-chip { border: 1px solid var(--ds-border); background: var(--ds-bg); color: var(--ds-dim); font-family: inherit; font-size: 12px; font-weight: 700; padding: 8px 12px; border-radius: 999px; cursor: pointer; }
-        .fin-chip.active { background: var(--ds-primary-dim); border-color: var(--ds-primary); color: var(--ds-primary); }
-
-        .fin-unit-note { font-size: 12px; padding: 8px 11px; border-radius: 10px; margin-bottom: 12px; }
-        .fin-unit-note.ok { background: var(--ds-success-dim); color: var(--ds-success); font-weight: 600; }
-        .fin-unit-note.err { background: var(--ds-danger-dim); color: var(--ds-danger); font-weight: 600; }
-
-        .fin-sh-note { font-size: 11.5px; color: var(--ds-dim); line-height: 1.45; margin-bottom: 14px; }
-        .fin-sh-acts { display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px; }
-        .fin-sh-acts.single { grid-template-columns: 1fr; }
-
-        .fin-toast { position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--ds-text); color: var(--ds-bg); font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 10px; opacity: 0; transition: transform .25s, opacity .25s; z-index: 60; white-space: nowrap; max-width: 92%; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
-        .fin-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-      `}</style>
-
-      {/* Page Head */}
-      <div className="fin-page-head">
-        <div className="fin-eyebrow">Tesouraria</div>
-        <h1 className="fin-h1">Painel financeiro</h1>
-        <div className="fin-cta-row">
-          <button type="button" className="fin-btn primary" onClick={openEmitirBoleto}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            Emitir boleto
-          </button>
-          <button type="button" className="fin-btn" onClick={openLancarDespesa}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
-            Lançar despesa
-          </button>
-        </div>
+      <div className="grid grid-cols-2 gap-2.5">
+        <Button variant="primary" onClick={openEmitirBoleto}>
+          <Plus className="w-4 h-4" />
+          Emitir boleto
+        </Button>
+        <Button variant="secondary" onClick={openLancarDespesa}>
+          <DollarSign className="w-4 h-4" />
+          Lançar despesa
+        </Button>
       </div>
 
-      {/* Main Content */}
-      <main className="fin-main">
-        {/* Hero Card */}
-        <section id="hero" className="fin-card">
-          <div className="fin-lab">Saldo do mês · {monthTitle}</div>
-          <div className={`fin-big ${stats.saldo < 0 ? 'neg' : ''}`}>
-            {fmtBRL(stats.saldo)}
-          </div>
-          <div className="fin-mini">
-            <div>
-              <span>Arrecadado</span>
-              <b>{fmtBRL(stats.paidVal)}</b>
-            </div>
-            <div className="bad">
-              <span>Em atraso</span>
-              <b>{fmtBRL(stats.overVal)}</b>
-            </div>
-            <div>
-              <span>Despesas</span>
-              <b>{fmtBRL(stats.expPagas)}</b>
-            </div>
-          </div>
-        </section>
-
-        {/* Arrecadação Card */}
-        <section id="arr" className="fin-card">
-          <div className="fin-lab">Arrecadação dos boletos</div>
-          <div className="fin-arr-top">
-            <b>
-              {fmtBRL(stats.paidVal)} de {fmtBRL(stats.totalBoletoVal)}
-            </b>
-            <span>{stats.paidPct}%</span>
-          </div>
-          <div className="fin-stack">
-            <i className="s-ok" style={{ width: `${stats.okBarPct}%` }} />
-            <i className="s-bad" style={{ width: `${stats.overPct}%` }} />
-          </div>
-          <div className="fin-legend">
-            <span>
-              <i style={{ background: 'var(--ds-success)' }} />
-              {stats.paidCount} pagos
-            </span>
-            <span>
-              <i style={{ background: 'var(--ds-danger)' }} />
-              {stats.overCount} em atraso
-            </span>
-            {stats.openCount > 0 && (
-              <span>
-                <i style={{ background: 'var(--ds-faint)' }} />
-                {stats.openCount} a vencer
-              </span>
-            )}
-          </div>
-        </section>
-
-        {/* Alert Box */}
-        {stats.overCount > 0 && (
-          <section id="alertBox" className="fin-alert">
-            <div className="a-t">
-              Inadimplência de {stats.inadPct.toFixed(1).replace('.', ',')}%
-            </div>
-            <div className="a-s">
-              {stats.overCount} {stats.overCount === 1 ? 'boleto' : 'boletos'} em atraso somando{' '}
-              {fmtBRL(stats.overVal)} (sem multa e juros).
-            </div>
-            <div className="a-acts">
-              <button type="button" className="fin-btn" onClick={handleVerInadimplentes}>
-                Ver inadimplentes
-              </button>
-              <button type="button" className="fin-btn" onClick={handleBulkReminder}>
-                Enviar cobrança
-              </button>
-            </div>
-          </section>
-        )}
-
-        {/* Tabs */}
-        <div id="tabs" ref={tabsRef} className="fin-tabs">
-          <button
-            type="button"
-            className={`fin-tab ${activeTab === 'boletos' ? 'active' : ''}`}
-            onClick={() => setActiveTab('boletos')}
-          >
-            Boletos
-            <b>{boletos.length}</b>
-          </button>
-          <button
-            type="button"
-            className={`fin-tab ${activeTab === 'despesas' ? 'active' : ''}`}
-            onClick={() => setActiveTab('despesas')}
-          >
-            Despesas
-            <b>{despesas.length}</b>
-          </button>
-          <button
-            type="button"
-            className={`fin-tab ${activeTab === 'auditoria' ? 'active' : ''}`}
-            onClick={() => setActiveTab('auditoria')}
-          >
-            Auditoria
-            <b>{auditoria.length}</b>
-          </button>
+      {/* Hero Card */}
+      <ListCard>
+        <div className="text-[11px] font-bold uppercase tracking-[0.05em] text-faint">
+          Saldo do mês · {monthTitle}
         </div>
-
-        {/* Tab: Boletos */}
-        {activeTab === 'boletos' && (
+        <div
+          className={`font-mono text-[30px] font-semibold tracking-[-0.02em] leading-[1.1] mt-1.5 ${
+            stats.saldo < 0 ? 'text-bad' : 'text-ink'
+          }`}
+        >
+          {fmtBRL(stats.saldo)}
+        </div>
+        <div className="grid grid-cols-3 gap-2 mt-3.5 pt-3 border-t border-line">
           <div>
-            <div className="fin-search">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
-              <input
-                type="text"
-                value={bSearch}
-                onChange={e => {
-                  setBSearch(e.target.value);
-                  setBLimit(12);
-                }}
-                placeholder="Buscar unidade ou morador"
-              />
-            </div>
+            <span className="block text-[10.5px] font-semibold text-dim">Arrecadado</span>
+            <b className="font-mono text-[13px] font-semibold text-ink">
+              {fmtBRL(stats.paidVal)}
+            </b>
+          </div>
+          <div>
+            <span className="block text-[10.5px] font-semibold text-dim">Em atraso</span>
+            <b className="font-mono text-[13px] font-semibold text-bad">
+              {fmtBRL(stats.overVal)}
+            </b>
+          </div>
+          <div>
+            <span className="block text-[10.5px] font-semibold text-dim">Despesas</span>
+            <b className="font-mono text-[13px] font-semibold text-ink">
+              {fmtBRL(stats.expPagas)}
+            </b>
+          </div>
+        </div>
+      </ListCard>
 
-            <div className="fin-fchips">
-              <button
-                type="button"
-                className={`fin-fc ${bFilter === 'todos' ? 'active' : ''}`}
-                onClick={() => {
-                  setBFilter('todos');
-                  setBLimit(12);
-                }}
-              >
-                Todos<b>{boletos.length}</b>
-              </button>
-              <button
-                type="button"
-                className={`fin-fc ${bFilter === 'vencido' ? 'active' : ''}`}
-                onClick={() => {
-                  setBFilter('vencido');
-                  setBLimit(12);
-                }}
-              >
-                Vencidos<b>{stats.overCount}</b>
-              </button>
-              <button
-                type="button"
-                className={`fin-fc ${bFilter === 'aberto' ? 'active' : ''}`}
-                onClick={() => {
-                  setBFilter('aberto');
-                  setBLimit(12);
-                }}
-              >
-                Em aberto<b>{stats.openCount}</b>
-              </button>
-              <button
-                type="button"
-                className={`fin-fc ${bFilter === 'pago' ? 'active' : ''}`}
-                onClick={() => {
-                  setBFilter('pago');
-                  setBLimit(12);
-                }}
-              >
-                Pagos<b>{stats.paidCount}</b>
-              </button>
-            </div>
+      {/* Arrecadação Card */}
+      <ListCard>
+        <div className="text-[11px] font-bold uppercase tracking-[0.05em] text-faint">
+          Arrecadação dos boletos
+        </div>
+        <div className="flex justify-between items-baseline gap-2 mt-2 mb-2.5">
+          <b className="font-mono text-[13.5px] font-semibold text-ink">
+            {fmtBRL(stats.paidVal)} de {fmtBRL(stats.totalBoletoVal)}
+          </b>
+          <span className="font-mono text-[13px] font-semibold text-brand">{stats.paidPct}%</span>
+        </div>
+        <ProgressBar percent={stats.okBarPct} secondaryPercent={stats.overPct} />
+        <div className="flex flex-wrap gap-3 mt-2.5 text-[11.5px] text-dim">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-ok" />
+            {stats.paidCount} pagos
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-bad" />
+            {stats.overCount} em atraso
+          </span>
+          {stats.openCount > 0 && (
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-faint" />
+              {stats.openCount} a vencer
+            </span>
+          )}
+        </div>
+      </ListCard>
 
-            {shownBoletos.length === 0 ? (
-              <div className="fin-empty">
-                <div className="fin-empty-t">Nenhum boleto encontrado</div>
-                <div className="fin-empty-s">Ajuste a busca ou o filtro selecionado.</div>
-              </div>
-            ) : (
-              <>
-                <div className="fin-list">
-                  {shownBoletos.map(b => {
-                    const daysLate = Math.max(0, daysBetween(new Date(), b.due));
-                    const statusText =
-                      b.status === 'pago'
-                        ? `Pago em ${b.paidAt ? fmtDateShort(b.paidAt) : fmtDateShort(b.due)} via ${b.method || 'PIX'}`
-                        : b.status === 'vencido'
-                        ? `Venceu há ${daysLate} ${daysLate === 1 ? 'dia' : 'dias'}`
-                        : daysBetween(b.due, new Date()) === 0
-                        ? 'Vence hoje'
-                        : `Vence em ${fmtDateShort(b.due)}`;
+      {/* Alert Box */}
+      {stats.overCount > 0 && (
+        <section className="rounded-[14px] p-3.5 bg-bad-soft border border-bad/25">
+          <div className="text-[14px] font-extrabold text-bad">
+            Inadimplência de {stats.inadPct.toFixed(1).replace('.', ',')}%
+          </div>
+          <p className="text-[12.5px] text-ink/90 mt-1 mb-3 leading-[1.45]">
+            {stats.overCount} {stats.overCount === 1 ? 'boleto' : 'boletos'} em atraso somando{' '}
+            {fmtBRL(stats.overVal)} (sem multa e juros).
+          </p>
+          <div className="grid grid-cols-2 gap-2.5">
+            <Button variant="secondary" size="card" onClick={handleVerInadimplentes}>
+              Ver inadimplentes
+            </Button>
+            <Button variant="secondary" size="card" onClick={handleBulkReminder}>
+              Enviar cobrança
+            </Button>
+          </div>
+        </section>
+      )}
 
-                    return (
-                      <div
-                        key={b.id}
-                        className="fin-row"
-                        onClick={() => openBoleto(b.id, 'view')}
+      {/* Tabs */}
+      <div ref={tabsRef}>
+        <SegmentedTabs
+          value={activeTab}
+          onChange={(v) => setActiveTab(v as MainTab)}
+          items={[
+            { id: 'boletos', label: 'Boletos', count: boletos.length },
+            { id: 'despesas', label: 'Despesas', count: despesas.length },
+            { id: 'auditoria', label: 'Auditoria', count: auditoria.length },
+          ]}
+        />
+      </div>
+
+      {/* Tab: Boletos */}
+      {activeTab === 'boletos' && (
+        <div className="flex flex-col gap-3">
+          <SearchInput
+            value={bSearch}
+            onChange={(val) => {
+              setBSearch(val);
+              setBLimit(12);
+            }}
+            placeholder="Buscar unidade ou morador"
+          />
+
+          <FilterChips
+            value={bFilter}
+            onChange={(val) => {
+              setBFilter(val as BoletoFilter);
+              setBLimit(12);
+            }}
+            items={[
+              { id: 'todos', label: 'Todos', count: boletos.length },
+              { id: 'vencido', label: 'Vencidos', count: stats.overCount },
+              { id: 'aberto', label: 'Em aberto', count: stats.openCount },
+              { id: 'pago', label: 'Pagos', count: stats.paidCount },
+            ]}
+          />
+
+          {shownBoletos.length === 0 ? (
+            <EmptyState
+              icon={<FileText className="w-6 h-6 text-faint" />}
+              title="Nenhum boleto encontrado"
+              description="Ajuste a busca ou o filtro selecionado."
+            />
+          ) : (
+            <>
+              <div className="bg-surface border border-line rounded-[14px] overflow-hidden divide-y divide-line">
+                {shownBoletos.map((b) => {
+                  const daysLate = Math.max(0, daysBetween(new Date(), b.due));
+                  const statusText =
+                    b.status === 'pago'
+                      ? `Pago em ${b.paidAt ? fmtDateShort(b.paidAt) : fmtDateShort(b.due)} via ${b.method || 'PIX'}`
+                      : b.status === 'vencido'
+                      ? `Venceu há ${daysLate} ${daysLate === 1 ? 'dia' : 'dias'}`
+                      : daysBetween(b.due, new Date()) === 0
+                      ? 'Vence hoje'
+                      : `Vence em ${fmtDateShort(b.due)}`;
+
+                  return (
+                    <div
+                      key={b.id}
+                      onClick={() => openBoleto(b.id, 'view')}
+                      className="flex items-center gap-3 p-[12px_14px] cursor-pointer hover:bg-canvas transition-colors"
+                    >
+                      <IconChip
+                        tone={
+                          b.status === 'vencido'
+                            ? 'bad'
+                            : b.status === 'pago'
+                            ? 'ok'
+                            : 'neutral'
+                        }
+                        size="md"
                       >
-                        <div className={`fin-rico ${b.status === 'vencido' ? 'bad' : b.status === 'pago' ? 'ok' : ''}`}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                            <path d="M14 2v6h6M8 13h8M8 17h5" />
-                          </svg>
+                        <FileText className="w-4 h-4" />
+                      </IconChip>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="font-mono text-[13px] font-semibold text-ink truncate">
+                          {b.unit}
                         </div>
-
-                        <div className="fin-rbody">
-                          <div className="fin-rt">{b.unit}</div>
-                          <div className="fin-rn">
-                            {b.resident} · {b.kind}
-                          </div>
-                          <div className={`fin-rd ${b.status === 'vencido' ? 'bad' : ''}`}>
-                            {statusText}
-                          </div>
+                        <div className="text-[12px] text-dim truncate">
+                          {b.resident} · {b.kind}
                         </div>
-
-                        <div className="fin-rright">
-                          <div className="fin-rv">{fmtBRL(b.val)}</div>
-                          {b.status === 'pago' ? (
-                            <span className="fin-badge ok">PAGO</span>
-                          ) : (
-                            <button
-                              type="button"
-                              className="fin-mini-btn"
-                              onClick={e => {
-                                e.stopPropagation();
-                                openBoleto(b.id, 'baixa');
-                              }}
-                            >
-                              Dar baixa
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {filteredBoletos.length > shownBoletos.length && (
-                  <button
-                    type="button"
-                    className="fin-more-btn"
-                    onClick={() => setBLimit(prev => prev + 15)}
-                  >
-                    Mostrar mais ({filteredBoletos.length - shownBoletos.length})
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Tab: Despesas */}
-        {activeTab === 'despesas' && (
-          <div>
-            <div className="fin-sum-line">
-              Total {fmtBRL(stats.expTotal)} · pagas {fmtBRL(stats.expPagas)} · a pagar{' '}
-              {fmtBRL(stats.expApagar)}
-            </div>
-
-            {sortedDespesas.length === 0 ? (
-              <div className="fin-empty">
-                <div className="fin-empty-t">Nenhuma despesa lançada</div>
-                <div className="fin-empty-s">Use "Lançar despesa" para registrar um gasto.</div>
-              </div>
-            ) : (
-              <div className="fin-list">
-                {sortedDespesas.map(d => (
-                  <div key={d.id} className="fin-row static">
-                    <div className={`fin-rico ${d.status === 'paga' ? 'ok' : ''}`}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                      </svg>
-                    </div>
-
-                    <div className="fin-rbody">
-                      <div className="fin-rt-sans">{d.desc}</div>
-                      <div className="fin-rn">
-                        {d.cat} · {fmtDateShort(d.date)}
-                      </div>
-                      <div className="fin-rd">
-                        {d.status === 'paga'
-                          ? `Paga em ${fmtDateShort(d.paidAt || d.date)}`
-                          : `A pagar · venc. ${fmtDateShort(d.date)}`}
-                      </div>
-                    </div>
-
-                    <div className="fin-rright">
-                      <div className="fin-rv">{fmtBRL(d.val)}</div>
-                      {d.status === 'paga' ? (
-                        <span className="fin-badge ok">PAGA</span>
-                      ) : (
-                        <button
-                          type="button"
-                          className="fin-mini-btn"
-                          onClick={() => handleMarkExpensePaid(d.id)}
+                        <div
+                          className={`text-[11px] mt-0.5 ${
+                            b.status === 'vencido' ? 'text-bad font-bold' : 'text-dim'
+                          }`}
                         >
-                          Marcar paga
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                          {statusText}
+                        </div>
+                      </div>
 
-        {/* Tab: Auditoria */}
-        {activeTab === 'auditoria' && (
-          <div>
-            <div className="fin-list">
-              {auditoria.map(a => (
-                <div key={a.id} className="fin-row static">
-                  <div className="fin-rico">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    </svg>
-                  </div>
-                  <div className="fin-rbody">
-                    <div className="fin-rt">{fmtDateTime(a.at)}</div>
-                    <div className="fin-rn" style={{ whiteSpace: 'normal' }}>
-                      {a.text}
+                      <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                        <div className="font-mono text-[13.5px] font-semibold text-ink">
+                          {fmtBRL(b.val)}
+                        </div>
+                        {b.status === 'pago' ? (
+                          <Badge tone="ok">PAGO</Badge>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openBoleto(b.id, 'baixa');
+                            }}
+                            className="text-[11px] font-bold px-2.5 py-1 rounded-[8px] border border-line bg-canvas text-ink hover:border-brand hover:text-brand cursor-pointer transition-colors"
+                          >
+                            Dar baixa
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <div className="fin-rd">por {a.who}</div>
+                  );
+                })}
+              </div>
+
+              {filteredBoletos.length > shownBoletos.length && (
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => setBLimit((prev) => prev + 15)}
+                >
+                  Mostrar mais ({filteredBoletos.length - shownBoletos.length})
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Tab: Despesas */}
+      {activeTab === 'despesas' && (
+        <div className="flex flex-col gap-3">
+          <div className="font-mono text-[11.5px] text-dim">
+            Total {fmtBRL(stats.expTotal)} · pagas {fmtBRL(stats.expPagas)} · a pagar{' '}
+            {fmtBRL(stats.expApagar)}
+          </div>
+
+          {sortedDespesas.length === 0 ? (
+            <EmptyState
+              icon={<DollarSign className="w-6 h-6 text-faint" />}
+              title="Nenhuma despesa lançada"
+              description='Use "Lançar despesa" para registrar um gasto.'
+            />
+          ) : (
+            <div className="bg-surface border border-line rounded-[14px] overflow-hidden divide-y divide-line">
+              {sortedDespesas.map((d) => (
+                <div key={d.id} className="flex items-center gap-3 p-[12px_14px]">
+                  <IconChip tone={d.status === 'paga' ? 'ok' : 'neutral'} size="md">
+                    <DollarSign className="w-4 h-4" />
+                  </IconChip>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-bold text-ink truncate">{d.desc}</div>
+                    <div className="text-[12px] text-dim truncate">
+                      {d.cat} · {fmtDateShort(d.date)}
+                    </div>
+                    <div className="text-[11px] text-dim mt-0.5">
+                      {d.status === 'paga'
+                        ? `Paga em ${fmtDateShort(d.paidAt || d.date)}`
+                        : `A pagar · venc. ${fmtDateShort(d.date)}`}
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                    <div className="font-mono text-[13.5px] font-semibold text-ink">
+                      {fmtBRL(d.val)}
+                    </div>
+                    {d.status === 'paga' ? (
+                      <Badge tone="ok">PAGA</Badge>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleMarkExpensePaid(d.id)}
+                        className="text-[11px] font-bold px-2.5 py-1 rounded-[8px] border border-line bg-canvas text-ink hover:border-brand hover:text-brand cursor-pointer transition-colors"
+                      >
+                        Marcar paga
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
-            <div className="fin-audit-note">
-              Registros da trilha não podem ser editados nem apagados. Toda baixa, emissão e despesa fica aqui.
-            </div>
-          </div>
-        )}
-      </main>
+          )}
+        </div>
+      )}
 
-      {/* Backdrop */}
-      <div
-        className={`fin-overlay ${anySheetOpen ? 'show' : ''}`}
-        onClick={closeAllSheets}
-      />
+      {/* Tab: Auditoria */}
+      {activeTab === 'auditoria' && (
+        <div className="flex flex-col gap-3">
+          <div className="bg-surface border border-line rounded-[14px] overflow-hidden divide-y divide-line">
+            {auditoria.map((a) => (
+              <div key={a.id} className="flex items-start gap-3 p-[12px_14px]">
+                <IconChip tone="neutral" size="md">
+                  <ShieldCheck className="w-4 h-4" />
+                </IconChip>
+                <div className="flex-1 min-w-0">
+                  <div className="font-mono text-[10.5px] text-dim">{fmtDateTime(a.at)}</div>
+                  <div className="text-[13px] text-ink mt-0.5 leading-[1.4]">{a.text}</div>
+                  <div className="text-[11.5px] text-dim mt-0.5">por {a.who}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-[12px] leading-[1.5] text-dim bg-canvas border border-line rounded-[10px] p-[10px_12px]">
+            Registros da trilha não podem ser editados nem apagados. Toda baixa, emissão e despesa
+            fica aqui.
+          </div>
+        </div>
+      )}
 
       {/* Sheet 1: Detalhe do Boleto / Dar Baixa */}
-      <div id="bSheet" className={`fin-sheet ${activeBoleto ? 'show' : ''}`}>
-        {activeBoleto && bSheetMode === 'view' && (() => {
-          const enc = calcEncargos(activeBoleto);
-          return (
-            <>
-              <div className="fin-sh-head">
-                <h2>{activeBoleto.unit}</h2>
-                <button
-                  type="button"
-                  className="fin-close-btn"
-                  onClick={closeAllSheets}
-                  aria-label="Fechar"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                    <path d="M18 6 6 18M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="fin-sh-sub">
-                {activeBoleto.resident} · {activeBoleto.kind}
-              </div>
-
-              <div className="fin-kv-box">
-                <div className="fin-kv">
-                  <span>Vencimento</span>
-                  <b className={activeBoleto.status === 'vencido' ? 'bad' : ''}>
-                    {fmtDateFull(activeBoleto.due)}
-                    {activeBoleto.status === 'vencido' && enc.dias > 0 ? ` (${enc.dias}d atrás)` : ''}
-                  </b>
-                </div>
-                <div className="fin-kv">
-                  <span>Valor nominal</span>
-                  <b>{fmtBRL(activeBoleto.val)}</b>
-                </div>
-
-                {activeBoleto.status === 'vencido' && enc.dias > 0 && (
-                  <>
-                    <div className="fin-kv">
-                      <span>Multa (2%)</span>
-                      <b className="bad">{fmtBRL(enc.multa)}</b>
-                    </div>
-                    <div className="fin-kv">
-                      <span>Juros (1% a.m. · {enc.dias}d)</span>
-                      <b className="bad">{fmtBRL(enc.juros)}</b>
-                    </div>
-                    <div className="fin-kv total">
-                      <span>Total atualizado</span>
-                      <b>{fmtBRL(enc.total)}</b>
-                    </div>
-                  </>
-                )}
-
-                <div className="fin-kv">
-                  <span>Situação</span>
-                  {activeBoleto.status === 'pago' ? (
-                    <b className="ok">
-                      Pago em {activeBoleto.paidAt ? fmtDateShort(activeBoleto.paidAt) : fmtDateShort(activeBoleto.due)} ·{' '}
-                      {activeBoleto.method || 'PIX'}
-                    </b>
-                  ) : activeBoleto.status === 'vencido' ? (
-                    <b className="bad">Em atraso</b>
-                  ) : (
-                    <b>Em aberto</b>
-                  )}
-                </div>
-              </div>
-
-              {activeBoleto.status === 'pago' ? (
-                <div className="fin-sh-acts single">
-                  <button type="button" className="fin-btn" onClick={closeAllSheets}>
-                    Fechar
-                  </button>
-                </div>
+      <BottomSheet
+        open={Boolean(activeBoleto)}
+        onClose={closeAllSheets}
+        title={
+          activeBoleto
+            ? bSheetMode === 'view'
+              ? activeBoleto.unit
+              : 'Dar baixa manual'
+            : ''
+        }
+        subtitle={
+          activeBoleto
+            ? bSheetMode === 'view'
+              ? `${activeBoleto.resident} · ${activeBoleto.kind}`
+              : `${activeBoleto.unit} · ${activeBoleto.resident}`
+            : undefined
+        }
+        footer={
+          activeBoleto ? (
+            bSheetMode === 'view' ? (
+              activeBoleto.status === 'pago' ? (
+                <Button variant="secondary" fullWidth onClick={closeAllSheets}>
+                  Fechar
+                </Button>
               ) : (
-                <div className="fin-sh-acts">
-                  <button
-                    type="button"
-                    className="fin-btn"
+                <div className="grid grid-cols-2 gap-2.5">
+                  <Button
+                    variant="secondary"
                     onClick={() => handleSendSingleReminder(activeBoleto)}
                   >
                     Enviar lembrete
-                  </button>
-                  <button
-                    type="button"
-                    className="fin-btn primary"
-                    onClick={() => switchToBaixa(activeBoleto)}
-                  >
+                  </Button>
+                  <Button variant="primary" onClick={() => switchToBaixa(activeBoleto)}>
                     Dar baixa
-                  </button>
+                  </Button>
                 </div>
+              )
+            ) : (
+              <div className="grid grid-cols-[1fr_1.4fr] gap-2.5">
+                <Button variant="secondary" onClick={() => setBSheetMode('view')}>
+                  Voltar
+                </Button>
+                <Button variant="primary" onClick={handleConfirmBaixa}>
+                  Confirmar baixa
+                </Button>
+              </div>
+            )
+          ) : undefined
+        }
+      >
+        {activeBoleto && bSheetMode === 'view' && (() => {
+          const enc = calcEncargos(activeBoleto);
+          return (
+            <div className="border-t border-line">
+              <div className="flex justify-between gap-3 py-2.5 border-b border-line text-[13px]">
+                <span className="text-dim">Vencimento</span>
+                <b
+                  className={`font-mono ${
+                    activeBoleto.status === 'vencido' ? 'text-bad' : 'text-ink'
+                  }`}
+                >
+                  {fmtDateFull(activeBoleto.due)}
+                  {activeBoleto.status === 'vencido' && enc.dias > 0 ? ` (${enc.dias}d atrás)` : ''}
+                </b>
+              </div>
+              <div className="flex justify-between gap-3 py-2.5 border-b border-line text-[13px]">
+                <span className="text-dim">Valor nominal</span>
+                <b className="font-mono text-ink">{fmtBRL(activeBoleto.val)}</b>
+              </div>
+
+              {activeBoleto.status === 'vencido' && enc.dias > 0 && (
+                <>
+                  <div className="flex justify-between gap-3 py-2.5 border-b border-line text-[13px]">
+                    <span className="text-dim">Multa (2%)</span>
+                    <b className="font-mono text-bad">{fmtBRL(enc.multa)}</b>
+                  </div>
+                  <div className="flex justify-between gap-3 py-2.5 border-b border-line text-[13px]">
+                    <span className="text-dim">Juros (1% a.m. · {enc.dias}d)</span>
+                    <b className="font-mono text-bad">{fmtBRL(enc.juros)}</b>
+                  </div>
+                  <div className="flex justify-between gap-3 py-2.5 border-b border-line text-[13.5px] font-bold">
+                    <span className="text-ink">Total atualizado</span>
+                    <b className="font-mono text-ink">{fmtBRL(enc.total)}</b>
+                  </div>
+                </>
               )}
-            </>
+
+              <div className="flex justify-between gap-3 py-2.5 border-b border-line text-[13px]">
+                <span className="text-dim">Situação</span>
+                {activeBoleto.status === 'pago' ? (
+                  <b className="text-ok">
+                    Pago em{' '}
+                    {activeBoleto.paidAt
+                      ? fmtDateShort(activeBoleto.paidAt)
+                      : fmtDateShort(activeBoleto.due)}{' '}
+                    · {activeBoleto.method || 'PIX'}
+                  </b>
+                ) : activeBoleto.status === 'vencido' ? (
+                  <b className="text-bad">Em atraso</b>
+                ) : (
+                  <b className="text-ink">Em aberto</b>
+                )}
+              </div>
+            </div>
           );
         })()}
 
         {activeBoleto && bSheetMode === 'baixa' && (
-          <>
-            <div className="fin-sh-head">
-              <h2>Dar baixa manual</h2>
-              <button
-                type="button"
-                className="fin-close-btn"
-                onClick={closeAllSheets}
-                aria-label="Fechar"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="fin-sh-sub">
-              {activeBoleto.unit} · {activeBoleto.resident}
+          <div className="flex flex-col gap-4">
+            <ChoiceChips
+              label="Forma de pagamento"
+              options={PAY_METHODS.map((m) => ({ value: m, label: m }))}
+              value={baixaMethod}
+              onChange={(v) => setBaixaMethod(v as PayMethod)}
+            />
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <Field
+                label="Data do pagamento"
+                type="date"
+                mono
+                value={baixaDate}
+                onChange={(e) => setBaixaDate(e.target.value)}
+              />
+              <Field
+                label="Valor recebido (R$)"
+                type="text"
+                inputMode="decimal"
+                mono
+                value={baixaVal}
+                onChange={(e) => setBaixaVal(e.target.value)}
+              />
             </div>
 
-            <span className="fin-lbl">Forma de pagamento</span>
-            <div className="fin-chips">
-              {PAY_METHODS.map(m => (
-                <button
-                  key={m}
-                  type="button"
-                  className={`fin-chip ${baixaMethod === m ? 'active' : ''}`}
-                  onClick={() => setBaixaMethod(m)}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-
-            <div className="fin-grid-2">
-              <div>
-                <span className="fin-lbl">Data do pagamento</span>
-                <input
-                  type="date"
-                  className="fin-input mono"
-                  value={baixaDate}
-                  onChange={e => setBaixaDate(e.target.value)}
-                />
-              </div>
-              <div>
-                <span className="fin-lbl">Valor recebido (R$)</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  className="fin-input mono"
-                  value={baixaVal}
-                  onChange={e => setBaixaVal(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="fin-sh-note">
+            <div className="text-[12px] leading-[1.5] text-dim bg-canvas border border-line rounded-[10px] p-[10px_12px]">
               A baixa gera registro na trilha de auditoria e atualiza o saldo do condomínio.
             </div>
-
-            <div className="fin-sh-acts">
-              <button
-                type="button"
-                className="fin-btn"
-                onClick={() => setBSheetMode('view')}
-              >
-                Voltar
-              </button>
-              <button
-                type="button"
-                className="fin-btn primary"
-                onClick={handleConfirmBaixa}
-              >
-                Confirmar baixa
-              </button>
-            </div>
-          </>
+          </div>
         )}
-      </div>
+      </BottomSheet>
 
       {/* Sheet 2: Emitir Boleto */}
-      <div id="nbSheet" className={`fin-sheet ${isNbOpen ? 'show' : ''}`}>
-        <div className="fin-sh-head">
-          <h2>Emitir boleto</h2>
-          <button
-            type="button"
-            className="fin-close-btn"
-            onClick={closeAllSheets}
-            aria-label="Fechar"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div className="fin-sh-sub">Cobrança avulsa para uma unidade.</div>
-
-        <div className="fin-grid-2">
-          <div>
-            <span className="fin-lbl">Bloco (1 a 14)</span>
-            <input
+      <BottomSheet
+        open={isNbOpen}
+        onClose={closeAllSheets}
+        title="Emitir boleto"
+        subtitle="Cobrança avulsa para uma unidade."
+        footer={
+          <div className="grid grid-cols-[1fr_1.4fr] gap-2.5">
+            <Button variant="secondary" onClick={closeAllSheets}>
+              Cancelar
+            </Button>
+            <Button variant="primary" disabled={!canSubmitBoleto} onClick={handleEmitirBoleto}>
+              Emitir boleto
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-2.5">
+            <Field
+              label="Bloco (1 a 14)"
               type="number"
               min={1}
               max={14}
               inputMode="numeric"
-              className="fin-input mono"
+              mono
               placeholder="Ex: 3"
               value={nbBlock}
-              onChange={e => setNbBlock(e.target.value)}
+              onChange={(e) => setNbBlock(e.target.value)}
             />
-          </div>
-          <div>
-            <span className="fin-lbl">Apto (1 a 12)</span>
-            <input
+            <Field
+              label="Apto (1 a 12)"
               type="number"
               min={1}
               max={12}
               inputMode="numeric"
-              className="fin-input mono"
+              mono
               placeholder="Ex: 2"
               value={nbApto}
-              onChange={e => setNbApto(e.target.value)}
+              onChange={(e) => setNbApto(e.target.value)}
             />
           </div>
-        </div>
 
-        {nbLookup.message && (
-          <div id="nbNote" className={`fin-unit-note ${nbLookup.valid ? 'ok' : 'err'}`}>
-            {nbLookup.message}
-          </div>
-        )}
-
-        <span className="fin-lbl">Tipo</span>
-        <div className="fin-chips">
-          {BOLETO_KINDS.map(k => (
-            <button
-              key={k}
-              type="button"
-              className={`fin-chip ${nbKind === k ? 'active' : ''}`}
-              onClick={() => setNbKind(k)}
+          {nbLookup.message && (
+            <div
+              className={`text-[12px] leading-[1.45] rounded-[10px] p-[9px_12px] ${
+                nbLookup.valid ? 'bg-ok-soft text-ok' : 'bg-bad-soft text-bad'
+              }`}
             >
-              {k}
-            </button>
-          ))}
-        </div>
+              {nbLookup.message}
+            </div>
+          )}
 
-        <span className="fin-lbl">Descrição (opcional)</span>
-        <input
-          type="text"
-          className="fin-input"
-          placeholder="Ex: Rateio reforma do telhado"
-          value={nbDesc}
-          onChange={e => setNbDesc(e.target.value)}
-        />
+          <ChoiceChips<string>
+            label="Tipo"
+            options={BOLETO_KINDS.map((k) => ({ value: k, label: k }))}
+            value={nbKind}
+            onChange={(v) => setNbKind(v as Exclude<BoletoKind, 'Taxa condominial'>)}
+          />
 
-        <div className="fin-grid-2">
-          <div>
-            <span className="fin-lbl">Valor (R$)</span>
-            <input
+          <Field
+            label="Descrição (opcional)"
+            type="text"
+            placeholder="Ex: Rateio reforma do telhado"
+            value={nbDesc}
+            onChange={(e) => setNbDesc(e.target.value)}
+          />
+
+          <div className="grid grid-cols-2 gap-2.5">
+            <Field
+              label="Valor (R$)"
               type="text"
               inputMode="decimal"
-              className="fin-input mono"
+              mono
               placeholder="0,00"
               value={nbVal}
-              onChange={e => setNbVal(e.target.value)}
+              onChange={(e) => setNbVal(e.target.value)}
             />
-          </div>
-          <div>
-            <span className="fin-lbl">Vencimento</span>
-            <input
+            <Field
+              label="Vencimento"
               type="date"
-              className="fin-input mono"
+              mono
               value={nbDue}
-              onChange={e => setNbDue(e.target.value)}
+              onChange={(e) => setNbDue(e.target.value)}
             />
           </div>
         </div>
-
-        <div className="fin-sh-acts">
-          <button type="button" className="fin-btn" onClick={closeAllSheets}>
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="fin-btn primary"
-            disabled={!canSubmitBoleto}
-            onClick={handleEmitirBoleto}
-          >
-            Emitir boleto
-          </button>
-        </div>
-      </div>
+      </BottomSheet>
 
       {/* Sheet 3: Lançar Despesa */}
-      <div id="neSheet" className={`fin-sheet ${isNeOpen ? 'show' : ''}`}>
-        <div className="fin-sh-head">
-          <h2>Lançar despesa</h2>
-          <button
-            type="button"
-            className="fin-close-btn"
-            onClick={closeAllSheets}
-            aria-label="Fechar"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-        <div className="fin-sh-sub">Registre um pagamento ou conta a vencer do condomínio.</div>
+      <BottomSheet
+        open={isNeOpen}
+        onClose={closeAllSheets}
+        title="Lançar despesa"
+        subtitle="Registre um pagamento ou conta a vencer do condomínio."
+        footer={
+          <div className="grid grid-cols-[1fr_1.4fr] gap-2.5">
+            <Button variant="secondary" onClick={closeAllSheets}>
+              Cancelar
+            </Button>
+            <Button variant="primary" disabled={!canSubmitDespesa} onClick={handleLancarDespesa}>
+              Lançar despesa
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <Field
+            label="Descrição"
+            type="text"
+            placeholder="Ex: Troca de bomba da caixa d'água"
+            value={neDesc}
+            onChange={(e) => setNeDesc(e.target.value)}
+          />
 
-        <span className="fin-lbl">Descrição</span>
-        <input
-          type="text"
-          className="fin-input"
-          placeholder="Ex: Troca de bomba da caixa d'água"
-          value={neDesc}
-          onChange={e => setNeDesc(e.target.value)}
-        />
+          <ChoiceChips
+            label="Categoria"
+            options={EXPENSE_CATS.map((c) => ({ value: c, label: c }))}
+            value={neCat}
+            onChange={(v) => setNeCat(v as ExpenseCat)}
+          />
 
-        <span className="fin-lbl">Categoria</span>
-        <div className="fin-chips">
-          {EXPENSE_CATS.map(c => (
-            <button
-              key={c}
-              type="button"
-              className={`fin-chip ${neCat === c ? 'active' : ''}`}
-              onClick={() => setNeCat(c)}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-
-        <div className="fin-grid-2">
-          <div>
-            <span className="fin-lbl">Valor (R$)</span>
-            <input
+          <div className="grid grid-cols-2 gap-2.5">
+            <Field
+              label="Valor (R$)"
               type="text"
               inputMode="decimal"
-              className="fin-input mono"
+              mono
               placeholder="0,00"
               value={neVal}
-              onChange={e => setNeVal(e.target.value)}
+              onChange={(e) => setNeVal(e.target.value)}
             />
-          </div>
-          <div>
-            <span className="fin-lbl">Data</span>
-            <input
+            <Field
+              label="Data"
               type="date"
-              className="fin-input mono"
+              mono
               value={neDate}
-              onChange={e => setNeDate(e.target.value)}
+              onChange={(e) => setNeDate(e.target.value)}
             />
           </div>
-        </div>
 
-        <span className="fin-lbl">Situação</span>
-        <div className="fin-chips">
-          <button
-            type="button"
-            className={`fin-chip ${neStatus === 'paga' ? 'active' : ''}`}
-            onClick={() => setNeStatus('paga')}
-          >
-            Já paga
-          </button>
-          <button
-            type="button"
-            className={`fin-chip ${neStatus === 'apagar' ? 'active' : ''}`}
-            onClick={() => setNeStatus('apagar')}
-          >
-            A pagar
-          </button>
+          <ChoiceChips
+            label="Situação"
+            options={[
+              { value: 'paga', label: 'Já paga' },
+              { value: 'apagar', label: 'A pagar' },
+            ]}
+            value={neStatus}
+            onChange={(v) => setNeStatus(v as ExpenseStatus)}
+          />
         </div>
+      </BottomSheet>
 
-        <div className="fin-sh-acts">
-          <button type="button" className="fin-btn" onClick={closeAllSheets}>
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="fin-btn primary"
-            disabled={!canSubmitDespesa}
-            onClick={handleLancarDespesa}
-          >
-            Lançar despesa
-          </button>
-        </div>
-      </div>
-
-      {/* Toast Notification */}
-      <div className={`fin-toast ${toastMsg ? 'show' : ''}`}>{toastMsg}</div>
+      <Toast message={toastMsg} />
     </div>
   );
 }

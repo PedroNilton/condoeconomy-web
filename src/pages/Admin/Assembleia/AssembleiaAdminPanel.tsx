@@ -1,6 +1,23 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { BarChart3, Plus, X } from 'lucide-react';
 import api from '../../../services/api';
 import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
+import {
+  Badge,
+  BottomSheet,
+  Button,
+  ChoiceChips,
+  ConfirmSheet,
+  EmptyState,
+  Field,
+  ListCard,
+  PageHead,
+  ProgressBar,
+  SegmentedTabs,
+  TextAreaField,
+  Toast,
+  Toggle,
+} from '../../../components/ui';
 
 const TOTAL_UNIDADES = 168;
 const DAY_MS = 86400000;
@@ -20,13 +37,35 @@ function inMs(ms: number) {
 
 const YN = ['Sim', 'Não', 'Abstenção'];
 
+const TYPE_OPTIONS = [
+  { value: 'yn', label: 'Sim / Não / Abstenção' },
+  { value: 'multi', label: 'Múltipla escolha' },
+] as const;
+
+const START_OPTIONS = [
+  { value: 'now', label: 'Agora' },
+  { value: 'later', label: 'Agendar' },
+] as const;
+
+const DUR_OPTIONS = [
+  { value: '1', label: '24 horas' },
+  { value: '3', label: '3 dias' },
+  { value: '7', label: '7 dias' },
+] as const;
+
+const QUORUM_OPTIONS = [
+  { value: '30', label: '30%' },
+  { value: '50', label: '50%' },
+  { value: '66', label: '66%' },
+] as const;
+
 export interface PautaItem {
   id: string;
   title: string;
   desc: string;
   opts: string[];
   votes: number[];
-  q: number; // Percentual de quórum (ex: 50)
+  q: number;
   status: 'aberta' | 'agendada' | 'encerrada';
   start?: Date;
   end: Date;
@@ -43,7 +82,7 @@ const INITIAL_DEMO_ITEMS: PautaItem[] = [
     q: 50,
     status: 'aberta',
     start: new Date(Date.now() - 1 * DAY_MS),
-    end: inMs(2 * DAY_MS)
+    end: inMs(2 * DAY_MS),
   },
   {
     id: 'demo-2',
@@ -54,7 +93,7 @@ const INITIAL_DEMO_ITEMS: PautaItem[] = [
     q: 50,
     status: 'aberta',
     start: new Date(Date.now() - 2 * DAY_MS),
-    end: inMs(5 * HOUR_MS)
+    end: inMs(5 * HOUR_MS),
   },
   {
     id: 'demo-3',
@@ -65,7 +104,7 @@ const INITIAL_DEMO_ITEMS: PautaItem[] = [
     q: 50,
     status: 'agendada',
     start: inMs(4 * DAY_MS),
-    end: inMs(11 * DAY_MS)
+    end: inMs(11 * DAY_MS),
   },
   {
     id: 'demo-4',
@@ -76,7 +115,7 @@ const INITIAL_DEMO_ITEMS: PautaItem[] = [
     q: 50,
     status: 'encerrada',
     start: new Date(Date.now() - 10 * DAY_MS),
-    end: inMs(-6 * DAY_MS)
+    end: inMs(-6 * DAY_MS),
   },
   {
     id: 'demo-5',
@@ -87,8 +126,8 @@ const INITIAL_DEMO_ITEMS: PautaItem[] = [
     q: 50,
     status: 'encerrada',
     start: new Date(Date.now() - 15 * DAY_MS),
-    end: inMs(-12 * DAY_MS)
-  }
+    end: inMs(-12 * DAY_MS),
+  },
 ];
 
 export function AssembleiaAdminPanel() {
@@ -96,8 +135,8 @@ export function AssembleiaAdminPanel() {
   const [filter, setFilter] = useState<'aberta' | 'agendada' | 'encerrada'>('aberta');
   const [, setLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
-  // Sheets
   const [isNewSheetOpen, setIsNewSheetOpen] = useState(false);
   const [isConfSheetOpen, setIsConfSheetOpen] = useState(false);
   const [confData, setConfData] = useState<{
@@ -107,7 +146,6 @@ export function AssembleiaAdminPanel() {
     onConfirm: () => void;
   } | null>(null);
 
-  // New Pauta Form State
   const [nTitle, setNTitle] = useState('');
   const [nDesc, setNDesc] = useState('');
   const [nType, setNType] = useState<'yn' | 'multi'>('yn');
@@ -122,59 +160,69 @@ export function AssembleiaAdminPanel() {
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => {
+    window.setTimeout(() => {
       setToastMessage(null);
     }, 2600);
   };
 
-  // Fetch das votações reais da API
   const fetchVotacoes = useCallback(async () => {
     try {
       setLoading(true);
       const res = await api.get('/api/v1/votacoes');
+      const now = Date.now();
+      setNowMs(now);
       if (Array.isArray(res.data) && res.data.length > 0) {
-        // Para cada votação da API, tentar buscar resultados atualizados
-        const mappedPromises = res.data.map(async (v: any) => {
-          let votesList: number[] = [];
-          try {
-            const resRes = await api.get(`/api/v1/votacoes/${v.id}/resultado`);
-            if (resRes.data && Array.isArray(resRes.data.opcoes)) {
-              votesList = resRes.data.opcoes.map((o: any) => o.votos || 0);
+        const mappedPromises = res.data.map(
+          async (v: {
+            id: string | number;
+            titulo: string;
+            descricao?: string;
+            dataAbertura?: string;
+            dataEncerramento?: string;
+            status?: string;
+            opcoes?: { titulo: string }[];
+          }) => {
+            let votesList: number[] = [];
+            try {
+              const resRes = await api.get(`/api/v1/votacoes/${v.id}/resultado`);
+              if (resRes.data && Array.isArray(resRes.data.opcoes)) {
+                votesList = resRes.data.opcoes.map((o: { votos?: number }) => o.votos || 0);
+              }
+            } catch {
+              votesList = v.opcoes ? v.opcoes.map(() => 0) : [];
             }
-          } catch {
-            votesList = v.opcoes ? v.opcoes.map(() => 0) : [];
-          }
 
-          const optsTitles = v.opcoes ? v.opcoes.map((o: any) => o.titulo) : YN;
-          if (votesList.length < optsTitles.length) {
-            votesList = optsTitles.map(() => 0);
-          }
+            const optsTitles = v.opcoes ? v.opcoes.map((o) => o.titulo) : YN;
+            if (votesList.length < optsTitles.length) {
+              votesList = optsTitles.map(() => 0);
+            }
 
-          const startDate = v.dataAbertura ? new Date(v.dataAbertura) : new Date();
-          const endDate = v.dataEncerramento ? new Date(v.dataEncerramento) : inMs(3 * DAY_MS);
+            const startDate = v.dataAbertura ? new Date(v.dataAbertura) : new Date(now);
+            const endDate = v.dataEncerramento
+              ? new Date(v.dataEncerramento)
+              : new Date(now + 3 * DAY_MS);
 
-          let statusCalculado: 'aberta' | 'agendada' | 'encerrada' = 'aberta';
-          if (v.status === 'ENCERRADA' || endDate.getTime() < Date.now()) {
-            statusCalculado = 'encerrada';
-          } else if (startDate.getTime() > Date.now()) {
-            statusCalculado = 'agendada';
-          } else {
-            statusCalculado = 'aberta';
-          }
+            let statusCalculado: 'aberta' | 'agendada' | 'encerrada' = 'aberta';
+            if (v.status === 'ENCERRADA' || endDate.getTime() < now) {
+              statusCalculado = 'encerrada';
+            } else if (startDate.getTime() > now) {
+              statusCalculado = 'agendada';
+            }
 
-          return {
-            id: String(v.id),
-            backendId: String(v.id),
-            title: v.titulo,
-            desc: v.descricao || '',
-            opts: optsTitles,
-            votes: votesList,
-            q: 50,
-            status: statusCalculado,
-            start: startDate,
-            end: endDate
-          } as PautaItem;
-        });
+            return {
+              id: String(v.id),
+              backendId: String(v.id),
+              title: v.titulo,
+              desc: v.descricao || '',
+              opts: optsTitles,
+              votes: votesList,
+              q: 50,
+              status: statusCalculado,
+              start: startDate,
+              end: endDate,
+            } as PautaItem;
+          },
+        );
 
         const apiItems = await Promise.all(mappedPromises);
         setItems(apiItems);
@@ -190,35 +238,36 @@ export function AssembleiaAdminPanel() {
     fetchVotacoes();
   }, [fetchVotacoes]);
 
-  // Contagem de votos
   const cast = useCallback((p: PautaItem) => {
     return p.votes.reduce((a, b) => a + b, 0);
   }, []);
 
-  // Índice da opção líder
   const leader = useCallback((p: PautaItem) => {
     const m = Math.max(...p.votes);
     return m > 0 ? p.votes.indexOf(m) : -1;
   }, []);
 
-  // Tempo restante
-  const remaining = useCallback((p: PautaItem) => {
-    const h = Math.max(Math.ceil((p.end.getTime() - Date.now()) / HOUR_MS), 0);
-    return {
-      urgent: h < 24,
-      text: h < 24 ? `Encerra em ${h} h` : `Encerra em ${Math.round(h / 24)} dias`
-    };
-  }, []);
+  const remaining = useCallback(
+    (p: PautaItem) => {
+      const h = Math.max(Math.ceil((p.end.getTime() - nowMs) / HOUR_MS), 0);
+      return {
+        urgent: h < 24,
+        text: h < 24 ? `Encerra em ${h} h` : `Encerra em ${Math.round(h / 24)} dias`,
+      };
+    },
+    [nowMs],
+  );
 
-  // Contagens por aba
-  const countAberta = useMemo(() => items.filter(p => p.status === 'aberta').length, [items]);
-  const countAgendada = useMemo(() => items.filter(p => p.status === 'agendada').length, [items]);
-  const countEncerrada = useMemo(() => items.filter(p => p.status === 'encerrada').length, [items]);
+  const countAberta = useMemo(() => items.filter((p) => p.status === 'aberta').length, [items]);
+  const countAgendada = useMemo(() => items.filter((p) => p.status === 'agendada').length, [items]);
+  const countEncerrada = useMemo(
+    () => items.filter((p) => p.status === 'encerrada').length,
+    [items],
+  );
 
-  // Lista filtrada e ordenada
   const shownItems = useMemo(() => {
     return items
-      .filter(p => p.status === filter)
+      .filter((p) => p.status === filter)
       .sort((a, b) => {
         if (filter === 'encerrada') {
           return b.end.getTime() - a.end.getTime();
@@ -229,7 +278,6 @@ export function AssembleiaAdminPanel() {
       });
   }, [items, filter]);
 
-  // Ações
   const handleRemind = (p: PautaItem) => {
     const c = cast(p);
     const missing = Math.max(TOTAL_UNIDADES - c, 0);
@@ -270,10 +318,10 @@ export function AssembleiaAdminPanel() {
           </style>
         </head>
         <body>
-          <button class="btn" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+          <button class="btn" onclick="window.print()">Imprimir / Salvar PDF</button>
           <div class="header">
             <div class="logo">HabitOS · Gestão Condominial</div>
-            <div class="sub">Relatório Oficial de Assembleia Virtual · Mar Egeu Condomínio</div>
+            <div class="sub">Relatório Oficial de Assembleia Virtual</div>
           </div>
           <div class="card">
             <h2>${p.title}</h2>
@@ -282,7 +330,7 @@ export function AssembleiaAdminPanel() {
             <div class="info-row"><span>Data de Encerramento:</span><b>${fmtDT(p.end)}</b></div>
             <div class="info-row"><span>Participação Total:</span><b>${c} de ${TOTAL_UNIDADES} unidades (${Math.round((c / TOTAL_UNIDADES) * 100)}%)</b></div>
             <div class="info-row"><span>Quórum Mínimo Requerido:</span><b>${p.q}% (${need} unidades)</b></div>
-            <div class="info-row"><span>Resultado do Quórum:</span><b>${ok ? '✅ Quórum Atingido' : '⚠️ Quórum Não Atingido'}</b></div>
+            <div class="info-row"><span>Resultado do Quórum:</span><b>${ok ? 'Quórum Atingido' : 'Quórum Não Atingido'}</b></div>
             <div class="info-row"><span>Opção Mais Votada:</span><b>${leadName}</b></div>
           </div>
           <h3>Apuração dos Votos</h3>
@@ -295,18 +343,20 @@ export function AssembleiaAdminPanel() {
               </tr>
             </thead>
             <tbody>
-              ${p.opts.map((opt, i) => {
-                const votesCount = p.votes[i] || 0;
-                const pct = c > 0 ? Math.round((votesCount / c) * 100) : 0;
-                const isLead = i === leadIdx;
-                return `
+              ${p.opts
+                .map((opt, i) => {
+                  const votesCount = p.votes[i] || 0;
+                  const pct = c > 0 ? Math.round((votesCount / c) * 100) : 0;
+                  const isLead = i === leadIdx;
+                  return `
                   <tr class="${isLead ? 'lead-row' : ''}">
                     <td>${opt} ${isLead ? '★ (Mais votada)' : ''}</td>
                     <td><b>${votesCount}</b></td>
                     <td><b>${pct}%</b></td>
                   </tr>
                 `;
-              }).join('')}
+                })
+                .join('')}
             </tbody>
           </table>
         </body>
@@ -330,14 +380,14 @@ export function AssembleiaAdminPanel() {
         } catch (err) {
           console.warn('Erro ao encerrar votação na API:', err);
         }
-        setItems(prev =>
-          prev.map(item =>
-            item.id === p.id ? { ...item, status: 'encerrada', end: new Date() } : item
-          )
+        setItems((prev) =>
+          prev.map((item) =>
+            item.id === p.id ? { ...item, status: 'encerrada', end: new Date() } : item,
+          ),
         );
         setIsConfSheetOpen(false);
         showToast('Votação encerrada');
-      }
+      },
     });
     setIsConfSheetOpen(true);
   };
@@ -348,22 +398,21 @@ export function AssembleiaAdminPanel() {
       text: `"${p.title}" é removida e os moradores que já foram avisados recebem a informação do cancelamento.`,
       okLabel: 'Cancelar pauta',
       onConfirm: () => {
-        setItems(prev => prev.filter(item => item.id !== p.id));
+        setItems((prev) => prev.filter((item) => item.id !== p.id));
         setIsConfSheetOpen(false);
         showToast('Pauta cancelada');
-      }
+      },
     });
     setIsConfSheetOpen(true);
   };
 
-  // Validação do Form
   const isFormValid = useMemo(() => {
     const hasTitle = nTitle.trim().length > 0;
     const hasDesc = nDesc.trim().length > 0;
     if (!hasTitle || !hasDesc) return false;
 
     if (nType === 'multi') {
-      const validOpts = nOptions.map(o => o.trim()).filter(Boolean);
+      const validOpts = nOptions.map((o) => o.trim()).filter(Boolean);
       if (validOpts.length < 2) return false;
     }
 
@@ -378,25 +427,24 @@ export function AssembleiaAdminPanel() {
     if (!isFormValid || submitting) return;
 
     if (contemAmeacas(nTitle) || contemAmeacas(nDesc) || nOptions.some(contemAmeacas)) {
-      alert('Entrada inválida: caracteres não permitidos detectados.');
+      showToast('Entrada inválida: caracteres não permitidos detectados.');
       return;
     }
 
     setSubmitting(true);
-    const opts = nType === 'yn' ? [...YN] : nOptions.map(o => sanitizarEntrada(o)).filter(Boolean);
+    const opts = nType === 'yn' ? [...YN] : nOptions.map((o) => sanitizarEntrada(o)).filter(Boolean);
     const startDate = nStart === 'later' && nWhen ? new Date(nWhen) : new Date();
     const endDate = new Date(startDate.getTime() + nDur * DAY_MS);
     const status: 'aberta' | 'agendada' = nStart === 'later' ? 'agendada' : 'aberta';
 
     let backendId: string | undefined = undefined;
 
-    // Se estiver abrindo agora, envia para a API persistir no banco de dados
     try {
       const res = await api.post('/api/v1/votacoes', {
         titulo: sanitizarEntrada(nTitle),
         descricao: sanitizarEntrada(nDesc),
         dataEncerramento: endDate.toISOString().slice(0, 19),
-        opcoes: opts
+        opcoes: opts,
       });
       if (res.data && res.data.id) {
         backendId = String(res.data.id);
@@ -415,12 +463,11 @@ export function AssembleiaAdminPanel() {
       q: nQuorum,
       status,
       start: startDate,
-      end: endDate
+      end: endDate,
     };
 
-    setItems(prev => [newItem, ...prev]);
+    setItems((prev) => [newItem, ...prev]);
 
-    // Reset Form
     setNTitle('');
     setNDesc('');
     setNOptions(['', '']);
@@ -432,208 +479,67 @@ export function AssembleiaAdminPanel() {
     setIsNewSheetOpen(false);
     setSubmitting(false);
 
-    // Muda para a aba correspondente
     setFilter(status);
-    showToast(status === 'aberta' ? `Votação aberta para ${TOTAL_UNIDADES} unidades` : `Pauta agendada para ${fmtDT(startDate)}`);
+    showToast(
+      status === 'aberta'
+        ? `Votação aberta para ${TOTAL_UNIDADES} unidades`
+        : `Pauta agendada para ${fmtDT(startDate)}`,
+    );
   };
 
   const handleAddOptionInput = () => {
     if (nOptions.length >= 5) return;
-    setNOptions(prev => [...prev, '']);
+    setNOptions((prev) => [...prev, '']);
   };
 
   const handleRemoveOptionInput = (idx: number) => {
     if (nOptions.length <= 2) return;
-    setNOptions(prev => prev.filter((_, i) => i !== idx));
+    setNOptions((prev) => prev.filter((_, i) => i !== idx));
   };
 
   return (
-    <div className="flex flex-col min-h-full">
-      {/* Estilos embutidos com variáveis do Design System HabitOS */}
-      <style>{`
-        .page-head { padding: 10px 18px 0; }
-        .title-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px; gap: 10px; }
-        .eyebrow { font-size: 11px; font-weight: 700; color: var(--ds-faint); text-transform: uppercase; letter-spacing: .06em; }
-        .p-title-h1 { font-size: 21px; font-weight: 800; margin: 3px 0 0; letter-spacing: -.01em; color: var(--ds-text); }
-
-        .btn-base { font-family: inherit; font-size: 14px; font-weight: 700; height: 46px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--ds-border); background: var(--ds-card); color: var(--ds-text); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px; transition: all 0.15s ease; }
-        .btn-base:active { transform: scale(0.98); }
-        .btn-base.primary { background: var(--ds-primary); border-color: var(--ds-primary); color: var(--ds-primary-ink); }
-        .btn-base.primary:hover { filter: brightness(1.08); }
-        .btn-base.danger { background: var(--ds-danger); border-color: var(--ds-danger); color: #fff; }
-        .btn-base.danger:hover { filter: brightness(1.08); }
-        .btn-base.ghost-danger { color: var(--ds-danger); border-color: var(--ds-border); background: var(--ds-card); }
-        .btn-base.ghost-danger:hover { background: var(--ds-danger-dim); }
-        .btn-base:disabled { opacity: .4; cursor: not-allowed; }
-
-        .tabs-wrap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 3px; background: var(--ds-card); border: 1px solid var(--ds-border); border-radius: 12px; }
-        .tab-btn { border: none; background: none; font-family: inherit; font-size: 12px; font-weight: 700; color: var(--ds-dim); padding: 9px 2px; border-radius: 9px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; transition: all 0.15s; }
-        .tab-btn b { font-family: 'IBM Plex Mono', monospace; font-size: 14px; font-weight: 600; color: var(--ds-text); }
-        .tab-btn.active { background: var(--ds-primary-dim); color: var(--ds-primary); }
-        .tab-btn.active b { color: var(--ds-primary); }
-
-        .main-list { flex: 1; padding: 14px 18px 110px; display: flex; flex-direction: column; gap: 10px; }
-
-        .p-card { background: var(--ds-card); border: 1px solid var(--ds-border); border-radius: 14px; padding: 14px; }
-        .p-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-        .p-title { font-size: 14.5px; font-weight: 700; color: var(--ds-text); }
-        .p-desc { font-size: 12.5px; color: var(--ds-dim); line-height: 1.5; margin-top: 4px; }
-        .badge { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; font-weight: 700; padding: 4px 8px; border-radius: 999px; white-space: nowrap; flex: none; }
-        .b-open { background: var(--ds-primary-dim); color: var(--ds-primary); }
-        .b-sched { background: var(--ds-warning-dim); color: var(--ds-warning); }
-        .b-done { background: var(--ds-bg); color: var(--ds-dim); border: 1px solid var(--ds-border); }
-        .p-when { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--ds-dim); margin-top: 10px; }
-        .p-when.warn { color: var(--ds-warning); font-weight: 600; }
-
-        .part { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--ds-border); }
-        .part-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--ds-dim); margin-bottom: 7px; }
-        .part-row b { font-family: 'IBM Plex Mono', monospace; font-weight: 600; color: var(--ds-text); }
-        .qbar { position: relative; height: 8px; border-radius: 999px; background: var(--ds-border); }
-        .qbar i { display: block; height: 100%; border-radius: 999px; background: var(--ds-success); }
-        .qbar i.low { background: var(--ds-warning); }
-        .qbar u { position: absolute; top: -3px; width: 2px; height: 14px; background: var(--ds-text); border-radius: 1px; }
-        .q-note { font-size: 11.5px; margin-top: 8px; color: var(--ds-dim); }
-        .q-note.ok { color: var(--ds-success); font-weight: 600; }
-        .q-note.low { color: var(--ds-warning); font-weight: 600; }
-
-        .opts { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--ds-border); display: flex; flex-direction: column; gap: 10px; }
-        .o-top { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 5px; color: var(--ds-text); }
-        .o-top b { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 12px; color: var(--ds-text); }
-        .track { height: 7px; border-radius: 999px; background: var(--ds-bg); border: 1px solid var(--ds-border); overflow: hidden; }
-        .track i { display: block; height: 100%; background: var(--ds-border-strong); }
-        .track i.lead { background: var(--ds-primary); }
-        .o-chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 8px; background: var(--ds-bg); border: 1px solid var(--ds-border); margin: 0 6px 6px 0; color: var(--ds-text); }
-        .outcome { margin-top: 12px; font-size: 12.5px; color: var(--ds-dim); }
-        .outcome b { color: var(--ds-text); }
-        .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
-        .acts.one { grid-template-columns: 1fr; }
-        .acts .btn-base { height: 44px; font-size: 13px; padding: 0 8px; }
-
-        .empty { text-align: center; padding: 40px 20px; background: var(--ds-card); border: 1px solid var(--ds-border); border-radius: 16px; }
-        .empty .e-ico { width: 60px; height: 60px; border-radius: 16px; background: var(--ds-bg); border: 1px solid var(--ds-border); color: var(--ds-dim); display: grid; place-items: center; margin: 0 auto 14px; }
-        .empty .e-t { font-size: 15px; font-weight: 800; margin-bottom: 4px; color: var(--ds-text); }
-        .empty .e-s { font-size: 12.5px; color: var(--ds-dim); line-height: 1.5; }
-
-        .sheet-overlay { position: fixed; inset: 0; background: rgba(10,10,14,.45); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 50; }
-        .sheet-overlay.show { opacity: 1; pointer-events: auto; }
-        .sheet-panel { position: fixed; left: 50%; bottom: 0; transform: translate(-50%, 100%); width: 100%; max-width: 412px; background: var(--ds-card); border-radius: 20px 20px 0 0; padding: 20px 20px calc(22px + env(safe-area-inset-bottom,0px)); z-index: 51; transition: transform .25s ease; max-height: 92vh; overflow-y: auto; }
-        .sheet-panel.show { transform: translate(-50%, 0); }
-        .sheet-panel h2 { font-size: 17px; font-weight: 800; margin: 0 0 16px; color: var(--ds-text); }
-        .sheet-lbl { font-size: 12px; font-weight: 700; color: var(--ds-dim); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 8px; display: block; }
-        .sheet-panel input[type="text"], .sheet-panel input[type="datetime-local"], .sheet-panel textarea { width: 100%; padding: 11px 13px; border-radius: 10px; border: 1px solid var(--ds-border); background: var(--ds-bg); color: var(--ds-text); font-family: inherit; font-size: 14px; margin-bottom: 16px; outline: none; }
-        .sheet-panel input[type="text"]:focus, .sheet-panel input[type="datetime-local"]:focus, .sheet-panel textarea:focus { border-color: var(--ds-primary); }
-        .sheet-panel textarea { resize: none; min-height: 80px; }
-        .chips-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-        .chip-btn { border: 1px solid var(--ds-border); background: var(--ds-bg); color: var(--ds-text); font-family: inherit; font-size: 12.5px; font-weight: 600; padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: all 0.15s; }
-        .chip-btn.sel { border-color: var(--ds-primary); background: var(--ds-primary-dim); color: var(--ds-primary); }
-        .link-add-btn { background: none; border: none; color: var(--ds-primary); font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; padding: 0; margin: -6px 0 16px; display: inline-block; }
-        .tog-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 12px 0; border-top: 1px solid var(--ds-border); }
-        .tog-row:last-of-type { border-bottom: 1px solid var(--ds-border); margin-bottom: 14px; }
-        .tog-row .t1 { font-size: 13.5px; font-weight: 700; color: var(--ds-text); }
-        .tog-row .t2 { font-size: 11.5px; color: var(--ds-dim); margin-top: 2px; line-height: 1.45; }
-        .switch-wrap { position: relative; width: 40px; height: 23px; flex: none; margin-top: 2px; }
-        .switch-wrap input { opacity: 0; width: 0; height: 0; }
-        .switch-wrap .track2 { position: absolute; inset: 0; background: var(--ds-border); border-radius: 999px; transition: background .15s; }
-        .switch-wrap .thumb { position: absolute; top: 2.5px; left: 2.5px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
-        .switch-wrap input:checked + .track2 { background: var(--ds-primary); }
-        .switch-wrap input:checked + .track2 .thumb { transform: translateX(17px); }
-        .s-note-box { font-size: 12px; line-height: 1.5; color: var(--ds-dim); background: var(--ds-bg); border: 1px solid var(--ds-border); border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; }
-        .sheet-actions-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; }
-
-        .toast-bubble { position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--ds-text); color: var(--ds-bg); font-size: 13px; font-weight: 600; padding: 11px 18px; border-radius: 10px; opacity: 0; transition: transform .25s, opacity .25s; z-index: 60; white-space: nowrap; max-width: 92%; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
-        .toast-bubble.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-      `}</style>
-
-      {/* Page Header */}
-      <div className="page-head">
-        <div className="title-row">
-          <div>
-            <div className="eyebrow">Decisões</div>
-            <h1 className="p-title-h1">Assembleias</h1>
-          </div>
-          <button
+    <div className="flex flex-col gap-4">
+      <PageHead
+        eyebrow="Decisões"
+        title="Assembleias"
+        action={
+          <Button
+            variant="primary"
+            size="mini"
             onClick={() => setIsNewSheetOpen(true)}
-            className="btn-base primary"
+            className="!h-[38px] !px-3.5 !text-[13px]"
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.4"
-              strokeLinecap="round"
-              className="w-[17px] h-[17px]"
-            >
-              <path d="M12 5v14M5 12h14" />
-            </svg>
+            <Plus className="w-[15px] h-[15px]" />
             Nova pauta
-          </button>
-        </div>
+          </Button>
+        }
+      />
 
-        {/* Tabs */}
-        <div className="tabs-wrap">
-          <button
-            onClick={() => setFilter('aberta')}
-            className={`tab-btn ${filter === 'aberta' ? 'active' : ''}`}
-          >
-            Em votação
-            <b>{countAberta}</b>
-          </button>
-          <button
-            onClick={() => setFilter('agendada')}
-            className={`tab-btn ${filter === 'agendada' ? 'active' : ''}`}
-          >
-            Agendadas
-            <b>{countAgendada}</b>
-          </button>
-          <button
-            onClick={() => setFilter('encerrada')}
-            className={`tab-btn ${filter === 'encerrada' ? 'active' : ''}`}
-          >
-            Encerradas
-            <b>{countEncerrada}</b>
-          </button>
-        </div>
-      </div>
+      <SegmentedTabs
+        value={filter}
+        onChange={(v) => setFilter(v as 'aberta' | 'agendada' | 'encerrada')}
+        items={[
+          { id: 'aberta', label: 'Em votação', count: countAberta },
+          { id: 'agendada', label: 'Agendadas', count: countAgendada },
+          { id: 'encerrada', label: 'Encerradas', count: countEncerrada },
+        ]}
+      />
 
-      {/* Main List */}
-      <main className="main-list">
-        {shownItems.length === 0 ? (
-          <div className="empty">
-            <div className="e-ico">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-7 h-7"
-              >
-                <path d="M3 3v18h18" />
-                <path d="M8 17v-5M13 17V7M18 17v-8" />
-              </svg>
-            </div>
-            <div className="e-t">
-              {items.length === 0
-                ? 'Nenhuma assembleia'
-                : filter === 'aberta'
-                ? 'Nenhuma votação em andamento'
-                : filter === 'agendada'
-                ? 'Nenhuma pauta agendada'
-                : 'Nenhuma pauta encerrada'}
-            </div>
-            <div className="e-s">
-              {items.length === 0
-                ? 'Crie uma nova pauta para os moradores votarem.'
-                : filter === 'aberta'
-                ? 'Pautas publicadas aparecem aqui enquanto os moradores votam.'
-                : filter === 'agendada'
-                ? 'Agende uma pauta para avisar os moradores com antecedência.'
-                : 'Os resultados das votações finalizadas ficam aqui.'}
-            </div>
-          </div>
-        ) : (
-          shownItems.map(p => {
+      {shownItems.length === 0 ? (
+        <EmptyState
+          icon={<BarChart3 className="w-7 h-7 text-faint" />}
+          title="Nenhuma assembleia"
+          description={
+            filter === 'aberta'
+              ? 'Crie uma nova pauta para os moradores votarem.'
+              : filter === 'agendada'
+              ? 'Agende uma pauta para avisar os moradores com antecedência.'
+              : 'Os resultados das votações finalizadas ficam aqui.'
+          }
+        />
+      ) : (
+        <div className="flex flex-col gap-3">
+          {shownItems.map((p) => {
             const c = cast(p);
             const leadIdx = leader(p);
             const pct = Math.round((c / TOTAL_UNIDADES) * 100);
@@ -641,468 +547,356 @@ export function AssembleiaAdminPanel() {
             const ok = c >= need;
 
             return (
-              <div key={p.id} className="p-card">
-                {/* Cabeçalho do Card */}
-                <div className="p-top">
-                  <div className="p-title">{p.title}</div>
-                  <span
-                    className={`badge ${
+              <ListCard key={p.id}>
+                <div className="flex justify-between items-start gap-2.5">
+                  <h3 className="text-[15.5px] font-extrabold text-ink leading-[1.3] m-0">
+                    {p.title}
+                  </h3>
+                  <Badge
+                    tone={
                       p.status === 'aberta'
-                        ? 'b-open'
+                        ? 'brand'
                         : p.status === 'agendada'
-                        ? 'b-sched'
-                        : 'b-done'
-                    }`}
+                        ? 'warn'
+                        : 'neutral'
+                    }
                   >
                     {p.status === 'aberta'
                       ? 'EM VOTAÇÃO'
                       : p.status === 'agendada'
                       ? 'AGENDADA'
                       : 'ENCERRADA'}
-                  </span>
+                  </Badge>
                 </div>
 
-                <div className="p-desc">{p.desc}</div>
+                <p className="text-[12.5px] text-dim leading-[1.5] mt-1.5 mb-0">{p.desc}</p>
 
-                {/* Card - Votação Aberta */}
                 {p.status === 'aberta' && (
-                  <>
+                  <div className="flex flex-col gap-3 mt-3">
                     {(() => {
                       const r = remaining(p);
                       return (
-                        <div className={`p-when ${r.urgent ? 'warn' : ''}`}>
+                        <div
+                          className={`font-mono text-[11px] ${
+                            r.urgent ? 'text-warn font-semibold' : 'text-dim'
+                          }`}
+                        >
                           {r.text} · {fmtDT(p.end)}
                         </div>
                       );
                     })()}
 
-                    {/* Quórum / Participação */}
-                    <div className="part">
-                      <div className="part-row">
+                    <div className="p-[11px_12px] bg-canvas border border-line rounded-[10px]">
+                      <div className="flex justify-between text-[11.5px] text-dim mb-2">
                         <span>Participação</span>
-                        <b>
+                        <b className="font-mono text-ink font-semibold">
                           {c} de {TOTAL_UNIDADES} unidades · {pct}%
                         </b>
                       </div>
-                      <div className="qbar">
-                        <i
-                          className={ok ? '' : 'low'}
-                          style={{ width: `${Math.min(pct, 100)}%` }}
-                        ></i>
-                        <u
-                          style={{ left: `calc(${p.q}% - 1px)` }}
-                          title={`Quórum mínimo ${p.q}%`}
-                        ></u>
+                      <ProgressBar
+                        percent={pct}
+                        quorumPercent={p.q}
+                        tone={ok ? 'ok' : 'warn'}
+                        height="sm"
+                      />
+                      <div
+                        className={`text-[11px] font-semibold mt-2 ${
+                          ok ? 'text-ok' : 'text-warn'
+                        }`}
+                      >
+                        {ok ? 'Quórum atingido' : `Faltam ${need - c} unidades para o quórum`}
                       </div>
-                      {ok ? (
-                        <div className="q-note ok">Quórum atingido</div>
-                      ) : (
-                        <div className="q-note low">
-                          Faltam {need - c} unidades para o quórum
-                        </div>
-                      )}
                     </div>
 
-                    {/* Resultados / Opções */}
-                    <div className="opts">
+                    <div className="flex flex-col gap-2">
                       {p.opts.map((opt, i) => {
                         const votesCount = p.votes[i] || 0;
                         const optPct = c > 0 ? Math.round((votesCount / c) * 100) : 0;
                         const isLead = i === leadIdx;
                         return (
                           <div key={i}>
-                            <div className="o-top">
-                              <span>{opt}</span>
-                              <b>
+                            <div className="flex justify-between text-[12.5px] mb-1">
+                              <span className="font-semibold text-ink">{opt}</span>
+                              <b className="font-mono text-[12px] font-semibold text-ink">
                                 {votesCount} · {optPct}%
                               </b>
                             </div>
-                            <div className="track">
-                              <i
-                                className={isLead ? 'lead' : ''}
+                            <div className="h-[7px] rounded-full bg-line overflow-hidden">
+                              <div
                                 style={{ width: `${optPct}%` }}
-                              ></i>
+                                className={`h-full rounded-full transition-all ${
+                                  isLead ? 'bg-brand' : 'bg-line-strong'
+                                }`}
+                              />
                             </div>
                           </div>
                         );
                       })}
                     </div>
 
-                    {/* Ações */}
-                    <div className="acts">
-                      <button
-                        onClick={() => handleRemind(p)}
-                        className="btn-base"
-                      >
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <Button variant="secondary" onClick={() => handleRemind(p)}>
                         Lembrar quem falta
-                      </button>
-                      <button
-                        onClick={() => handleOpenCloseConfirm(p)}
-                        className="btn-base ghost-danger"
-                      >
+                      </Button>
+                      <Button variant="ghost-danger" onClick={() => handleOpenCloseConfirm(p)}>
                         Encerrar agora
-                      </button>
+                      </Button>
                     </div>
-                  </>
+                  </div>
                 )}
 
-                {/* Card - Votação Agendada */}
                 {p.status === 'agendada' && (
-                  <>
-                    <div className="p-when">
+                  <div className="flex flex-col gap-2.5 mt-3">
+                    <div className="font-mono text-[11px] text-dim">
                       Abre em {p.start ? fmtDT(p.start) : '—'} · encerra {fmtDT(p.end)}
                     </div>
-                    <div className="opts" style={{ gap: 0 }}>
-                      <div className="flex flex-wrap">
-                        {p.opts.map((opt, i) => (
-                          <span key={i} className="o-chip">
-                            {opt}
-                          </span>
-                        ))}
-                      </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {p.opts.map((opt, i) => (
+                        <span
+                          key={i}
+                          className="text-[11.5px] font-semibold text-dim bg-canvas border border-line rounded-full px-2.5 py-1"
+                        >
+                          {opt}
+                        </span>
+                      ))}
                     </div>
-                    <div className="part-row" style={{ marginTop: '6px' }}>
+                    <div className="flex justify-between text-[11.5px] text-dim">
                       <span>Quórum mínimo</span>
-                      <b>{p.q}%</b>
+                      <b className="font-mono text-ink font-semibold">{p.q}%</b>
                     </div>
-                    <div className="acts one">
-                      <button
-                        onClick={() => handleOpenCancelConfirm(p)}
-                        className="btn-base ghost-danger"
-                      >
-                        Cancelar pauta
-                      </button>
-                    </div>
-                  </>
+                    <Button
+                      variant="ghost-danger"
+                      fullWidth
+                      onClick={() => handleOpenCancelConfirm(p)}
+                    >
+                      Cancelar pauta
+                    </Button>
+                  </div>
                 )}
 
-                {/* Card - Votação Encerrada */}
                 {p.status === 'encerrada' && (
-                  <>
-                    <div className="p-when">Encerrada em {fmtDT(p.end)}</div>
+                  <div className="flex flex-col gap-3 mt-3">
+                    <div className="font-mono text-[11px] text-dim">
+                      Encerrada em {fmtDT(p.end)}
+                    </div>
 
-                    {/* Quórum */}
-                    <div className="part">
-                      <div className="part-row">
+                    <div className="p-[11px_12px] bg-canvas border border-line rounded-[10px]">
+                      <div className="flex justify-between text-[11.5px] text-dim mb-2">
                         <span>Participação</span>
-                        <b>
+                        <b className="font-mono text-ink font-semibold">
                           {c} de {TOTAL_UNIDADES} unidades · {pct}%
                         </b>
                       </div>
-                      <div className="qbar">
-                        <i
-                          className={ok ? '' : 'low'}
-                          style={{ width: `${Math.min(pct, 100)}%` }}
-                        ></i>
-                        <u
-                          style={{ left: `calc(${p.q}% - 1px)` }}
-                          title={`Quórum mínimo ${p.q}%`}
-                        ></u>
+                      <ProgressBar
+                        percent={pct}
+                        quorumPercent={p.q}
+                        tone={ok ? 'ok' : 'warn'}
+                        height="sm"
+                      />
+                      <div
+                        className={`text-[11px] font-semibold mt-2 ${
+                          ok ? 'text-ok' : 'text-warn'
+                        }`}
+                      >
+                        {ok
+                          ? 'Quórum atingido'
+                          : `Quórum não atingido (${c} de ${need} unidades necessárias)`}
                       </div>
-                      {ok ? (
-                        <div className="q-note ok">Quórum atingido</div>
-                      ) : (
-                        <div className="q-note low">
-                          Quórum não atingido ({c} de {need} unidades necessárias)
-                        </div>
-                      )}
                     </div>
 
-                    {/* Resultados */}
-                    <div className="opts">
+                    <div className="flex flex-col gap-2">
                       {p.opts.map((opt, i) => {
                         const votesCount = p.votes[i] || 0;
                         const optPct = c > 0 ? Math.round((votesCount / c) * 100) : 0;
                         const isLead = i === leadIdx;
                         return (
                           <div key={i}>
-                            <div className="o-top">
-                              <span>{opt}</span>
-                              <b>
+                            <div className="flex justify-between text-[12.5px] mb-1">
+                              <span className="font-semibold text-ink">{opt}</span>
+                              <b className="font-mono text-[12px] font-semibold text-ink">
                                 {votesCount} · {optPct}%
                               </b>
                             </div>
-                            <div className="track">
-                              <i
-                                className={isLead ? 'lead' : ''}
+                            <div className="h-[7px] rounded-full bg-line overflow-hidden">
+                              <div
                                 style={{ width: `${optPct}%` }}
-                              ></i>
+                                className={`h-full rounded-full transition-all ${
+                                  isLead ? 'bg-brand' : 'bg-line-strong'
+                                }`}
+                              />
                             </div>
                           </div>
                         );
                       })}
                     </div>
 
-                    <div className="outcome">
-                      Opção mais votada: <b>{leadIdx > -1 ? p.opts[leadIdx] : '—'}</b>
+                    <div className="text-[12px] leading-[1.5] text-dim bg-canvas border border-line rounded-[10px] p-[10px_12px]">
+                      Opção mais votada:{' '}
+                      <b className="text-ink">{leadIdx > -1 ? p.opts[leadIdx] : '—'}</b>
                     </div>
 
-                    <div className="acts one">
-                      <button
-                        onClick={() => handleDownloadPdf(p)}
-                        className="btn-base"
-                      >
-                        Baixar resultado (PDF)
-                      </button>
-                    </div>
-                  </>
+                    <Button variant="secondary" fullWidth onClick={() => handleDownloadPdf(p)}>
+                      Baixar resultado (PDF)
+                    </Button>
+                  </div>
                 )}
-              </div>
+              </ListCard>
             );
-          })
-        )}
-      </main>
-
-      {/* Overlay Backdrop */}
-      <div
-        className={`sheet-overlay ${isNewSheetOpen || isConfSheetOpen ? 'show' : ''}`}
-        onClick={() => {
-          setIsNewSheetOpen(false);
-          setIsConfSheetOpen(false);
-        }}
-      ></div>
+          })}
+        </div>
+      )}
 
       {/* Bottom Sheet - Nova Pauta */}
-      <div className={`sheet-panel ${isNewSheetOpen ? 'show' : ''}`}>
-        <h2>Nova pauta</h2>
+      <BottomSheet
+        open={isNewSheetOpen}
+        onClose={() => setIsNewSheetOpen(false)}
+        title="Nova pauta"
+        footer={
+          <div className="grid grid-cols-[1fr_1.4fr] gap-2.5">
+            <Button variant="secondary" onClick={() => setIsNewSheetOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              disabled={!isFormValid || submitting}
+              onClick={handlePublish}
+            >
+              {submitting ? 'Publicando...' : 'Publicar pauta'}
+            </Button>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <Field
+            label="Título"
+            value={nTitle}
+            onChange={(e) => setNTitle(e.target.value)}
+            placeholder="Ex: Pintura da fachada"
+          />
 
-        <span className="sheet-lbl">Título</span>
-        <input
-          type="text"
-          value={nTitle}
-          onChange={e => setNTitle(e.target.value)}
-          placeholder="Ex: Pintura da fachada"
-        />
+          <TextAreaField
+            label="Descrição"
+            value={nDesc}
+            onChange={(e) => setNDesc(e.target.value)}
+            placeholder="Explique o que será decidido e o que muda para os moradores"
+          />
 
-        <span className="sheet-lbl">Descrição</span>
-        <textarea
-          value={nDesc}
-          onChange={e => setNDesc(e.target.value)}
-          placeholder="Explique o que será decidido e o que muda para os moradores"
-        ></textarea>
+          <ChoiceChips
+            label="Tipo de votação"
+            options={TYPE_OPTIONS}
+            value={nType}
+            onChange={(v) => setNType(v as 'yn' | 'multi')}
+          />
 
-        <span className="sheet-lbl">Tipo de votação</span>
-        <div className="chips-row">
-          <button
-            type="button"
-            className={`chip-btn ${nType === 'yn' ? 'sel' : ''}`}
-            onClick={() => setNType('yn')}
-          >
-            Sim / Não / Abstenção
-          </button>
-          <button
-            type="button"
-            className={`chip-btn ${nType === 'multi' ? 'sel' : ''}`}
-            onClick={() => setNType('multi')}
-          >
-            Múltipla escolha
-          </button>
-        </div>
-
-        {nType === 'multi' && (
-          <div>
-            <span className="sheet-lbl">Opções</span>
-            <div>
+          {nType === 'multi' && (
+            <div className="flex flex-col gap-2">
+              <span className="block text-[12px] font-bold uppercase tracking-[0.04em] text-dim">
+                Opções
+              </span>
               {nOptions.map((opt, idx) => (
-                <div key={idx} className="flex gap-2 mb-2 items-center">
-                  <input
-                    type="text"
+                <div key={idx} className="flex gap-2 items-center">
+                  <Field
                     value={opt}
-                    onChange={e => {
+                    onChange={(e) => {
                       const next = [...nOptions];
                       next[idx] = e.target.value;
                       setNOptions(next);
                     }}
                     placeholder={`Opção ${idx + 1}`}
-                    style={{ marginBottom: 0 }}
                   />
                   {nOptions.length > 2 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveOptionInput(idx)}
-                      className="text-ds-danger px-2 py-1 text-sm font-bold hover:bg-ds-danger-dim rounded-lg"
+                      className="text-bad p-2 hover:bg-bad-soft rounded-lg cursor-pointer shrink-0"
                       title="Remover opção"
+                      aria-label="Remover opção"
                     >
-                      ✕
+                      <X className="w-4 h-4" />
                     </button>
                   )}
                 </div>
               ))}
+              {nOptions.length < 5 && (
+                <button
+                  type="button"
+                  onClick={handleAddOptionInput}
+                  className="text-left text-[12.5px] font-bold text-brand bg-transparent border-0 p-1 cursor-pointer hover:underline"
+                >
+                  + Adicionar opção
+                </button>
+              )}
             </div>
-            {nOptions.length < 5 && (
-              <button
-                type="button"
-                onClick={handleAddOptionInput}
-                className="link-add-btn"
-              >
-                + Adicionar opção
-              </button>
-            )}
-          </div>
-        )}
+          )}
 
-        <span className="sheet-lbl">Início</span>
-        <div className="chips-row">
-          <button
-            type="button"
-            className={`chip-btn ${nStart === 'now' ? 'sel' : ''}`}
-            onClick={() => setNStart('now')}
-          >
-            Agora
-          </button>
-          <button
-            type="button"
-            className={`chip-btn ${nStart === 'later' ? 'sel' : ''}`}
-            onClick={() => setNStart('later')}
-          >
-            Agendar
-          </button>
-        </div>
-
-        {nStart === 'later' && (
-          <input
-            type="datetime-local"
-            value={nWhen}
-            onChange={e => setNWhen(e.target.value)}
+          <ChoiceChips
+            label="Início"
+            options={START_OPTIONS}
+            value={nStart}
+            onChange={(v) => setNStart(v as 'now' | 'later')}
           />
-        )}
 
-        <span className="sheet-lbl">Duração da votação</span>
-        <div className="chips-row">
-          <button
-            type="button"
-            className={`chip-btn ${nDur === 1 ? 'sel' : ''}`}
-            onClick={() => setNDur(1)}
-          >
-            24 horas
-          </button>
-          <button
-            type="button"
-            className={`chip-btn ${nDur === 3 ? 'sel' : ''}`}
-            onClick={() => setNDur(3)}
-          >
-            3 dias
-          </button>
-          <button
-            type="button"
-            className={`chip-btn ${nDur === 7 ? 'sel' : ''}`}
-            onClick={() => setNDur(7)}
-          >
-            7 dias
-          </button>
-        </div>
-
-        <span className="sheet-lbl">Quórum mínimo de participação</span>
-        <div className="chips-row">
-          <button
-            type="button"
-            className={`chip-btn ${nQuorum === 30 ? 'sel' : ''}`}
-            onClick={() => setNQuorum(30)}
-          >
-            30%
-          </button>
-          <button
-            type="button"
-            className={`chip-btn ${nQuorum === 50 ? 'sel' : ''}`}
-            onClick={() => setNQuorum(50)}
-          >
-            50%
-          </button>
-          <button
-            type="button"
-            className={`chip-btn ${nQuorum === 66 ? 'sel' : ''}`}
-            onClick={() => setNQuorum(66)}
-          >
-            66%
-          </button>
-        </div>
-
-        {/* Toggles */}
-        <label className="tog-row">
-          <span>
-            <div className="t1">Mostrar resultado parcial aos moradores</div>
-            <div className="t2">Desligado: só você acompanha a contagem até encerrar.</div>
-          </span>
-          <span className="switch-wrap">
-            <input
-              type="checkbox"
-              checked={nPartial}
-              onChange={e => setNPartial(e.target.checked)}
+          {nStart === 'later' && (
+            <Field
+              type="datetime-local"
+              value={nWhen}
+              onChange={(e) => setNWhen(e.target.value)}
             />
-            <span className="track2">
-              <span className="thumb"></span>
-            </span>
-          </span>
-        </label>
+          )}
 
-        <label className="tog-row">
-          <span>
-            <div className="t1">Notificar moradores ao abrir</div>
-            <div className="t2">Envia push quando a votação começar.</div>
-          </span>
-          <span className="switch-wrap">
-            <input
-              type="checkbox"
-              checked={nPush}
-              onChange={e => setNPush(e.target.checked)}
-            />
-            <span className="track2">
-              <span className="thumb"></span>
-            </span>
-          </span>
-        </label>
+          <ChoiceChips
+            label="Duração da votação"
+            options={DUR_OPTIONS}
+            value={String(nDur)}
+            onChange={(v) => setNDur(Number(v))}
+          />
 
-        <div className="s-note-box">
-          Cada unidade tem 1 voto, registrado pelo morador titular. Confira na convenção do condomínio o quórum e o prazo de convocação exigidos.
+          <ChoiceChips
+            label="Quórum mínimo de participação"
+            options={QUORUM_OPTIONS}
+            value={String(nQuorum)}
+            onChange={(v) => setNQuorum(Number(v))}
+          />
+
+          <div className="divide-y divide-line border-y border-line">
+            <div className="py-1">
+              <Toggle
+                checked={nPartial}
+                onChange={setNPartial}
+                title="Mostrar resultado parcial aos moradores"
+                description="Desligado: só você acompanha a contagem até encerrar."
+              />
+            </div>
+            <div className="py-1">
+              <Toggle
+                checked={nPush}
+                onChange={setNPush}
+                title="Notificar moradores ao abrir"
+                description="Envia push quando a votação começar."
+              />
+            </div>
+          </div>
+
+          <div className="text-[12px] leading-[1.5] text-dim bg-canvas border border-line rounded-[10px] p-[10px_12px]">
+            Cada unidade tem 1 voto, registrado pelo morador titular. Confira na convenção do
+            condomínio o quórum e o prazo de convocação exigidos.
+          </div>
         </div>
+      </BottomSheet>
 
-        <div className="sheet-actions-grid">
-          <button
-            type="button"
-            onClick={() => setIsNewSheetOpen(false)}
-            className="btn-base"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            disabled={!isFormValid || submitting}
-            onClick={handlePublish}
-            className="btn-base primary"
-          >
-            {submitting ? 'Publicando...' : 'Publicar pauta'}
-          </button>
-        </div>
-      </div>
+      <ConfirmSheet
+        open={isConfSheetOpen && !!confData}
+        onClose={() => setIsConfSheetOpen(false)}
+        title={confData?.title || ''}
+        description={confData?.text}
+        confirmLabel={confData?.okLabel || 'Confirmar'}
+        destructive
+        onConfirm={() => {
+          if (confData?.onConfirm) confData.onConfirm();
+        }}
+      />
 
-      {/* Confirmation Bottom Sheet */}
-      <div className={`sheet-panel ${isConfSheetOpen ? 'show' : ''}`}>
-        <h2>{confData?.title}</h2>
-        <div className="s-note-box">{confData?.text}</div>
-        <div className="sheet-actions-grid">
-          <button
-            type="button"
-            onClick={() => setIsConfSheetOpen(false)}
-            className="btn-base"
-          >
-            Voltar
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (confData?.onConfirm) confData.onConfirm();
-            }}
-            className="btn-base danger"
-          >
-            {confData?.okLabel}
-          </button>
-        </div>
-      </div>
-
-      {/* Toast Notification */}
-      <div className={`toast-bubble ${toastMessage ? 'show' : ''}`}>
-        {toastMessage}
-      </div>
+      <Toast message={toastMessage} />
     </div>
   );
 }
