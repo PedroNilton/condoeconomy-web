@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { Search, X } from 'lucide-react';
 import api from '../../../services/api';
 import { useWebSocket } from '../../../hooks/useWebSocket';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { RegistrarVisitanteSheet } from '../../Visitantes/components/RegistrarVisitanteForm';
+import { Badge, Button, GroupedList, ListCard, Toast } from '../../../components/ui';
 
 interface VeiculoApi {
   id: string;
@@ -168,7 +170,7 @@ function saveRecents(list: RecentLookup[]) {
   try {
     localStorage.setItem(
       RECENTS_STORAGE_KEY,
-      JSON.stringify(list.slice(0, 8).map((r) => ({ plate: r.plate, at: r.at.getTime() })))
+      JSON.stringify(list.slice(0, 8).map((r) => ({ plate: r.plate, at: r.at.getTime() }))),
     );
   } catch {
     // ignore
@@ -182,24 +184,16 @@ export function ConsultaVeiculos() {
   const [recents, setRecents] = useState<RecentLookup[]>(() => loadInitialRecents());
   const [result, setResult] = useState<LookupResult | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const [toastMsg, setToastMsg] = useState('');
-  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [isRegisterSheetOpen, setIsRegisterSheetOpen] = useState(false);
   const [registerInitialPlaca, setRegisterInitialPlaca] = useState('');
 
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const toastTimerRef = useRef<number | null>(null);
   const { refreshCounts } = useNotification();
 
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
-    setToastVisible(true);
-    if (toastTimerRef.current) {
-      window.clearTimeout(toastTimerRef.current);
-    }
-    toastTimerRef.current = window.setTimeout(() => {
-      setToastVisible(false);
-    }, 2200);
+    window.setTimeout(() => setToastMsg(null), 2200);
   }, []);
 
   const fetchVehiclesAndVisitors = useCallback(async () => {
@@ -244,7 +238,11 @@ export function ConsultaVeiculos() {
       if (resVisitantes.status === 'fulfilled' && Array.isArray(resVisitantes.value.data)) {
         resVisitantes.value.data.forEach((v: VisitanteApi) => {
           if (!v.placaVeiculo) return;
-          if (v.status !== 'NO_CONDOMINIO' && v.status !== 'AGUARDANDO' && v.status !== 'AGUARDANDO_LIBERACAO') {
+          if (
+            v.status !== 'NO_CONDOMINIO' &&
+            v.status !== 'AGUARDANDO' &&
+            v.status !== 'AGUARDANDO_LIBERACAO'
+          ) {
             return;
           }
           const p = norm(v.placaVeiculo);
@@ -276,7 +274,6 @@ export function ConsultaVeiculos() {
     }, 30000);
     return () => {
       window.clearInterval(interval);
-      if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
     };
   }, [fetchVehiclesAndVisitors]);
 
@@ -289,14 +286,14 @@ export function ConsultaVeiculos() {
       const v = visitors.find((x) => x.plate === p);
       return v ? { type: 'vis', d: v } : { type: 'no', d: { plate: p } };
     },
-    [residents, visitors]
+    [residents, visitors],
   );
 
   const kindOf = useCallback(
     (p: string): 'ok' | 'vis' | 'no' => {
       return findLocal(p).type;
     },
-    [findLocal]
+    [findLocal],
   );
 
   const consult = useCallback(
@@ -310,7 +307,7 @@ export function ConsultaVeiculos() {
       if (found.type === 'no') {
         try {
           const response = await api.get(
-            `/api/v1/portaria/veiculos/consulta?placa=${encodeURIComponent(fmtPlate(p))}`
+            `/api/v1/portaria/veiculos/consulta?placa=${encodeURIComponent(fmtPlate(p))}`,
           );
           const apiList: VeiculoApi[] = Array.isArray(response.data) ? response.data : [];
           const match = apiList.find((item) => norm(item.placa) === p) || apiList[0];
@@ -325,7 +322,7 @@ export function ConsultaVeiculos() {
               vaga: 'G-14',
             };
             setResidents((prev) =>
-              prev.some((x) => x.plate === mapped.plate) ? prev : [mapped, ...prev]
+              prev.some((x) => x.plate === mapped.plate) ? prev : [mapped, ...prev],
             );
             found = { type: 'ok', d: mapped };
           }
@@ -341,7 +338,7 @@ export function ConsultaVeiculos() {
         return next;
       });
     },
-    [findLocal]
+    [findLocal],
   );
 
   const reset = useCallback(() => {
@@ -372,34 +369,22 @@ export function ConsultaVeiculos() {
 
   return (
     <div className="flex flex-col">
-      {/* Page Head */}
-      <div className="pt-[6px]">
-        <div className="text-[11px] font-bold text-ds-faint uppercase tracking-[0.06em]">
+      <div className="pt-1">
+        <div className="text-[11px] font-bold text-faint uppercase tracking-[0.06em]">
           Garagem e acesso
         </div>
-        <h1 className="text-[21px] font-extrabold text-ds-text mt-[3px] mb-[14px] tracking-[-0.01em]">
+        <h1 className="text-[21px] font-extrabold text-ink mt-[3px] mb-3.5 tracking-[-0.01em]">
           Consultar placa
         </h1>
 
-        <div className="bg-ds-card border border-ds-border rounded-[16px] p-[14px]">
-          <span className="text-[11px] font-bold text-ds-dim uppercase tracking-[0.05em] mb-[10px] block">
+        <ListCard>
+          <span className="text-[11px] font-bold text-dim uppercase tracking-[0.05em] mb-2.5 block">
             Placa do veículo
           </span>
 
-          <div className="flex gap-[10px]">
+          <div className="flex gap-2.5">
             <div className="relative flex-1">
-              <svg
-                className="absolute left-[13px] top-1/2 -translate-y-1/2 w-[17px] h-[17px] text-ds-faint pointer-events-none"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="11" cy="11" r="7" />
-                <path d="m21 21-4.3-4.3" />
-              </svg>
+              <Search className="absolute left-[13px] top-1/2 -translate-y-1/2 w-[17px] h-[17px] text-faint pointer-events-none" />
 
               <input
                 ref={inputRef}
@@ -416,7 +401,7 @@ export function ConsultaVeiculos() {
                 autoComplete="off"
                 autoCapitalize="characters"
                 spellCheck={false}
-                className="w-full h-[54px] pl-[40px] pr-[38px] rounded-[12px] border border-ds-border bg-ds-bg text-ds-text font-mono text-[19px] font-semibold tracking-[0.08em] uppercase placeholder:text-ds-faint placeholder:font-medium placeholder:tracking-[0.06em] focus-visible:outline-2 focus-visible:outline-ds-primary focus-visible:outline-offset-1"
+                className="w-full h-[54px] pl-[40px] pr-[38px] rounded-[12px] border border-line bg-canvas text-ink font-mono text-[19px] font-semibold tracking-[0.08em] uppercase placeholder:text-faint placeholder:font-medium placeholder:tracking-[0.06em] focus-visible:outline-2 focus-visible:outline-brand"
               />
 
               {inputValue.length > 0 && (
@@ -424,284 +409,258 @@ export function ConsultaVeiculos() {
                   type="button"
                   onClick={reset}
                   aria-label="Limpar"
-                  className="absolute right-[8px] top-1/2 -translate-y-1/2 w-[30px] h-[30px] border-0 bg-transparent text-ds-faint cursor-pointer grid place-items-center hover:text-ds-text transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-[30px] h-[30px] border-0 bg-transparent text-faint cursor-pointer grid place-items-center hover:text-ink transition-colors"
                 >
-                  <svg
-                    className="w-[16px] h-[16px]"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                  >
-                    <path d="M18 6 6 18M6 6l12 12" />
-                  </svg>
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
 
-            <button
-              type="button"
+            <Button
+              variant="primary"
               disabled={!isOk}
               onClick={() => consult(pNorm)}
-              className="h-[54px] px-[18px] rounded-[12px] border-0 bg-ds-primary text-ds-primary-ink font-sans text-[14px] font-bold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 transition-all"
+              className="!h-[54px] !px-[18px]"
             >
               Consultar
-            </button>
+            </Button>
           </div>
 
           <div
-            className={`text-[11.5px] mt-[10px] leading-[1.45] ${
-              isInvalidFormat ? 'text-ds-warning' : 'text-ds-dim'
+            className={`text-[11.5px] mt-2.5 leading-[1.45] ${
+              isInvalidFormat ? 'text-warn' : 'text-dim'
             }`}
           >
             {isInvalidFormat
               ? 'Formato inválido. Use ABC-1D23 (Mercosul) ou ABC-1234.'
               : 'Digite a placa inteira, ou só um pedaço para ver sugestões.'}
           </div>
-        </div>
+        </ListCard>
       </div>
 
-      {/* Main Content Area (#below) */}
-      <div className="pt-[16px] flex flex-col gap-[20px]">
+      {/* Resultado / Sugestões / Recentes */}
+      <div className="pt-4 flex flex-col gap-5">
         {result ? (
           result.type === 'no' ? (
-            <div className="bg-ds-card border border-ds-warning rounded-[16px] p-[16px]">
-              <div className="flex justify-between items-center mb-[14px]">
-                <span className="font-mono text-[9.5px] font-bold py-[4px] px-[9px] rounded-full bg-ds-warning-dim text-ds-warning">
-                  NÃO ENCONTRADA
-                </span>
+            <ListCard tone="warn">
+              <div className="mb-3.5">
+                <Badge tone="warn">NÃO ENCONTRADA</Badge>
               </div>
 
-              <span className="inline-block border-2 border-ds-text rounded-[9px] py-[6px] px-[14px] font-mono text-[24px] font-semibold tracking-[0.1em] text-ds-text">
+              <span className="inline-block border-2 border-ink rounded-[9px] py-1.5 px-3.5 font-mono text-[24px] font-semibold tracking-[0.1em] text-ink">
                 {fmtPlate(result.d.plate)}
               </span>
 
-              <p className="text-[13px] text-ds-dim leading-[1.5] mt-[12px] mb-0">
+              <p className="text-[13px] text-dim leading-[1.5] mt-3 mb-0">
                 Nenhum morador ou visitante no local com essa placa. Se o veículo está entrando
                 agora, registre o visitante com a placa já preenchida.
               </p>
 
-              <div className="grid gap-[10px] mt-[12px]">
-                <button
-                  type="button"
+              <div className="grid gap-2.5 mt-3.5">
+                <Button
+                  variant="primary"
+                  size="portaria"
+                  fullWidth
                   onClick={() => {
                     setRegisterInitialPlaca(fmtPlate(result.d.plate));
                     setIsRegisterSheetOpen(true);
                     showToast('Abrindo cadastro de visitante com a placa');
                   }}
-                  className="font-sans text-[14px] font-bold h-[50px] rounded-[12px] border border-ds-primary bg-ds-primary text-ds-primary-ink cursor-pointer hover:brightness-110 transition-all"
                 >
                   Registrar como visitante
-                </button>
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="font-sans text-[14px] font-bold h-[50px] rounded-[12px] border border-ds-border bg-ds-card text-ds-text cursor-pointer hover:border-ds-border-strong transition-colors"
-                >
+                </Button>
+                <Button variant="secondary" size="portaria" fullWidth onClick={reset}>
                   Nova consulta
-                </button>
+                </Button>
               </div>
-            </div>
+            </ListCard>
           ) : result.type === 'ok' ? (
-            <div className="bg-ds-card border border-ds-success rounded-[16px] p-[16px]">
-              <div className="flex justify-between items-center mb-[14px]">
-                <span className="font-mono text-[9.5px] font-bold py-[4px] px-[9px] rounded-full bg-ds-success-dim text-ds-success">
-                  VEÍCULO DE MORADOR
-                </span>
+            <ListCard tone="ok">
+              <div className="mb-3.5">
+                <Badge tone="ok">VEÍCULO DE MORADOR</Badge>
               </div>
 
-              <span className="inline-block border-2 border-ds-text rounded-[9px] py-[6px] px-[14px] font-mono text-[24px] font-semibold tracking-[0.1em] text-ds-text">
+              <span className="inline-block border-2 border-ink rounded-[9px] py-1.5 px-3.5 font-mono text-[24px] font-semibold tracking-[0.1em] text-ink">
                 {fmtPlate(result.d.plate)}
               </span>
 
-              <div className="flex items-center gap-[8px] mt-[12px] mb-[4px] text-[14px] font-bold text-ds-text">
+              <div className="flex items-center gap-2 mt-3 mb-1 text-[14px] font-bold text-ink">
                 <span
-                  className="w-[14px] h-[14px] rounded-full border border-ds-border shrink-0"
+                  className="w-[14px] h-[14px] rounded-full border border-line shrink-0"
                   style={{ background: result.d.hex }}
                 />
                 {result.d.model}{' '}
-                <span className="text-ds-dim font-medium">· {result.d.color}</span>
+                <span className="text-dim font-medium">· {result.d.color}</span>
               </div>
 
-              <div className="mt-[12px] border-t border-ds-border">
-                <div className="flex justify-between gap-[12px] py-[10px] border-b border-ds-border text-[13px]">
-                  <span className="text-ds-dim">Unidade</span>
-                  <span className="font-mono font-semibold text-right text-ds-text">
+              <div className="mt-3 border-t border-line">
+                <div className="flex justify-between gap-3 py-2.5 border-b border-line text-[13px]">
+                  <span className="text-dim">Unidade</span>
+                  <span className="font-mono font-semibold text-right text-ink">
                     {result.d.unit}
                   </span>
                 </div>
-                <div className="flex justify-between gap-[12px] py-[10px] border-b border-ds-border text-[13px]">
-                  <span className="text-ds-dim">Morador</span>
-                  <span className="font-bold text-right text-ds-text">{result.d.who}</span>
+                <div className="flex justify-between gap-3 py-2.5 border-b border-line text-[13px]">
+                  <span className="text-dim">Morador</span>
+                  <span className="font-bold text-right text-ink">{result.d.who}</span>
                 </div>
-                <div className="flex justify-between gap-[12px] py-[10px] text-[13px]">
-                  <span className="text-ds-dim">Vaga</span>
-                  <span className="font-mono font-semibold text-right text-ds-text">
+                <div className="flex justify-between gap-3 py-2.5 text-[13px]">
+                  <span className="text-dim">Vaga</span>
+                  <span className="font-mono font-semibold text-right text-ink">
                     {result.d.vaga}
                   </span>
                 </div>
               </div>
 
-              <div className="grid gap-[10px] mt-[12px]">
-                <button
-                  type="button"
+              <div className="grid gap-2.5 mt-3">
+                <Button
+                  variant="primary"
+                  size="portaria"
+                  fullWidth
                   onClick={() => showToast('Morador avisado no app')}
-                  className="font-sans text-[14px] font-bold h-[50px] rounded-[12px] border border-ds-primary bg-ds-primary text-ds-primary-ink cursor-pointer hover:brightness-110 transition-all"
                 >
                   Avisar morador
-                </button>
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="font-sans text-[14px] font-bold h-[50px] rounded-[12px] border border-ds-border bg-ds-card text-ds-text cursor-pointer hover:border-ds-border-strong transition-colors"
-                >
+                </Button>
+                <Button variant="secondary" size="portaria" fullWidth onClick={reset}>
                   Nova consulta
-                </button>
+                </Button>
               </div>
-            </div>
+            </ListCard>
           ) : (
-            <div className="bg-ds-card border border-ds-border rounded-[16px] p-[16px]">
-              <div className="flex justify-between items-center mb-[14px]">
-                <span className="font-mono text-[9.5px] font-bold py-[4px] px-[9px] rounded-full bg-ds-primary-dim text-ds-primary">
-                  VISITANTE NO LOCAL
-                </span>
+            <ListCard>
+              <div className="mb-3.5">
+                <Badge tone="brand">VISITANTE NO LOCAL</Badge>
               </div>
 
-              <span className="inline-block border-2 border-ds-text rounded-[9px] py-[6px] px-[14px] font-mono text-[24px] font-semibold tracking-[0.1em] text-ds-text">
+              <span className="inline-block border-2 border-ink rounded-[9px] py-1.5 px-3.5 font-mono text-[24px] font-semibold tracking-[0.1em] text-ink">
                 {fmtPlate(result.d.plate)}
               </span>
 
-              <div className="flex items-center gap-[8px] mt-[12px] mb-[4px] text-[14px] font-bold text-ds-text">
+              <div className="flex items-center gap-2 mt-3 mb-1 text-[14px] font-bold text-ink">
                 <span
-                  className="w-[14px] h-[14px] rounded-full border border-ds-border shrink-0"
+                  className="w-[14px] h-[14px] rounded-full border border-line shrink-0"
                   style={{ background: result.d.hex }}
                 />
                 {result.d.model}{' '}
-                <span className="text-ds-dim font-medium">· {result.d.color}</span>
+                <span className="text-dim font-medium">· {result.d.color}</span>
               </div>
 
-              <div className="mt-[12px] border-t border-ds-border">
-                <div className="flex justify-between gap-[12px] py-[10px] border-b border-ds-border text-[13px]">
-                  <span className="text-ds-dim">Visitante</span>
-                  <span className="font-bold text-right text-ds-text">{result.d.who}</span>
+              <div className="mt-3 border-t border-line">
+                <div className="flex justify-between gap-3 py-2.5 border-b border-line text-[13px]">
+                  <span className="text-dim">Visitante</span>
+                  <span className="font-bold text-right text-ink">{result.d.who}</span>
                 </div>
-                <div className="flex justify-between gap-[12px] py-[10px] border-b border-ds-border text-[13px]">
-                  <span className="text-ds-dim">Destino</span>
-                  <span className="font-mono font-semibold text-right text-ds-text">
+                <div className="flex justify-between gap-3 py-2.5 border-b border-line text-[13px]">
+                  <span className="text-dim">Destino</span>
+                  <span className="font-mono font-semibold text-right text-ink">
                     {result.d.dest}
                   </span>
                 </div>
-                <div className="flex justify-between gap-[12px] py-[10px] text-[13px]">
-                  <span className="text-ds-dim">Entrada</span>
-                  <span className="font-mono font-semibold text-right text-ds-text">
+                <div className="flex justify-between gap-3 py-2.5 text-[13px]">
+                  <span className="text-dim">Entrada</span>
+                  <span className="font-mono font-semibold text-right text-ink">
                     {hm(result.d.inAt)} · {stay(result.d.inAt, nowMs)} no local
                   </span>
                 </div>
               </div>
 
-              <div className="grid gap-[10px] mt-[12px]">
-                <button
-                  type="button"
+              <div className="grid gap-2.5 mt-3">
+                <Button
+                  variant="primary"
+                  size="portaria"
+                  fullWidth
                   onClick={() => showToast('Morador avisado no app')}
-                  className="font-sans text-[14px] font-bold h-[50px] rounded-[12px] border border-ds-primary bg-ds-primary text-ds-primary-ink cursor-pointer hover:brightness-110 transition-all"
                 >
                   Avisar morador do destino
-                </button>
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="font-sans text-[14px] font-bold h-[50px] rounded-[12px] border border-ds-border bg-ds-card text-ds-text cursor-pointer hover:border-ds-border-strong transition-colors"
-                >
+                </Button>
+                <Button variant="secondary" size="portaria" fullWidth onClick={reset}>
                   Nova consulta
-                </button>
+                </Button>
               </div>
-            </div>
+            </ListCard>
           )
         ) : pNorm.length >= 2 && pNorm.length < 7 ? (
           suggestions.length > 0 ? (
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.05em] text-ds-faint mt-0 mb-[10px]">
+              <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-faint mt-0 mb-2.5">
                 Sugestões
               </p>
-              <div className="bg-ds-card border border-ds-border rounded-[14px] overflow-hidden">
+              <GroupedList>
                 {suggestions.map((entry) => (
                   <button
                     key={entry.item.plate}
                     type="button"
                     onClick={() => consult(entry.item.plate)}
-                    className="w-full flex justify-between items-center gap-[12px] py-[13px] px-[14px] border-0 border-b border-ds-border last:border-b-0 bg-transparent text-ds-text font-sans text-left cursor-pointer hover:bg-ds-bg/60 transition-colors"
+                    className="w-full flex justify-between items-center gap-3 py-3 px-3.5 bg-transparent text-ink font-sans text-left cursor-pointer hover:bg-canvas transition-colors"
                   >
                     <div>
                       <div className="font-mono text-[14px] font-semibold tracking-[0.05em]">
                         {fmtPlate(entry.item.plate)}
                       </div>
-                      <div className="text-[11.5px] text-ds-dim mt-[2px]">
+                      <div className="text-[11.5px] text-dim mt-0.5">
                         {entry.item.model} · {entry.item.color}
                       </div>
                     </div>
-                    <div className="font-mono text-[10.5px] text-ds-faint text-right shrink-0">
+                    <div className="font-mono text-[10.5px] text-faint text-right shrink-0">
                       {entry.kind === 'ok' ? (
                         <>
-                          <b className="block font-bold mb-[2px] text-ds-success">MORADOR</b>
+                          <b className="block font-bold mb-0.5 text-ok">MORADOR</b>
                           {(entry.item as ResidentVehicle).unit}
                         </>
                       ) : (
                         <>
-                          <b className="block font-bold mb-[2px] text-ds-primary">VISITANTE</b>
+                          <b className="block font-bold mb-0.5 text-brand">VISITANTE</b>
                           no local
                         </>
                       )}
                     </div>
                   </button>
                 ))}
-              </div>
+              </GroupedList>
             </div>
           ) : (
-            <div className="text-[11.5px] text-ds-dim mt-[10px] leading-[1.45]">
+            <div className="text-[11.5px] text-dim mt-2.5 leading-[1.45]">
               Nenhuma placa parecida entre moradores e visitantes no local.
             </div>
           )
         ) : (
           <>
-            {/* Visitantes com veículo no local */}
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.05em] text-ds-faint mt-0 mb-[10px]">
+              <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-faint mt-0 mb-2.5">
                 Visitantes com veículo no local
               </p>
-              <div className="bg-ds-card border border-ds-border rounded-[14px] overflow-hidden">
+              <GroupedList>
                 {visitors.map((v) => (
                   <button
                     key={v.plate}
                     type="button"
                     onClick={() => consult(v.plate)}
-                    className="w-full flex justify-between items-center gap-[12px] py-[13px] px-[14px] border-0 border-b border-ds-border last:border-b-0 bg-transparent text-ds-text font-sans text-left cursor-pointer hover:bg-ds-bg/60 transition-colors"
+                    className="w-full flex justify-between items-center gap-3 py-3 px-3.5 bg-transparent text-ink font-sans text-left cursor-pointer hover:bg-canvas transition-colors"
                   >
                     <div>
                       <div className="font-mono text-[14px] font-semibold tracking-[0.05em]">
                         {fmtPlate(v.plate)}
                       </div>
-                      <div className="text-[11.5px] text-ds-dim mt-[2px]">
+                      <div className="text-[11.5px] text-dim mt-0.5">
                         {v.who} → {v.dest}
                       </div>
                     </div>
-                    <div className="font-mono text-[10.5px] text-ds-faint text-right shrink-0">
-                      <b className="block font-bold mb-[2px] text-ds-faint">
+                    <div className="font-mono text-[10.5px] text-faint text-right shrink-0">
+                      <b className="block font-bold mb-0.5 text-faint">
                         {stay(v.inAt, nowMs)}
                       </b>
                       no local
                     </div>
                   </button>
                 ))}
-              </div>
+              </GroupedList>
             </div>
 
-            {/* Consultas recentes */}
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.05em] text-ds-faint mt-0 mb-[10px]">
+              <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-faint mt-0 mb-2.5">
                 Consultas recentes
               </p>
-              <div className="bg-ds-card border border-ds-border rounded-[14px] overflow-hidden">
+              <GroupedList>
                 {recents.slice(0, 4).map((r) => {
                   const k = kindOf(r.plate);
                   return (
@@ -709,37 +668,34 @@ export function ConsultaVeiculos() {
                       key={r.plate}
                       type="button"
                       onClick={() => consult(r.plate)}
-                      className="w-full flex justify-between items-center gap-[12px] py-[13px] px-[14px] border-0 border-b border-ds-border last:border-b-0 bg-transparent text-ds-text font-sans text-left cursor-pointer hover:bg-ds-bg/60 transition-colors"
+                      className="w-full flex justify-between items-center gap-3 py-3 px-3.5 bg-transparent text-ink font-sans text-left cursor-pointer hover:bg-canvas transition-colors"
                     >
                       <div>
                         <div className="font-mono text-[14px] font-semibold tracking-[0.05em]">
                           {fmtPlate(r.plate)}
                         </div>
-                        <div className="text-[11.5px] text-ds-dim mt-[2px]">
+                        <div className="text-[11.5px] text-dim mt-0.5">
                           {rel(r.at, nowMs)}
                         </div>
                       </div>
-                      <div className="font-mono text-[10.5px] text-ds-faint text-right shrink-0">
+                      <div className="font-mono text-[10.5px] text-faint text-right shrink-0">
                         {k === 'ok' ? (
-                          <b className="block font-bold mb-[2px] text-ds-success">MORADOR</b>
+                          <b className="block font-bold mb-0.5 text-ok">MORADOR</b>
                         ) : k === 'vis' ? (
-                          <b className="block font-bold mb-[2px] text-ds-primary">VISITANTE</b>
+                          <b className="block font-bold mb-0.5 text-brand">VISITANTE</b>
                         ) : (
-                          <b className="block font-bold mb-[2px] text-ds-warning">
-                            NÃO ENCONTRADA
-                          </b>
+                          <b className="block font-bold mb-0.5 text-warn">NÃO ENCONTRADA</b>
                         )}
                       </div>
                     </button>
                   );
                 })}
-              </div>
+              </GroupedList>
             </div>
           </>
         )}
       </div>
 
-      {/* Sheet de Registro de Visitante com placa pré-preenchida */}
       <RegistrarVisitanteSheet
         isOpen={isRegisterSheetOpen}
         initialPlaca={registerInitialPlaca}
@@ -752,16 +708,7 @@ export function ConsultaVeiculos() {
         }}
       />
 
-      {/* Toast */}
-      <div
-        role="status"
-        aria-live="polite"
-        className={`fixed bottom-[84px] left-1/2 -translate-x-1/2 bg-ds-text text-ds-bg text-[13px] font-semibold py-[11px] px-[18px] rounded-[10px] transition-all duration-250 z-[60] whitespace-nowrap pointer-events-none ${
-          toastVisible ? 'translate-y-0 opacity-100' : 'translate-y-[80px] opacity-0'
-        }`}
-      >
-        {toastMsg}
-      </div>
+      <Toast message={toastMsg} />
     </div>
   );
 }

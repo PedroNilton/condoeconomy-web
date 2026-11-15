@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { UserPlus, Package, QrCode, Search, AlertCircle, Users } from 'lucide-react';
 import api from '../../services/api';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -7,6 +8,7 @@ import { Modal } from '../../components/UI/Modal';
 import { NovaEncomendaForm } from '../Encomendas/components/NovaEncomendaForm';
 import { RegistrarVisitanteSheet } from '../Visitantes/components/RegistrarVisitanteForm';
 import { QrAcessoModal } from '../Visitantes/components/QrAcessoModal';
+import { GroupedList, LiveIndicator, Toast } from '../../components/ui';
 
 interface FeedEvent {
   id: string;
@@ -59,18 +61,14 @@ export function DashboardHome() {
   const [isEncomendaModalOpen, setIsEncomendaModalOpen] = useState(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
 
-  const [toastMsg, setToastMsg] = useState('');
-  const [toastVisible, setToastVisible] = useState(false);
-  const toastTimerRef = useRef<number | null>(null);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const { refreshCounts } = useNotification();
 
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
-    setToastVisible(true);
-    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = window.setTimeout(() => setToastVisible(false), 2200);
+    window.setTimeout(() => setToastMsg(null), 2200);
   }, []);
 
   const carregarPainel = useCallback(async () => {
@@ -187,9 +185,6 @@ export function DashboardHome() {
 
   useEffect(() => {
     carregarPainel();
-    return () => {
-      if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-    };
   }, [carregarPainel]);
 
   useWebSocket('/topic/visitantes', carregarPainel);
@@ -207,91 +202,44 @@ export function DashboardHome() {
     <>
       {/* SEÇÃO 1: Ações rápidas */}
       <section>
-        <p className="text-[11px] font-bold uppercase tracking-[0.05em] text-ds-faint m-0 mb-[10px] flex justify-between items-center">
+        <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-faint m-0 mb-2.5">
           Ações rápidas
         </p>
 
-        <div className="grid grid-cols-2 gap-[10px]">
+        <div className="grid grid-cols-2 gap-2.5">
           <button
             type="button"
             onClick={() => setIsVisitanteSheetOpen(true)}
-            className="min-h-[92px] rounded-[16px] border border-ds-primary bg-ds-primary text-ds-primary-ink p-[14px] flex flex-col justify-between items-start cursor-pointer text-left hover:brightness-110 active:scale-[0.99] transition-all"
+            className="min-h-[92px] rounded-[16px] border border-brand bg-brand text-brand-ink p-3.5 flex flex-col justify-between items-start cursor-pointer text-left hover:bg-brand-hover active:translate-y-[1px] transition-all"
           >
-            <svg
-              className="w-[22px] h-[22px] text-ds-primary-ink"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M19 8v6M22 11h-6" />
-            </svg>
+            <UserPlus className="w-[22px] h-[22px]" />
             <span className="text-[13.5px] font-bold leading-[1.25]">Registrar visitante</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsEncomendaModalOpen(true)}
-            className="min-h-[92px] rounded-[16px] border border-ds-border bg-ds-card text-ds-text p-[14px] flex flex-col justify-between items-start cursor-pointer text-left hover:border-ds-border-strong active:scale-[0.99] transition-all"
+            className="min-h-[92px] rounded-[16px] border border-line bg-surface text-ink p-3.5 flex flex-col justify-between items-start cursor-pointer text-left hover:border-line-strong active:translate-y-[1px] transition-all"
           >
-            <svg
-              className="w-[22px] h-[22px] text-ds-primary"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" />
-              <path d="M3 8l9 5 9-5M12 13v8" />
-            </svg>
+            <Package className="w-[22px] h-[22px] text-brand" />
             <span className="text-[13.5px] font-bold leading-[1.25]">Receber encomenda</span>
           </button>
 
           <button
             type="button"
             onClick={() => setIsQrModalOpen(true)}
-            className="min-h-[92px] rounded-[16px] border border-ds-border bg-ds-card text-ds-text p-[14px] flex flex-col justify-between items-start cursor-pointer text-left hover:border-ds-border-strong active:scale-[0.99] transition-all"
+            className="min-h-[92px] rounded-[16px] border border-line bg-surface text-ink p-3.5 flex flex-col justify-between items-start cursor-pointer text-left hover:border-line-strong active:translate-y-[1px] transition-all"
           >
-            <svg
-              className="w-[22px] h-[22px] text-ds-primary"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="3" y="3" width="7" height="7" />
-              <rect x="14" y="3" width="7" height="7" />
-              <rect x="3" y="14" width="7" height="7" />
-              <path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z" />
-            </svg>
+            <QrCode className="w-[22px] h-[22px] text-brand" />
             <span className="text-[13.5px] font-bold leading-[1.25]">Ler QR de acesso</span>
           </button>
 
           <button
             type="button"
             onClick={() => navigate('/portaria/veiculos')}
-            className="min-h-[92px] rounded-[16px] border border-ds-border bg-ds-card text-ds-text p-[14px] flex flex-col justify-between items-start cursor-pointer text-left hover:border-ds-border-strong active:scale-[0.99] transition-all"
+            className="min-h-[92px] rounded-[16px] border border-line bg-surface text-ink p-3.5 flex flex-col justify-between items-start cursor-pointer text-left hover:border-line-strong active:translate-y-[1px] transition-all"
           >
-            <svg
-              className="w-[22px] h-[22px] text-ds-primary"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
+            <Search className="w-[22px] h-[22px] text-brand" />
             <span className="text-[13.5px] font-bold leading-[1.25]">Consultar placa</span>
           </button>
         </div>
@@ -299,46 +247,33 @@ export function DashboardHome() {
 
       {/* SEÇÃO 2: Visão geral */}
       <section>
-        <p className="text-[11px] font-bold uppercase tracking-[0.05em] text-ds-faint m-0 mb-[10px] flex justify-between items-center">
+        <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-faint m-0 mb-2.5">
           Visão geral
         </p>
 
-        <div className="grid grid-cols-3 gap-[10px]">
+        <div className="grid grid-cols-3 gap-2.5">
           <div
             role="button"
             tabIndex={0}
             onClick={() => navigate('/portaria/encomendas')}
             onKeyDown={(e) => e.key === 'Enter' && navigate('/portaria/encomendas')}
-            className="bg-ds-card border border-ds-border rounded-[14px] p-[12px] cursor-pointer hover:border-ds-border-strong transition-colors"
+            className="bg-surface border border-line rounded-[14px] p-3 cursor-pointer hover:border-line-strong transition-colors"
           >
             <div
-              className={`w-[28px] h-[28px] rounded-[8px] grid place-items-center mb-[10px] ${
-                encomendasCount > 0
-                  ? 'bg-ds-primary-dim text-ds-primary'
-                  : 'bg-ds-bg text-ds-faint'
+              className={`w-[28px] h-[28px] rounded-[8px] grid place-items-center mb-2.5 ${
+                encomendasCount > 0 ? 'bg-brand-soft text-brand' : 'bg-canvas text-faint'
               }`}
             >
-              <svg
-                className="w-[14px] h-[14px]"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M21 8 12 3 3 8v8l9 5 9-5V8Z" />
-                <path d="M3 8l9 5 9-5M12 13v8" />
-              </svg>
+              <Package className="w-[14px] h-[14px]" />
             </div>
             <div
-              className={`font-mono text-[24px] font-semibold leading-none ${
-                encomendasCount > 0 ? 'text-ds-text' : 'text-ds-faint'
+              className={`font-mono text-[24px] font-semibold leading-none tabular-nums ${
+                encomendasCount > 0 ? 'text-ink' : 'text-faint'
               }`}
             >
               {loading ? '–' : encomendasCount}
             </div>
-            <div className="text-[10.5px] text-ds-dim mt-[6px] leading-[1.3]">
+            <div className="text-[10.5px] text-dim mt-1.5 leading-[1.3]">
               Encomendas aguardando
             </div>
           </div>
@@ -348,36 +283,23 @@ export function DashboardHome() {
             tabIndex={0}
             onClick={() => navigate('/portaria/visitantes')}
             onKeyDown={(e) => e.key === 'Enter' && navigate('/portaria/visitantes')}
-            className="bg-ds-card border border-ds-border rounded-[14px] p-[12px] cursor-pointer hover:border-ds-border-strong transition-colors"
+            className="bg-surface border border-line rounded-[14px] p-3 cursor-pointer hover:border-line-strong transition-colors"
           >
             <div
-              className={`w-[28px] h-[28px] rounded-[8px] grid place-items-center mb-[10px] ${
-                visitantesCount > 0
-                  ? 'bg-ds-primary-dim text-ds-primary'
-                  : 'bg-ds-bg text-ds-faint'
+              className={`w-[28px] h-[28px] rounded-[8px] grid place-items-center mb-2.5 ${
+                visitantesCount > 0 ? 'bg-brand-soft text-brand' : 'bg-canvas text-faint'
               }`}
             >
-              <svg
-                className="w-[14px] h-[14px]"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-              </svg>
+              <Users className="w-[14px] h-[14px]" />
             </div>
             <div
-              className={`font-mono text-[24px] font-semibold leading-none ${
-                visitantesCount > 0 ? 'text-ds-text' : 'text-ds-faint'
+              className={`font-mono text-[24px] font-semibold leading-none tabular-nums ${
+                visitantesCount > 0 ? 'text-ink' : 'text-faint'
               }`}
             >
               {loading ? '–' : visitantesCount}
             </div>
-            <div className="text-[10.5px] text-ds-dim mt-[6px] leading-[1.3]">
+            <div className="text-[10.5px] text-dim mt-1.5 leading-[1.3]">
               Visitantes hoje
             </div>
           </div>
@@ -387,36 +309,23 @@ export function DashboardHome() {
             tabIndex={0}
             onClick={() => navigate('/portaria/chamados')}
             onKeyDown={(e) => e.key === 'Enter' && navigate('/portaria/chamados')}
-            className="bg-ds-card border border-ds-border rounded-[14px] p-[12px] cursor-pointer hover:border-ds-border-strong transition-colors"
+            className="bg-surface border border-line rounded-[14px] p-3 cursor-pointer hover:border-line-strong transition-colors"
           >
             <div
-              className={`w-[28px] h-[28px] rounded-[8px] grid place-items-center mb-[10px] ${
-                ouvidoriaCount > 0
-                  ? 'bg-ds-warning-dim text-ds-warning'
-                  : 'bg-ds-bg text-ds-faint'
+              className={`w-[28px] h-[28px] rounded-[8px] grid place-items-center mb-2.5 ${
+                ouvidoriaCount > 0 ? 'bg-warn-soft text-warn' : 'bg-canvas text-faint'
               }`}
             >
-              <svg
-                className="w-[14px] h-[14px]"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 8v4M12 16h.01" />
-              </svg>
+              <AlertCircle className="w-[14px] h-[14px]" />
             </div>
             <div
-              className={`font-mono text-[24px] font-semibold leading-none ${
-                ouvidoriaCount > 0 ? 'text-ds-text' : 'text-ds-faint'
+              className={`font-mono text-[24px] font-semibold leading-none tabular-nums ${
+                ouvidoriaCount > 0 ? 'text-ink' : 'text-faint'
               }`}
             >
               {loading ? '–' : ouvidoriaCount}
             </div>
-            <div className="text-[10.5px] text-ds-dim mt-[6px] leading-[1.3]">
+            <div className="text-[10.5px] text-dim mt-1.5 leading-[1.3]">
               Ouvidoria pendente
             </div>
           </div>
@@ -425,42 +334,36 @@ export function DashboardHome() {
 
       {/* SEÇÃO 3: Atividade recente AO VIVO */}
       <section>
-        <p className="text-[11px] font-bold uppercase tracking-[0.05em] text-ds-faint m-0 mb-[10px] flex justify-between items-center">
+        <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-faint m-0 mb-2.5 flex justify-between items-center">
           <span>Atividade recente</span>
-          <span className="flex items-center gap-[6px] font-mono text-[10px] text-ds-success tracking-[0.03em]">
-            <i className="w-[6px] h-[6px] rounded-full bg-ds-success portaria-live-dot inline-block" />
-            AO VIVO
-          </span>
-        </p>
+          <LiveIndicator />
+        </div>
 
-        <div className="bg-ds-card border border-ds-border rounded-[14px] overflow-hidden">
+        <GroupedList>
           {loading ? (
-            <div className="px-[14px] py-[18px] text-[12px] text-ds-dim text-center">
+            <div className="px-3.5 py-4 text-[12px] text-dim text-center">
               Sincronizando atividade...
             </div>
           ) : feed.length === 0 ? (
-            <div className="px-[14px] py-[18px] text-[12px] text-ds-dim text-center">
+            <div className="px-3.5 py-4 text-[12px] text-dim text-center">
               Nenhuma movimentação registrada recentemente.
             </div>
           ) : (
             feed.map((ev) => (
-              <div
-                key={ev.id}
-                className="flex gap-[12px] items-start px-[14px] py-[12px] border-b border-ds-border last:border-b-0"
-              >
-                <span className="font-mono text-[11px] text-ds-faint w-[38px] shrink-0 pt-[1px]">
+              <div key={ev.id} className="flex gap-3 items-start px-3.5 py-3">
+                <span className="font-mono text-[11px] text-faint w-[38px] shrink-0 pt-[1px]">
                   {ev.hora}
                 </span>
                 <div className="text-[12.5px] leading-[1.45] min-w-0">
-                  <b className="font-bold text-ds-text">{ev.titulo}</b>
-                  <small className="block text-[11px] text-ds-dim mt-[1px] truncate">
+                  <b className="font-bold text-ink">{ev.titulo}</b>
+                  <small className="block text-[11px] text-dim mt-[1px] truncate">
                     {ev.detalhe}
                   </small>
                 </div>
               </div>
             ))
           )}
-        </div>
+        </GroupedList>
       </section>
 
       {/* Bottom Sheet: Registrar visitante */}
@@ -495,16 +398,7 @@ export function DashboardHome() {
         onApproved={() => handleActionComplete('Entrada liberada')}
       />
 
-      {/* Toast */}
-      <div
-        role="status"
-        aria-live="polite"
-        className={`fixed bottom-[84px] left-1/2 -translate-x-1/2 bg-ds-text text-ds-bg text-[13px] font-semibold py-[11px] px-[18px] rounded-[10px] transition-all duration-250 z-[60] whitespace-nowrap pointer-events-none ${
-          toastVisible ? 'translate-y-0 opacity-100' : 'translate-y-[80px] opacity-0'
-        }`}
-      >
-        {toastMsg}
-      </div>
+      <Toast message={toastMsg} />
     </>
   );
 }

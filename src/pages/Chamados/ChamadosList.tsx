@@ -1,8 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
-import { MessageSquare, AlertTriangle, CheckCircle2, Clock, Wrench, ArrowUpRight, Loader2 } from 'lucide-react';
+import {
+  MessageSquare,
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Wrench,
+  ArrowUpRight,
+  Loader2,
+} from 'lucide-react';
 import api from '../../services/api';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useNotification } from '../../contexts/NotificationContext';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  ListCard,
+  SegmentedTabs,
+  Toast,
+} from '../../components/ui';
 
 interface Chamado {
   id: string;
@@ -19,15 +35,25 @@ interface Chamado {
 export function ChamadosList() {
   const [chamados, setChamados] = useState<Chamado[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeStatus, setActiveStatus] = useState<'ABERTO' | 'EM_ANDAMENTO' | 'RESOLVIDO'>('ABERTO');
+  const [activeStatus, setActiveStatus] = useState<'ABERTO' | 'EM_ANDAMENTO' | 'RESOLVIDO'>(
+    'ABERTO',
+  );
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   const { refreshCounts } = useNotification();
+
+  const showToast = useCallback((msg: string) => {
+    setToastMsg(msg);
+    window.setTimeout(() => setToastMsg(null), 2400);
+  }, []);
 
   const fetchChamados = useCallback(async () => {
     try {
       setLoading(true);
       const res = await api.get('/api/v1/chamados');
       setChamados(Array.isArray(res.data) ? res.data : []);
+      setNowMs(Date.now());
     } catch (err) {
       console.error(err);
     } finally {
@@ -46,8 +72,9 @@ export function ChamadosList() {
       await api.put(`/api/v1/chamados/${id}/status`, { novoStatus });
       fetchChamados();
       refreshCounts();
+      showToast(novoStatus === 'RESOLVIDO' ? 'Chamado resolvido' : 'Atendimento iniciado');
     } catch {
-      alert('Erro ao atualizar status do chamado.');
+      showToast('Erro ao atualizar status do chamado.');
     }
   };
 
@@ -56,162 +83,151 @@ export function ChamadosList() {
       await api.put(`/api/v1/chamados/${id}/escalar`);
       fetchChamados();
       refreshCounts();
+      showToast('Chamado escalado para o síndico');
     } catch {
-      alert('Erro ao escalar chamado.');
+      showToast('Erro ao escalar chamado.');
     }
   };
 
   const getCategoriaIcon = (categoria: string) => {
     switch (categoria) {
       case 'MANUTENCAO':
-        return <Wrench className="w-3.5 h-3.5 text-ds-warning" />;
+        return <Wrench className="w-3.5 h-3.5 text-warn" />;
       case 'RECLAMACAO':
-        return <AlertTriangle className="w-3.5 h-3.5 text-ds-danger" />;
+        return <AlertTriangle className="w-3.5 h-3.5 text-bad" />;
       default:
-        return <MessageSquare className="w-3.5 h-3.5 text-ds-primary" />;
+        return <MessageSquare className="w-3.5 h-3.5 text-brand" />;
     }
+  };
+
+  const isChamadoAtrasado = (chamado: Chamado) => {
+    if (chamado.status !== 'ABERTO' || !chamado.dataAbertura) return false;
+    const diffHoras = (nowMs - new Date(chamado.dataAbertura).getTime()) / (1000 * 60 * 60);
+    return diffHoras >= 3;
   };
 
   const countByStatus = (st: Chamado['status']) => chamados.filter((c) => c.status === st).length;
   const filtered = chamados.filter((c) => c.status === activeStatus);
 
   return (
-    <div className="flex flex-col gap-[16px]">
+    <div className="flex flex-col gap-4">
       <div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.05em] text-ds-faint m-0">
+        <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-faint m-0">
           Atendimento
         </p>
-        <h2 className="text-[17px] font-extrabold text-ds-text tracking-[-0.01em] m-0 mt-0.5">
+        <h1 className="text-[21px] font-extrabold text-ink tracking-[-0.01em] m-0 mt-[3px]">
           Ouvidoria
-        </h2>
+        </h1>
       </div>
 
-      {/* Tabs de Status */}
-      <div className="grid grid-cols-3 gap-1 p-1 bg-ds-card border border-ds-border rounded-[12px]">
-        {(
-          [
-            { id: 'ABERTO', label: 'Abertos' },
-            { id: 'EM_ANDAMENTO', label: 'Andamento' },
-            { id: 'RESOLVIDO', label: 'Resolvidos' },
-          ] as const
-        ).map((tab) => {
-          const count = countByStatus(tab.id);
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveStatus(tab.id)}
-              className={`py-1.5 px-2 rounded-[9px] text-[11px] font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
-                activeStatus === tab.id
-                  ? 'bg-ds-primary-dim text-ds-primary'
-                  : 'text-ds-dim hover:text-ds-text'
-              }`}
-            >
-              <span>{tab.label}</span>
-              <span className="font-mono text-[10px] opacity-80">{count}</span>
-            </button>
-          );
-        })}
-      </div>
+      <SegmentedTabs
+        value={activeStatus}
+        onChange={setActiveStatus}
+        items={[
+          { id: 'ABERTO', label: 'Abertos', count: countByStatus('ABERTO') },
+          { id: 'EM_ANDAMENTO', label: 'Andamento', count: countByStatus('EM_ANDAMENTO') },
+          { id: 'RESOLVIDO', label: 'Resolvidos', count: countByStatus('RESOLVIDO') },
+        ]}
+      />
 
-      {/* Lista */}
       {loading ? (
-        <div className="bg-ds-card border border-ds-border rounded-[14px] py-12 flex flex-col items-center justify-center gap-2 text-ds-dim text-[12.5px]">
-          <Loader2 className="w-5 h-5 animate-spin text-ds-primary" />
+        <ListCard className="py-12 flex flex-col items-center justify-center gap-2 text-dim text-[12.5px]">
+          <Loader2 className="w-5 h-5 animate-spin text-brand" />
           <span>Carregando manifestações...</span>
-        </div>
+        </ListCard>
       ) : filtered.length === 0 ? (
-        <div className="bg-ds-card border border-ds-border rounded-[14px] py-10 px-4 text-center">
-          <div className="w-10 h-10 rounded-[10px] bg-ds-bg border border-ds-border grid place-items-center mx-auto mb-2.5 text-ds-faint">
-            <MessageSquare className="w-5 h-5" />
-          </div>
-          <p className="text-[13px] font-bold text-ds-text m-0">Nenhum registro nesta aba</p>
-          <p className="text-[11.5px] text-ds-dim m-0 mt-1">
-            Chamados de moradores aparecem aqui em tempo real.
-          </p>
-        </div>
+        <EmptyState
+          icon={<MessageSquare className="w-6 h-6" />}
+          title="Nenhum registro nesta aba"
+          description="Chamados de moradores aparecem aqui em tempo real."
+        />
       ) : (
-        <div className="flex flex-col gap-[10px]">
-          {filtered.map((chamado) => (
-            <div
-              key={chamado.id}
-              className="bg-ds-card border border-ds-border rounded-[14px] p-[14px] flex flex-col gap-2.5 relative overflow-hidden"
-            >
-              {chamado.escaladoSindico && (
-                <div
-                  className="absolute top-0 left-0 bottom-0 w-1 bg-ds-danger"
-                  title="Escalado para o Síndico"
-                />
-              )}
+        <div className="flex flex-col gap-2.5">
+          {filtered.map((chamado) => {
+            const atrasado = isChamadoAtrasado(chamado);
+            return (
+              <ListCard
+                key={chamado.id}
+                tone={atrasado ? 'warn' : 'default'}
+                className="relative overflow-hidden"
+              >
+                {chamado.escaladoSindico && (
+                  <div
+                    className="absolute top-0 left-0 bottom-0 w-1 bg-bad"
+                    title="Escalado para o Síndico"
+                  />
+                )}
 
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-[10.5px] font-semibold px-2 py-0.5 rounded-[7px] bg-ds-bg border border-ds-border text-ds-text">
-                  {chamado.unidadeTexto}
-                </span>
-                <span className="inline-flex items-center gap-1 font-mono text-[10.5px] text-ds-faint">
-                  <Clock className="w-3 h-3" />
-                  {new Date(chamado.dataAbertura).toLocaleDateString('pt-BR')}
-                </span>
-              </div>
-
-              <div>
-                <h4 className="text-[13.5px] font-bold text-ds-text m-0 break-words">
-                  {chamado.assunto}
-                </h4>
-                <p className="text-[12px] text-ds-dim m-0 mt-1 leading-[1.45] break-words">
-                  {chamado.descricao}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between pt-2 border-t border-ds-border gap-2 flex-wrap">
-                <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-ds-dim">
-                  {getCategoriaIcon(chamado.categoria)}
-                  <span>{chamado.categoria}</span>
-                  {chamado.escaladoSindico && (
-                    <span className="font-mono text-[9.5px] text-ds-danger bg-ds-danger-dim px-1.5 py-0.5 rounded uppercase">
-                      Síndico
+                <div className="flex flex-col gap-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-[10.5px] font-semibold px-2 py-0.5 rounded-[7px] bg-canvas border border-line text-ink">
+                      {chamado.unidadeTexto}
                     </span>
-                  )}
+                    <span className="inline-flex items-center gap-1 font-mono text-[10.5px] text-faint">
+                      <Clock className="w-3 h-3" />
+                      {new Date(chamado.dataAbertura).toLocaleDateString('pt-BR')}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h4 className="text-[13.5px] font-bold text-ink m-0 break-words">
+                      {chamado.assunto}
+                    </h4>
+                    <p className="text-[12px] text-dim m-0 mt-1 leading-[1.45] break-words">
+                      {chamado.descricao}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-line gap-2 flex-wrap">
+                    <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-dim">
+                      {getCategoriaIcon(chamado.categoria)}
+                      <span>{chamado.categoria}</span>
+                      {chamado.escaladoSindico && <Badge tone="bad">Síndico</Badge>}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {activeStatus !== 'RESOLVIDO' && !chamado.escaladoSindico && (
+                        <Button
+                          variant="mini"
+                          onClick={() => handleEscalar(chamado.id)}
+                          className="hover:!text-bad hover:!border-bad"
+                        >
+                          <ArrowUpRight className="w-3 h-3" />
+                          <span>Síndico</span>
+                        </Button>
+                      )}
+
+                      {activeStatus === 'ABERTO' && (
+                        <Button
+                          variant="primary"
+                          size="mini"
+                          onClick={() => handleUpdateStatus(chamado.id, 'EM_ANDAMENTO')}
+                        >
+                          Atender
+                        </Button>
+                      )}
+
+                      {activeStatus === 'EM_ANDAMENTO' && (
+                        <Button
+                          variant="primary"
+                          size="mini"
+                          onClick={() => handleUpdateStatus(chamado.id, 'RESOLVIDO')}
+                          className="!bg-ok !border-ok !text-white"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Resolver</span>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  {activeStatus !== 'RESOLVIDO' && !chamado.escaladoSindico && (
-                    <button
-                      type="button"
-                      onClick={() => handleEscalar(chamado.id)}
-                      className="px-2.5 py-1.5 rounded-[8px] border border-ds-border bg-ds-bg text-ds-dim hover:text-ds-danger hover:border-ds-danger/40 text-[11px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
-                    >
-                      <ArrowUpRight className="w-3 h-3" />
-                      Síndico
-                    </button>
-                  )}
-
-                  {activeStatus === 'ABERTO' && (
-                    <button
-                      type="button"
-                      onClick={() => handleUpdateStatus(chamado.id, 'EM_ANDAMENTO')}
-                      className="px-3 py-1.5 rounded-[8px] bg-ds-primary text-ds-primary-ink text-[11.5px] font-bold hover:brightness-110 transition-all cursor-pointer"
-                    >
-                      Atender
-                    </button>
-                  )}
-
-                  {activeStatus === 'EM_ANDAMENTO' && (
-                    <button
-                      type="button"
-                      onClick={() => handleUpdateStatus(chamado.id, 'RESOLVIDO')}
-                      className="px-3 py-1.5 rounded-[8px] bg-ds-success text-white text-[11.5px] font-bold hover:brightness-110 transition-all inline-flex items-center gap-1 cursor-pointer"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      Resolver
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+              </ListCard>
+            );
+          })}
         </div>
       )}
+
+      <Toast message={toastMsg} />
     </div>
   );
 }

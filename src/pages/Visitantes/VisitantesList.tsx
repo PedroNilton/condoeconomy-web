@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { QrCode, UserPlus, Users } from 'lucide-react';
 import api from '../../services/api';
 import { useWebSocket } from '../../hooks/useWebSocket';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -7,6 +8,15 @@ import {
   WAIT_STORAGE_KEY,
 } from './components/RegistrarVisitanteForm';
 import { QrAcessoModal } from './components/QrAcessoModal';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  ListCard,
+  SearchInput,
+  SegmentedTabs,
+  Toast,
+} from '../../components/ui';
 
 interface VisitanteApi {
   id: string;
@@ -118,21 +128,13 @@ export function VisitantesList() {
   const [filter, setFilter] = useState<FilterTab>('todos');
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isQrOpen, setIsQrOpen] = useState(false);
-  const [toastMsg, setToastMsg] = useState('');
-  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  const toastTimerRef = useRef<number | null>(null);
   const { refreshCounts } = useNotification();
 
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
-    setToastVisible(true);
-    if (toastTimerRef.current) {
-      window.clearTimeout(toastTimerRef.current);
-    }
-    toastTimerRef.current = window.setTimeout(() => {
-      setToastVisible(false);
-    }, 2200);
+    window.setTimeout(() => setToastMsg(null), 2200);
   }, []);
 
   const fetchVisitantes = useCallback(async () => {
@@ -157,7 +159,6 @@ export function VisitantesList() {
     }, 30000);
     return () => {
       window.clearInterval(interval);
-      if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
     };
   }, [fetchVisitantes]);
 
@@ -227,131 +228,61 @@ export function VisitantesList() {
 
   return (
     <div className="flex flex-col">
-      {/* Page Head */}
       <div>
-        <div className="text-[11px] font-bold text-ds-faint uppercase tracking-[0.06em]">
+        <div className="text-[11px] font-bold text-faint uppercase tracking-[0.06em]">
           Controle de acesso
         </div>
-        <h1 className="text-[21px] font-extrabold text-ds-text mt-[3px] mb-[14px] tracking-[-0.01em]">
+        <h1 className="text-[21px] font-extrabold text-ink mt-[3px] mb-3.5 tracking-[-0.01em]">
           Visitantes hoje
         </h1>
 
-        <div className="grid grid-cols-[1fr_1.3fr] gap-[10px] mb-[14px]">
-          <button
-            type="button"
-            onClick={() => setIsQrOpen(true)}
-            className="h-[50px] rounded-[12px] border border-ds-border bg-ds-card text-ds-text text-[14px] font-bold flex items-center justify-center gap-[8px] cursor-pointer hover:border-ds-border-strong transition-colors"
-          >
-            <svg
-              className="w-[18px] h-[18px]"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="3" y="3" width="7" height="7" />
-              <rect x="14" y="3" width="7" height="7" />
-              <rect x="3" y="14" width="7" height="7" />
-              <path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z" />
-            </svg>
+        <div className="grid grid-cols-[1fr_1.3fr] gap-2.5 mb-3.5">
+          <Button variant="secondary" size="portaria" onClick={() => setIsQrOpen(true)}>
+            <QrCode className="w-[18px] h-[18px]" />
             <span>Ler QR</span>
-          </button>
+          </Button>
 
-          <button
-            type="button"
-            onClick={() => setIsSheetOpen(true)}
-            className="h-[50px] rounded-[12px] border border-ds-primary bg-ds-primary text-ds-primary-ink text-[14px] font-bold flex items-center justify-center gap-[8px] cursor-pointer hover:brightness-110 transition-all"
-          >
-            <svg
-              className="w-[18px] h-[18px]"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M19 8v6M22 11h-6" />
-            </svg>
+          <Button variant="primary" size="portaria" onClick={() => setIsSheetOpen(true)}>
+            <UserPlus className="w-[18px] h-[18px]" />
             <span>Registrar</span>
-          </button>
+          </Button>
         </div>
 
-        {/* Busca */}
-        <div className="relative mb-[12px]">
-          <svg
-            className="absolute left-[13px] top-1/2 -translate-y-1/2 w-[16px] h-[16px] text-ds-faint pointer-events-none"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="m21 21-4.3-4.3" />
-          </svg>
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar visitante, apto ou placa"
-            className="w-full h-[46px] pl-[38px] pr-[13px] rounded-[12px] border border-ds-border bg-ds-card text-ds-text text-[14px] placeholder:text-ds-faint focus-visible:outline-2 focus-visible:outline-ds-primary focus-visible:outline-offset-1"
-          />
-        </div>
+        <SearchInput
+          value={query}
+          onChange={setQuery}
+          placeholder="Buscar visitante, apto ou placa"
+          height="tall"
+          className="mb-3"
+        />
 
-        {/* Tabs com contadores empilhados */}
-        <div className="grid grid-cols-4 gap-[3px] p-[3px] bg-ds-card border border-ds-border rounded-[12px]">
-          {(
-            [
-              { id: 'todos', label: 'Todos', count: countTodos },
-              { id: 'espera', label: 'Espera', count: countEspera },
-              { id: 'local', label: 'No local', count: countLocal },
-              { id: 'saiu', label: 'Saíram', count: countSaiu },
-            ] as const
-          ).map((t) => {
-            const active = filter === t.id;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setFilter(t.id)}
-                className={`border-0 text-[12px] font-bold py-[9px] px-[2px] rounded-[9px] cursor-pointer flex flex-col items-center gap-[2px] transition-colors ${
-                  active ? 'bg-ds-primary-dim text-ds-primary' : 'bg-transparent text-ds-dim'
-                }`}
-              >
-                <span>{t.label}</span>
-                <b
-                  className={`font-mono text-[14px] font-semibold ${
-                    active ? 'text-ds-primary' : 'text-ds-text'
-                  }`}
-                >
-                  {loading ? '–' : t.count}
-                </b>
-              </button>
-            );
-          })}
-        </div>
+        <SegmentedTabs
+          value={filter}
+          onChange={setFilter}
+          items={[
+            { id: 'todos', label: 'Todos', count: loading ? undefined : countTodos },
+            { id: 'espera', label: 'Espera', count: loading ? undefined : countEspera },
+            { id: 'local', label: 'No local', count: loading ? undefined : countLocal },
+            { id: 'saiu', label: 'Saíram', count: loading ? undefined : countSaiu },
+          ]}
+        />
       </div>
 
       {/* Lista de Visitantes */}
-      <div className="mt-[14px] flex flex-col gap-[10px]">
+      <div className="mt-3.5 flex flex-col gap-2.5">
         {loading ? (
-          <div className="text-center py-[44px] px-[20px] bg-ds-card border border-ds-border rounded-[14px]">
-            <div className="text-[14px] font-bold text-ds-text mb-[4px]">Carregando...</div>
-            <div className="text-[12.5px] text-ds-dim leading-[1.5]">
+          <ListCard className="py-10 text-center">
+            <div className="text-[14px] font-bold text-ink mb-1">Carregando...</div>
+            <div className="text-[12.5px] text-dim">
               Sincronizando controle de acesso de hoje.
             </div>
-          </div>
+          </ListCard>
         ) : shown.length === 0 ? (
-          <div className="text-center py-[44px] px-[20px] bg-ds-card border border-ds-border rounded-[14px]">
-            <div className="text-[14px] font-bold text-ds-text mb-[4px]">{emptyTitle}</div>
-            <div className="text-[12.5px] text-ds-dim leading-[1.5]">{emptySub}</div>
-          </div>
+          <EmptyState
+            icon={<Users className="w-6 h-6" />}
+            title={emptyTitle}
+            description={emptySub}
+          />
         ) : (
           shown.map((v) => {
             const uiStatus = mapUiStatus(v.status);
@@ -359,53 +290,36 @@ export function VisitantesList() {
             const waitMin = Math.max(0, Math.floor((nowMs - startMs) / 60000));
             const isWaitLong = uiStatus === 'espera' && waitMin >= 5;
             const hasInviteQr = Boolean(
-              v.moradorResponsavel && v.moradorResponsavel !== 'A CONFIRMAR'
+              v.moradorResponsavel && v.moradorResponsavel !== 'A CONFIRMAR',
             );
             const stayText = formatPermanencia(v.horaEntrada, nowMs);
 
-            const badgeClass =
-              uiStatus === 'espera'
-                ? 'bg-ds-warning-dim text-ds-warning'
-                : uiStatus === 'local'
-                ? 'bg-ds-success-dim text-ds-success'
-                : 'bg-ds-bg text-ds-dim border border-ds-border';
+            const statusTone =
+              uiStatus === 'espera' ? 'warn' : uiStatus === 'local' ? 'ok' : 'neutral';
 
             return (
-              <div
-                key={v.id}
-                className={`bg-ds-card border rounded-[14px] p-[14px] ${
-                  isWaitLong ? 'border-ds-warning' : 'border-ds-border'
-                }`}
-              >
-                <div className="flex justify-between items-start gap-[10px]">
-                  <div>
-                    <div className="text-[14.5px] font-bold text-ds-text">
+              <ListCard key={v.id} tone={isWaitLong ? 'warn' : 'default'}>
+                <div className="flex justify-between items-start gap-2.5">
+                  <div className="min-w-0">
+                    <div className="text-[14.5px] font-extrabold text-ink truncate">
                       {formatNomeVisitante(v.nome, v.sobrenome)}
                     </div>
-                    <div className="text-[11.5px] text-ds-dim mt-[2px] flex items-center gap-[6px] flex-wrap">
+                    <div className="text-[11.5px] text-dim mt-0.5 flex items-center gap-1.5 flex-wrap">
                       <span>{formatTipoVisitante(v.tipo)}</span>
-                      {hasInviteQr && (
-                        <span className="font-mono text-[9px] font-bold py-[2px] px-[6px] rounded-full bg-ds-primary-dim text-ds-primary">
-                          CONVITE QR
-                        </span>
-                      )}
+                      {hasInviteQr && <Badge tone="brand">CONVITE QR</Badge>}
                     </div>
                   </div>
 
-                  <span
-                    className={`font-mono text-[9.5px] font-bold py-[4px] px-[8px] rounded-full whitespace-nowrap shrink-0 ${badgeClass}`}
-                  >
-                    {STATUS_LABELS[uiStatus]}
-                  </span>
+                  <Badge tone={statusTone}>{STATUS_LABELS[uiStatus]}</Badge>
                 </div>
 
-                <div className="font-mono text-[12.5px] font-semibold text-ds-text mt-[10px]">
+                <div className="font-mono text-[12.5px] font-semibold text-ink mt-2.5">
                   {formatDestino(v.blocoDestino, v.unidadeDestino)}
                 </div>
 
-                <div className="font-mono text-[11px] text-ds-dim mt-[5px] flex gap-[10px] flex-wrap">
+                <div className="font-mono text-[11px] text-dim mt-1.5 flex gap-2.5 flex-wrap">
                   {uiStatus === 'espera' && (
-                    <span className={isWaitLong ? 'text-ds-warning font-semibold' : ''}>
+                    <span className={isWaitLong ? 'text-warn font-semibold' : ''}>
                       Aguardando há {waitMin} min
                     </span>
                   )}
@@ -427,25 +341,29 @@ export function VisitantesList() {
                 </div>
 
                 {uiStatus === 'espera' && (
-                  <button
-                    type="button"
+                  <Button
+                    variant="primary"
+                    size="card"
+                    fullWidth
                     onClick={() => handleLiberarEntrada(v.id)}
-                    className="mt-[12px] w-full h-[46px] rounded-[11px] text-[13.5px] font-bold cursor-pointer border border-ds-primary bg-ds-primary text-ds-primary-ink hover:brightness-110 transition-all"
+                    className="mt-3"
                   >
                     Liberar entrada
-                  </button>
+                  </Button>
                 )}
 
                 {uiStatus === 'local' && (
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
+                    size="card"
+                    fullWidth
                     onClick={() => handleRegistrarSaida(v.id)}
-                    className="mt-[12px] w-full h-[46px] rounded-[11px] text-[13.5px] font-bold cursor-pointer border border-ds-border bg-ds-card text-ds-text hover:border-ds-border-strong transition-colors"
+                    className="mt-3"
                   >
                     Registrar saída
-                  </button>
+                  </Button>
                 )}
-              </div>
+              </ListCard>
             );
           })
         )}
@@ -475,16 +393,7 @@ export function VisitantesList() {
         }}
       />
 
-      {/* Toast */}
-      <div
-        role="status"
-        aria-live="polite"
-        className={`fixed bottom-[84px] left-1/2 -translate-x-1/2 bg-ds-text text-ds-bg text-[13px] font-semibold py-[11px] px-[18px] rounded-[10px] transition-all duration-250 z-[60] whitespace-nowrap pointer-events-none ${
-          toastVisible ? 'translate-y-0 opacity-100' : 'translate-y-[80px] opacity-0'
-        }`}
-      >
-        {toastMsg}
-      </div>
+      <Toast message={toastMsg} />
     </div>
   );
 }
