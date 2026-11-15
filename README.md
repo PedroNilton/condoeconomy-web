@@ -2,6 +2,14 @@
 
 Uma plataforma web moderna e mobile-first para a gestão inteligente de condomínios, conectando Síndicos, Porteiros e Moradores em um ecossistema digital centralizado.
 
+## Prévia Visual
+
+| Acesso por Perfil (Login) | Aplicativo do Morador |
+| :---: | :---: |
+| ![Tela de Login](docs/screenshots/login.png) | ![Home do Morador](docs/screenshots/morador-home.png) |
+| **Painel da Portaria (Tempo Real)** | **Painel do Síndico (Administração)** |
+| ![Painel da Portaria](docs/screenshots/portaria-dashboard.png) | ![Painel do Síndico](docs/screenshots/sindico-dashboard.png) |
+
 ## Tecnologias Utilizadas
 
 - **React 18** com **TypeScript**
