@@ -26,6 +26,7 @@ interface Pet {
   raca: string;
   cor?: string;
   foto?: string;
+  fotoUrl?: string;
 }
 
 const SPECIES = [
@@ -152,7 +153,7 @@ export function MoradorPets() {
         especie: especSanitizada,
         raca: racaSanitizada,
         cor: selectedColorName,
-        foto,
+        fotoUrl: foto || undefined,
       });
       closeSheet();
       fetchPets();
@@ -241,9 +242,9 @@ export function MoradorPets() {
                   <ListCard key={p.id}>
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        {p.foto ? (
+                        {p.foto || p.fotoUrl ? (
                           <img
-                            src={p.foto}
+                            src={p.foto || p.fotoUrl}
                             alt={p.nome}
                             className="w-[42px] h-[42px] rounded-[12px] object-cover border border-line shrink-0"
                           />

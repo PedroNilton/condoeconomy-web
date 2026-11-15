@@ -117,23 +117,32 @@ export function AvisosPanel() {
               mensagem?: string;
               autor?: string;
               dataCriacao?: string;
+              categoria?: string;
+              blocos?: string;
+              fixado?: boolean;
+              visualizacoes?: number;
             },
             idx: number,
           ) => {
             const id = item.id || `aviso-${idx}`;
-            let cat = 'Aviso geral';
-            const t = (item.titulo || '').toLowerCase();
-            if (t.includes('manutenção') || t.includes('piscina') || t.includes('elevador'))
-              cat = 'Manutenção';
-            else if (t.includes('limpeza') || t.includes('garagem')) cat = 'Limpeza';
-            else if (t.includes('segurança') || t.includes('portaria') || t.includes('acesso'))
-              cat = 'Segurança';
-            else if (t.includes('assembleia') || t.includes('reunião') || t.includes('festa'))
-              cat = 'Evento';
-            else if (t.includes('boleto') || t.includes('taxa') || t.includes('cota'))
-              cat = 'Financeiro';
+            let cat = item.categoria || 'Aviso geral';
+            if (!item.categoria) {
+              const t = (item.titulo || '').toLowerCase();
+              if (t.includes('manutenção') || t.includes('piscina') || t.includes('elevador'))
+                cat = 'Manutenção';
+              else if (t.includes('limpeza') || t.includes('garagem')) cat = 'Limpeza';
+              else if (t.includes('segurança') || t.includes('portaria') || t.includes('acesso'))
+                cat = 'Segurança';
+              else if (t.includes('assembleia') || t.includes('reunião') || t.includes('festa'))
+                cat = 'Evento';
+              else if (t.includes('boleto') || t.includes('taxa') || t.includes('cota'))
+                cat = 'Financeiro';
+            }
 
-            const seen = 90 + Math.floor(Math.sin(idx + 1) * 30) + idx * 15;
+            const seen =
+              typeof item.visualizacoes === 'number' && item.visualizacoes > 0
+                ? item.visualizacoes
+                : 90 + Math.floor(Math.sin(idx + 1) * 30) + idx * 15;
             return {
               id,
               titulo: item.titulo || '',
@@ -141,7 +150,7 @@ export function AvisosPanel() {
               autor: item.autor || 'Síndico',
               dataCriacao: item.dataCriacao || new Date().toISOString(),
               categoria: cat,
-              pinned: !!pinnedMap[String(id)],
+              pinned: item.fixado ?? !!pinnedMap[String(id)],
               seen: Math.min(seen, TOTAL_UNIDADES),
               total: TOTAL_UNIDADES,
               menu: 'closed',
@@ -259,8 +268,15 @@ export function AvisosPanel() {
     );
   };
 
-  const togglePin = (id: string | number) => {
-    const isCurrentlyPinned = !!pinnedMap[String(id)];
+  const togglePin = async (id: string | number) => {
+    const isCurrentlyPinned = !!(
+      avisos.find((n) => n.id === id)?.pinned ?? pinnedMap[String(id)]
+    );
+    try {
+      await api.put(`/api/v1/avisos/${id}/fixar`);
+    } catch {
+      // fallback local
+    }
     const updated = { ...pinnedMap, [String(id)]: !isCurrentlyPinned };
     setPinnedMap(updated);
     localStorage.setItem('@HabitOS:pinnedAvisos', JSON.stringify(updated));
@@ -299,10 +315,19 @@ export function AvisosPanel() {
 
     try {
       setPublishing(true);
+      const blocosPayload =
+        audiencia === 'blocks'
+          ? Object.keys(selectedBlocks)
+              .filter((k) => selectedBlocks[k])
+              .join(',')
+          : undefined;
       const res = await api.post('/api/v1/avisos', {
         titulo: sanitizarEntrada(novoTitulo),
         mensagem: sanitizarEntrada(novaMensagem),
         autor: userName || 'Síndico',
+        categoria,
+        blocos: blocosPayload,
+        fixado: fixarNoTopo,
       });
 
       const newId = res.data?.id || `aviso-${Date.now()}`;

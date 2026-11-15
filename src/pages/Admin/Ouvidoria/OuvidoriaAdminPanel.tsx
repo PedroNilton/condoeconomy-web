@@ -253,6 +253,7 @@ export function OuvidoriaAdminPanel() {
                 unidadeTexto?: string;
                 moradorSolicitante?: string;
                 fotoAnexo?: string;
+                notaPortaria?: string;
               },
               idx: number,
             ) => {
@@ -267,13 +268,14 @@ export function OuvidoriaAdminPanel() {
               const catLabel = mapCategoriaLabel(c.categoria);
 
               const defaultNote =
-                catLabel === 'Segurança'
+                c.notaPortaria ||
+                (catLabel === 'Segurança'
                   ? 'Verifiquei no local: situação requer atenção imediata da administração.'
                   : catLabel === 'Reclamação'
                   ? 'Já conversei com o morador responsável, mas requer intervenção da administração.'
                   : catLabel === 'Sugestão'
                   ? 'Sugestão encaminhada pela portaria para avaliação da administração.'
-                  : 'Ocorrência verificada pela portaria e escalada para providências.';
+                  : 'Ocorrência verificada pela portaria e escalada para providências.');
 
               const initialMsgs: OuvidoriaMsg[] = [
                 {
@@ -432,6 +434,30 @@ export function OuvidoriaAdminPanel() {
     setResolveTargetId(item.id);
   };
 
+  const handleOpenDetail = async (item: OuvidoriaItem) => {
+    setOpenDetailId(item.id);
+    if (!item.backendId) return;
+    try {
+      const res = await api.get(`/api/v1/chamados/${item.backendId}/mensagens`);
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        const backendMsgs: OuvidoriaMsg[] = res.data.map(
+          (m: { autorPapel?: string; texto: string; enviadaEm: string }) => ({
+            f: m.autorPapel === 'SINDICO' ? 's' : m.autorPapel === 'PORTARIA' ? 'p' : 'm',
+            t: m.texto,
+            at: new Date(m.enviadaEm),
+          }),
+        );
+        setItems((prev) =>
+          prev.map((i) =>
+            i.id === item.id ? { ...i, msgs: [i.msgs[0], i.msgs[1], ...backendMsgs].filter(Boolean) } : i,
+          ),
+        );
+      }
+    } catch {
+      // mantém histórico local
+    }
+  };
+
   const handleConfirmResolve = async () => {
     if (!resolveTargetItem) return;
     const trimmed = resolveNoteText.trim();
@@ -461,6 +487,13 @@ export function OuvidoriaAdminPanel() {
 
     closeAllSheets();
     showToast('Chamado resolvido, morador notificado');
+    if (backendId && cleanNote) {
+      try {
+        await api.post(`/api/v1/chamados/${backendId}/mensagens`, { texto: cleanNote });
+      } catch {
+        // fallback local
+      }
+    }
     await syncBackendStatus(backendId, 'RESOLVIDO');
   };
 
@@ -491,6 +524,13 @@ export function OuvidoriaAdminPanel() {
     );
 
     showToast(took ? 'Resposta enviada, você assumiu o chamado' : 'Resposta enviada');
+    if (backendId) {
+      try {
+        await api.post(`/api/v1/chamados/${backendId}/mensagens`, { texto: cleanReply });
+      } catch {
+        // fallback local
+      }
+    }
     if (took) {
       await syncBackendStatus(backendId, 'EM_ANDAMENTO');
     }
@@ -593,7 +633,7 @@ export function OuvidoriaAdminPanel() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setOpenDetailId(i.id)}
+                    onClick={() => handleOpenDetail(i)}
                     className="bg-transparent border-0 text-brand font-bold text-[12px] cursor-pointer hover:underline shrink-0"
                   >
                     Conversa ({i.msgs.length})
@@ -610,7 +650,7 @@ export function OuvidoriaAdminPanel() {
 
                 {i.status === 'andamento' && (
                   <div className="grid grid-cols-2 gap-2.5 mt-3">
-                    <Button variant="secondary" onClick={() => setOpenDetailId(i.id)}>
+                    <Button variant="secondary" onClick={() => handleOpenDetail(i)}>
                       Responder
                     </Button>
                     <Button variant="primary" onClick={() => handleOpenResolve(i)}>

@@ -19,6 +19,7 @@ interface Notificacao {
   mensagem: string;
   lida: boolean;
   dataCriacao: string;
+  categoria?: string;
 }
 
 export function NotificacoesList() {
@@ -48,8 +49,7 @@ export function NotificacoesList() {
 
   const markAllAsRead = async () => {
     try {
-      const unreadIds = notificacoes.filter((n) => !n.lida).map((n) => n.id);
-      await Promise.all(unreadIds.map((id) => api.put('/api/v1/notificacoes/' + id + '/lida')));
+      await api.put('/api/v1/notificacoes/todas-lidas');
       setNotificacoes((prev) => prev.map((n) => ({ ...n, lida: true })));
     } catch (err) {
       console.error(err);
@@ -62,13 +62,13 @@ export function NotificacoesList() {
 
   const unreadCount = notificacoes.filter((n) => !n.lida).length;
 
-  const getIconData = (titulo: string) => {
-    const t = titulo.toLowerCase();
+  const getIconData = (titulo: string, categoria?: string) => {
+    const t = `${categoria || ''} ${titulo}`.toLowerCase();
     if (t.includes('encomenda')) return { icon: Package, isEmergency: false };
-    if (t.includes('boleto')) return { icon: FileText, isEmergency: false };
+    if (t.includes('boleto') || t.includes('financ')) return { icon: FileText, isEmergency: false };
     if (t.includes('reserva')) return { icon: CalendarCheck, isEmergency: false };
     if (t.includes('manuten')) return { icon: Wrench, isEmergency: false };
-    if (t.includes('acesso') || t.includes('alerta') || t.includes('emerg'))
+    if (t.includes('acesso') || t.includes('alerta') || t.includes('emerg') || t.includes('segur'))
       return { icon: AlertTriangle, isEmergency: true };
     return { icon: Info, isEmergency: false };
   };
@@ -123,7 +123,7 @@ export function NotificacoesList() {
         ) : (
           <div className="flex flex-col gap-2.5">
             {notificacoes.map((n) => {
-              const { icon: Icon, isEmergency } = getIconData(n.titulo);
+              const { icon: Icon, isEmergency } = getIconData(n.titulo, n.categoria);
               return (
                 <button
                   type="button"
