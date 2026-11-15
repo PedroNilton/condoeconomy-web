@@ -8,8 +8,10 @@ import api from '../../services/api';
 import {
   Badge,
   Button,
+  ChoiceChips,
   ConfirmSheet,
   EmptyState,
+  Field,
   ListCard,
   SearchInput,
   SegmentedTabs,
@@ -37,6 +39,9 @@ export function EncomendasList() {
     'TODAS',
   );
   const [confirmRetiradaId, setConfirmRetiradaId] = useState<string | null>(null);
+  const [quemRetira, setQuemRetira] = useState<'destinatario' | 'outra'>('destinatario');
+  const [nomeRetirada, setNomeRetirada] = useState('');
+  const [erroRetirada, setErroRetirada] = useState('');
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
 
@@ -68,17 +73,39 @@ export function EncomendasList() {
 
   useWebSocket('/topic/encomendas', fetchEncomendas);
 
+  const abrirConfirmRetirada = (id: string) => {
+    setConfirmRetiradaId(id);
+    setQuemRetira('destinatario');
+    setNomeRetirada('');
+    setErroRetirada('');
+  };
+
+  const fecharConfirmRetirada = () => {
+    setConfirmRetiradaId(null);
+    setQuemRetira('destinatario');
+    setNomeRetirada('');
+    setErroRetirada('');
+  };
+
   const handleConfirmRetirar = async () => {
     if (!confirmRetiradaId) return;
+    if (quemRetira === 'outra' && !nomeRetirada.trim()) {
+      setErroRetirada('Informe o nome de quem está retirando.');
+      return;
+    }
+
     try {
-      await api.put(`/api/v1/encomendas/${confirmRetiradaId}/retirar`);
-      setConfirmRetiradaId(null);
+      const target = encomendas.find((e) => e.id === confirmRetiradaId);
+      const retiradoPor =
+        quemRetira === 'outra' ? nomeRetirada.trim() : target?.destinatario || 'Destinatário';
+      await api.put(`/api/v1/encomendas/${confirmRetiradaId}/retirar`, { retiradoPor });
+      fecharConfirmRetirada();
       fetchEncomendas();
       refreshCounts();
       showToast('Entrega confirmada');
     } catch (err) {
       console.error('Erro ao registrar retirada', err);
-      setConfirmRetiradaId(null);
+      fecharConfirmRetirada();
       showToast('Erro ao confirmar entrega. Tente novamente.');
     }
   };
@@ -177,15 +204,10 @@ export function EncomendasList() {
             return (
               <ListCard key={enc.id} tone={atrasada ? 'warn' : 'default'}>
                 <div className="flex flex-col gap-3">
-                  <div className="flex justify-between items-start gap-2">
-                    <div className="min-w-0">
-                      <span className="font-mono text-[13px] font-semibold text-ink block truncate">
-                        {enc.codigoRastreio}
-                      </span>
-                      <span className="text-[12px] font-bold text-brand block mt-0.5">
-                        {enc.unidade}
-                      </span>
-                    </div>
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="font-mono text-[14.5px] font-bold text-ink block truncate">
+                      {enc.unidade}
+                    </span>
                     <Badge tone={pendente ? 'warn' : 'ok'}>
                       {pendente ? 'Aguardando' : 'Entregue'}
                     </Badge>
@@ -211,35 +233,40 @@ export function EncomendasList() {
                   </div>
 
                   <div className="flex items-center justify-between gap-2">
-                    <div className="font-mono text-[10.5px] text-dim leading-[1.4]">
-                      <div>
-                        Chegada:{' '}
-                        {enc.dataRecebimento
-                          ? new Date(enc.dataRecebimento).toLocaleString('pt-BR', {
+                    <div className="min-w-0">
+                      <span className="font-mono text-[11px] text-faint block truncate">
+                        {enc.codigoRastreio}
+                      </span>
+                      <div className="font-mono text-[10.5px] text-dim leading-[1.4] mt-0.5">
+                        <div>
+                          Chegada:{' '}
+                          {enc.dataRecebimento
+                            ? new Date(enc.dataRecebimento).toLocaleString('pt-BR', {
+                                dateStyle: 'short',
+                                timeStyle: 'short',
+                              })
+                            : '-'}
+                        </div>
+                        {!pendente && enc.dataRetirada && (
+                          <div>
+                            Retirada:{' '}
+                            {new Date(enc.dataRetirada).toLocaleString('pt-BR', {
                               dateStyle: 'short',
                               timeStyle: 'short',
-                            })
-                          : '-'}
+                            })}
+                          </div>
+                        )}
                       </div>
-                      {!pendente && enc.dataRetirada && (
-                        <div>
-                          Retirada:{' '}
-                          {new Date(enc.dataRetirada).toLocaleString('pt-BR', {
-                            dateStyle: 'short',
-                            timeStyle: 'short',
-                          })}
-                        </div>
-                      )}
                     </div>
 
                     {pendente && (
                       <Button
                         variant="primary"
-                        size="mini"
-                        onClick={() => setConfirmRetiradaId(enc.id)}
-                        className="!bg-ok !border-ok !text-white"
+                        size="card"
+                        onClick={() => abrirConfirmRetirada(enc.id)}
+                        className="!bg-ok !border-ok !text-white shrink-0"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <CheckCircle2 className="w-4 h-4" />
                         <span>Entregar</span>
                       </Button>
                     )}
@@ -269,14 +296,44 @@ export function EncomendasList() {
 
       <ConfirmSheet
         open={confirmRetiradaId !== null}
-        onClose={() => setConfirmRetiradaId(null)}
+        onClose={fecharConfirmRetirada}
         onConfirm={handleConfirmRetirar}
         title="Confirmar entrega"
         description="Confirmar a entrega deste pacote ao morador?"
         confirmLabel="Confirmar entrega"
-      />
+      >
+        <div className="flex flex-col gap-3 py-1">
+          <ChoiceChips
+            label="Quem está retirando?"
+            options={[
+              { value: 'destinatario', label: 'O próprio destinatário' },
+              { value: 'outra', label: 'Outra pessoa' },
+            ]}
+            value={quemRetira}
+            onChange={(val) => {
+              setQuemRetira(val);
+              setErroRetirada('');
+            }}
+          />
+
+          {quemRetira === 'outra' && (
+            <Field
+              label="Nome de quem está retirando"
+              placeholder="Nome completo do retirante"
+              value={nomeRetirada}
+              onChange={(e) => {
+                setNomeRetirada(e.target.value);
+                if (erroRetirada) setErroRetirada('');
+              }}
+              error={erroRetirada || undefined}
+              required
+            />
+          )}
+        </div>
+      </ConfirmSheet>
 
       <Toast message={toastMsg} />
     </div>
   );
 }
+

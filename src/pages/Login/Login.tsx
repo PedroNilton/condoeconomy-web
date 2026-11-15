@@ -352,32 +352,32 @@ export function Login() {
         {/* Modal: Recuperação de Senha */}
         {isForgotModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-ds-card border border-ds-border rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+            <div className="bg-surface border border-line rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
               <button
                 type="button"
                 onClick={() => setIsForgotModalOpen(false)}
-                className="absolute top-4 right-4 text-ds-dim hover:text-ds-text p-1 rounded-lg transition-colors cursor-pointer"
+                className="absolute top-4 right-4 text-dim hover:text-ink p-1 rounded-lg transition-colors cursor-pointer"
                 aria-label="Fechar"
               >
                 <X className="w-5 h-5" />
               </button>
 
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-ds-primary/10 text-ds-primary flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-brand-soft text-brand flex items-center justify-center">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-ds-text m-0">Recuperação de Acesso</h2>
-                  <p className="text-xs text-ds-dim m-0">Instruções para redefinição segura</p>
+                  <h2 className="text-base font-bold text-ink m-0">Recuperação de Acesso</h2>
+                  <p className="text-xs text-dim m-0">Instruções para redefinição segura</p>
                 </div>
               </div>
 
               {forgotStep === 'done' ? (
                 <div className="space-y-4 py-2">
-                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-start gap-3">
+                  <div className="p-4 rounded-xl bg-ok-soft border border-ok/20 text-ok flex items-start gap-3">
                     <CheckCircle2 className="w-5 h-5 flex-none mt-0.5" />
-                    <div className="text-xs leading-relaxed text-ds-text">
-                      <p className="font-semibold text-emerald-500 mb-1">Senha redefinida com sucesso!</p>
+                    <div className="text-xs leading-relaxed text-ink">
+                      <p className="font-semibold text-ok mb-1">Senha redefinida com sucesso!</p>
                       Sua credencial foi atualizada com criptografia BCrypt e todas as sessões anteriores foram encerradas automaticamente.
                     </div>
                   </div>
@@ -390,26 +390,26 @@ export function Login() {
                       setResetNovaSenha('');
                       setResetConfirmacao('');
                     }}
-                    className="w-full py-2.5 rounded-lg bg-ds-primary text-ds-primary-ink font-bold text-sm hover:brightness-110 transition-all cursor-pointer"
+                    className="w-full py-2.5 rounded-lg bg-brand text-brand-ink font-bold text-sm hover:bg-brand-hover transition-all cursor-pointer"
                   >
                     Entrar com nova senha
                   </button>
                 </div>
               ) : forgotStep === 'reset' ? (
                 <form onSubmit={handleResetPasswordSubmit} className="space-y-3.5">
-                  <div className="p-3 rounded-xl bg-ds-primary/10 border border-ds-primary/20 text-xs text-ds-text leading-relaxed">
+                  <div className="p-3 rounded-xl bg-brand-soft border border-brand/20 text-xs text-ink leading-relaxed">
                     Enviamos um código de <strong>6 dígitos</strong> válido por 15 minutos para <strong>{forgotEmail}</strong> (se a conta estiver ativa).
                   </div>
 
                   {forgotError && (
-                    <div className="p-3 rounded-lg bg-ds-danger-dim border border-ds-danger/20 text-ds-danger text-xs flex items-center gap-2">
+                    <div className="p-3 rounded-lg bg-bad-soft border border-bad/20 text-bad text-xs flex items-center gap-2">
                       <AlertCircle className="w-4 h-4 flex-none" />
                       <span>{forgotError}</span>
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-xs font-semibold mb-1 text-ds-text">Código de 6 dígitos</label>
+                    <label className="block text-xs font-semibold mb-1 text-ink">Código de 6 dígitos</label>
                     <input
                       type="text"
                       inputMode="numeric"
@@ -418,12 +418,12 @@ export function Login() {
                       placeholder="000000"
                       maxLength={6}
                       required
-                      className="w-full px-3 py-2.5 rounded-lg border border-ds-border bg-ds-bg text-ds-text text-base font-mono tracking-[0.35em] text-center focus:outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim"
+                      className="w-full px-3 py-2.5 rounded-lg border border-line bg-canvas text-ink text-base font-mono tracking-[0.35em] text-center focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent placeholder:text-faint"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold mb-1 text-ds-text">Nova Senha (mín. 8 caracteres)</label>
+                    <label className="block text-xs font-semibold mb-1 text-ink">Nova Senha (mín. 8 caracteres)</label>
                     <input
                       type="password"
                       value={resetNovaSenha}
@@ -432,12 +432,12 @@ export function Login() {
                       minLength={8}
                       maxLength={128}
                       required
-                      className="w-full px-3 py-2.5 rounded-lg border border-ds-border bg-ds-bg text-ds-text text-sm focus:outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim"
+                      className="w-full px-3 py-2.5 rounded-lg border border-line bg-canvas text-ink text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent placeholder:text-faint"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold mb-1 text-ds-text">Confirmar Nova Senha</label>
+                    <label className="block text-xs font-semibold mb-1 text-ink">Confirmar Nova Senha</label>
                     <input
                       type="password"
                       value={resetConfirmacao}
@@ -446,7 +446,7 @@ export function Login() {
                       minLength={8}
                       maxLength={128}
                       required
-                      className="w-full px-3 py-2.5 rounded-lg border border-ds-border bg-ds-bg text-ds-text text-sm focus:outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim"
+                      className="w-full px-3 py-2.5 rounded-lg border border-line bg-canvas text-ink text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent placeholder:text-faint"
                     />
                   </div>
 
@@ -457,14 +457,14 @@ export function Login() {
                         setForgotError('');
                         setForgotStep('email');
                       }}
-                      className="flex-1 py-2.5 rounded-lg border border-ds-border text-ds-dim hover:text-ds-text font-semibold text-xs transition-colors cursor-pointer"
+                      className="flex-1 py-2.5 rounded-lg border border-line text-dim hover:text-ink font-semibold text-xs transition-colors cursor-pointer"
                     >
                       Voltar
                     </button>
                     <button
                       type="submit"
                       disabled={forgotLoading}
-                      className="flex-1 py-2.5 rounded-lg bg-ds-primary text-ds-primary-ink font-bold text-xs hover:brightness-110 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+                      className="flex-1 py-2.5 rounded-lg bg-brand text-brand-ink font-bold text-xs hover:bg-brand-hover transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
                     >
                       {forgotLoading ? (
                         <>
@@ -479,19 +479,19 @@ export function Login() {
                 </form>
               ) : (
                 <form onSubmit={handleForgotSubmit} className="space-y-4">
-                  <p className="text-xs text-ds-dim leading-relaxed">
+                  <p className="text-xs text-dim leading-relaxed">
                     Informe seu e-mail cadastrado na administração. Enviaremos um código temporário de 6 dígitos de uso único (expiração em 15 minutos).
                   </p>
 
                   {forgotError && (
-                    <div className="p-3 rounded-lg bg-ds-danger-dim border border-ds-danger/20 text-ds-danger text-xs flex items-center gap-2">
+                    <div className="p-3 rounded-lg bg-bad-soft border border-bad/20 text-bad text-xs flex items-center gap-2">
                       <AlertCircle className="w-4 h-4 flex-none" />
                       <span>{forgotError}</span>
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-xs font-semibold mb-1 text-ds-text">E-mail Cadastrado</label>
+                    <label className="block text-xs font-semibold mb-1 text-ink">E-mail Cadastrado</label>
                     <input
                       type="email"
                       value={forgotEmail}
@@ -499,7 +499,7 @@ export function Login() {
                       placeholder="seu@email.com"
                       maxLength={255}
                       required
-                      className="w-full px-3 py-2.5 rounded-lg border border-ds-border bg-ds-bg text-ds-text text-sm focus:outline-none focus:ring-2 focus:ring-ds-primary focus:border-transparent placeholder:text-ds-dim"
+                      className="w-full px-3 py-2.5 rounded-lg border border-line bg-canvas text-ink text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent placeholder:text-faint"
                     />
                   </div>
 
@@ -514,7 +514,7 @@ export function Login() {
                           setForgotError('Preencha seu e-mail acima antes de informar o código.');
                         }
                       }}
-                      className="text-[11px] font-semibold text-ds-primary hover:underline bg-transparent border-0 p-0 cursor-pointer"
+                      className="text-[11px] font-semibold text-brand hover:underline bg-transparent border-0 p-0 cursor-pointer"
                     >
                       Já tenho um código de 6 dígitos
                     </button>
@@ -524,14 +524,14 @@ export function Login() {
                     <button
                       type="button"
                       onClick={() => setIsForgotModalOpen(false)}
-                      className="flex-1 py-2.5 rounded-lg border border-ds-border text-ds-dim hover:text-ds-text font-semibold text-xs transition-colors cursor-pointer"
+                      className="flex-1 py-2.5 rounded-lg border border-line text-dim hover:text-ink font-semibold text-xs transition-colors cursor-pointer"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
                       disabled={forgotLoading}
-                      className="flex-1 py-2.5 rounded-lg bg-ds-primary text-ds-primary-ink font-bold text-xs hover:brightness-110 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
+                      className="flex-1 py-2.5 rounded-lg bg-brand text-brand-ink font-bold text-xs hover:bg-brand-hover transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60"
                     >
                       {forgotLoading ? (
                         <>
@@ -552,54 +552,54 @@ export function Login() {
         {/* Modal: Central de Ajuda e Acesso */}
         {isHelpModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-ds-card border border-ds-border rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+            <div className="bg-surface border border-line rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
               <button
                 type="button"
                 onClick={() => setIsHelpModalOpen(false)}
-                className="absolute top-4 right-4 text-ds-dim hover:text-ds-text p-1 rounded-lg transition-colors cursor-pointer"
+                className="absolute top-4 right-4 text-dim hover:text-ink p-1 rounded-lg transition-colors cursor-pointer"
                 aria-label="Fechar"
               >
                 <X className="w-5 h-5" />
               </button>
 
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-ds-primary/10 text-ds-primary flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-brand-soft text-brand flex items-center justify-center">
                   <HelpCircle className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-ds-text m-0">Central de Acesso e Ajuda</h2>
-                  <p className="text-xs text-ds-dim m-0">Como funciona o acesso ao CondoEconomy</p>
+                  <h2 className="text-base font-bold text-ink m-0">Central de Acesso e Ajuda</h2>
+                  <p className="text-xs text-dim m-0">Como funciona o acesso ao CondoEconomy</p>
                 </div>
               </div>
 
-              <div className="space-y-3.5 text-xs text-ds-dim leading-relaxed">
-                <div className="p-3 rounded-xl bg-ds-bg border border-ds-border">
-                  <p className="font-semibold text-ds-text mb-1 text-[13px]">🏢 Como sou cadastrado no condomínio?</p>
+              <div className="space-y-3.5 text-xs text-dim leading-relaxed">
+                <div className="p-3 rounded-xl bg-canvas border border-line">
+                  <p className="font-semibold text-ink mb-1 text-[13px]">🏢 Como sou cadastrado no condomínio?</p>
                   <span>
                     O cadastro de moradores, proprietários e colaboradores é realizado diretamente pela <strong>administração do condomínio</strong> ou pelo <strong>síndico</strong>.
                   </span>
                 </div>
 
-                <div className="p-3 rounded-xl bg-ds-bg border border-ds-border">
-                  <p className="font-semibold text-ds-text mb-1 text-[13px]">🔑 Primeiro Acesso</p>
+                <div className="p-3 rounded-xl bg-canvas border border-line">
+                  <p className="font-semibold text-ink mb-1 text-[13px]">🔑 Primeiro Acesso</p>
                   <span>
                     Após o cadastro pelo síndico, você receberá um e-mail com a senha provisória ou link de primeiro acesso. Ao entrar pela primeira vez, recomendamos a alteração da sua senha no menu Perfil.
                   </span>
                 </div>
 
-                <div className="p-3 rounded-xl bg-ds-bg border border-ds-border">
-                  <p className="font-semibold text-ds-text mb-1 text-[13px]">🛡️ Problemas de Acesso?</p>
+                <div className="p-3 rounded-xl bg-canvas border border-line">
+                  <p className="font-semibold text-ink mb-1 text-[13px]">🛡️ Problemas de Acesso?</p>
                   <span>
                     Se você trocou de e-mail ou não tem mais acesso à sua conta, entre em contato com a portaria ou com a administração do seu condomínio com um documento com foto para revalidação cadastral.
                   </span>
                 </div>
               </div>
 
-              <div className="mt-5 pt-3 border-t border-ds-border">
+              <div className="mt-5 pt-3 border-t border-line">
                 <button
                   type="button"
                   onClick={() => setIsHelpModalOpen(false)}
-                  className="w-full py-2.5 rounded-lg bg-ds-primary text-ds-primary-ink font-bold text-xs hover:brightness-110 transition-all cursor-pointer"
+                  className="w-full py-2.5 rounded-lg bg-brand text-brand-ink font-bold text-xs hover:bg-brand-hover transition-all cursor-pointer"
                 >
                   Entendi
                 </button>
@@ -611,3 +611,4 @@ export function Login() {
     </div>
   );
 }
+

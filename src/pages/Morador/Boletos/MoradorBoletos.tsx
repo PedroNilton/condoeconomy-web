@@ -17,6 +17,7 @@ interface Boleto {
   id: string;
   valor: number;
   dataVencimento: string;
+  dataPagamento?: string;
   status: string;
   linhaDigitavel: string;
 }
@@ -149,9 +150,13 @@ export function MoradorBoletos() {
 
   const getEmAberto = () => {
     return boletos
-      .filter((b) => b.status === 'PENDENTE')
+      .filter((b) => b.status === 'PENDENTE' || b.status === 'VENCIDO')
       .reduce((acc, curr) => acc + curr.valor, 0);
   };
+
+  const temBoletoVencido = boletos.some(
+    (b) => b.status === 'VENCIDO' || (b.status === 'PENDENTE' && isVencido(b.dataVencimento)),
+  );
 
   const getProximoVencimento = () => {
     const pendentes = boletos.filter(
@@ -166,10 +171,11 @@ export function MoradorBoletos() {
   };
 
   const filteredBoletos = boletos.filter((b) => {
-    const venc = isVencido(b.dataVencimento);
-    if (filter === 'Pendentes') return b.status === 'PENDENTE' && !venc;
+    const emAberto = b.status === 'PENDENTE' || b.status === 'VENCIDO';
+    const venc = b.status === 'VENCIDO' || (b.status === 'PENDENTE' && isVencido(b.dataVencimento));
+    if (filter === 'Pendentes') return emAberto && !venc;
     if (filter === 'Pagos') return b.status === 'PAGO';
-    if (filter === 'Atrasados') return b.status === 'PENDENTE' && venc;
+    if (filter === 'Atrasados') return venc;
     return true;
   });
 
@@ -180,7 +186,11 @@ export function MoradorBoletos() {
           <div className="flex justify-between items-center gap-3">
             <div>
               <div className="text-[11.5px] text-dim font-semibold">Em aberto</div>
-              <div className="font-mono text-[19px] font-extrabold text-bad tabular-nums mt-0.5">
+              <div
+                className={`font-mono text-[19px] font-extrabold ${
+                  temBoletoVencido ? 'text-bad' : 'text-ink'
+                } tabular-nums mt-0.5`}
+              >
                 {formatCurrency(getEmAberto())}
               </div>
             </div>
@@ -216,7 +226,10 @@ export function MoradorBoletos() {
           />
         ) : (
           filteredBoletos.map((boleto) => {
-            const vencido = boleto.status === 'PENDENTE' && isVencido(boleto.dataVencimento);
+            const emAberto = boleto.status === 'PENDENTE' || boleto.status === 'VENCIDO';
+            const vencido =
+              boleto.status === 'VENCIDO' ||
+              (boleto.status === 'PENDENTE' && isVencido(boleto.dataVencimento));
             const isExpanded = expandedId === boleto.id;
 
             let statusText = boleto.status;
@@ -226,14 +239,14 @@ export function MoradorBoletos() {
               month: '2-digit',
             })}`;
 
-            if (boleto.status === 'PENDENTE' && vencido) {
+            if (vencido) {
               statusText = 'VENCIDO';
               tone = 'bad';
               dateText = `VENCIDO EM ${new Date(boleto.dataVencimento).toLocaleDateString('pt-BR', {
                 day: '2-digit',
                 month: '2-digit',
               })}`;
-            } else if (boleto.status === 'PENDENTE') {
+            } else if (emAberto) {
               const diffTime = Math.ceil(
                 (new Date(boleto.dataVencimento).getTime() - new Date().getTime()) /
                   (1000 * 3600 * 24),
@@ -243,7 +256,9 @@ export function MoradorBoletos() {
             } else if (boleto.status === 'PAGO') {
               statusText = 'PAGO';
               tone = 'ok';
-              dateText = `PAGO EM ${new Date(boleto.dataVencimento).toLocaleDateString('pt-BR', {
+              dateText = `PAGO EM ${new Date(
+                boleto.dataPagamento || boleto.dataVencimento,
+              ).toLocaleDateString('pt-BR', {
                 day: '2-digit',
                 month: '2-digit',
               })}`;
@@ -284,7 +299,7 @@ export function MoradorBoletos() {
                   </div>
                 </div>
 
-                {isExpanded && boleto.status === 'PENDENTE' && (
+                {isExpanded && emAberto && (
                   <div className="pt-3 mt-3 border-t border-line space-y-2.5">
                     <div className="bg-canvas border border-line rounded-[10px] p-2.5">
                       <p className="font-mono text-[11.5px] text-ink break-all leading-relaxed m-0">

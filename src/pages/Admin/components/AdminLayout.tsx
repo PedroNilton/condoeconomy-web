@@ -91,9 +91,9 @@ export function AdminLayout() {
         onLogout={handleLogout}
       />
 
-      <div className="flex-1 overflow-y-auto no-scrollbar">
+      <main className="flex-1 overflow-y-auto pt-[4px] px-[18px] pb-[110px] no-scrollbar [&_.page-head]:px-0">
         <Outlet />
-      </div>
+      </main>
 
       <BottomNav items={navItems} />
     </MobileFrame>

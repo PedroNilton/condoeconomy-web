@@ -22,7 +22,9 @@ import {
   ListCard,
   PageHead,
   TextAreaField,
+  Thread,
   Toast,
+  type ThreadMessage,
 } from '../../../components/ui';
 
 interface Chamado {
@@ -33,6 +35,15 @@ interface Chamado {
   status: string;
   dataAbertura: string;
   fotoAnexo?: string | null;
+}
+
+interface ChamadoMensagem {
+  id: string;
+  chamadoId: string;
+  autorNome: string;
+  autorPapel: string;
+  texto: string;
+  enviadaEm: string;
 }
 
 const CATEGORIAS = [
@@ -57,12 +68,106 @@ export function MoradorOuvidoria() {
   const [fotoModal, setFotoModal] = useState<string | null>(null);
   const [erroFoto, setErroFoto] = useState<string | null>(null);
 
+  const [chamadoAtivo, setChamadoAtivo] = useState<Chamado | null>(null);
+  const [mensagens, setMensagens] = useState<ThreadMessage[]>([]);
+  const [loadingMensagens, setLoadingMensagens] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 2400);
+  };
+
+  const formatTimeLabel = (iso: string) => {
+    if (!iso) return 'agora';
+    return new Date(iso).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const mapMensagemToThread = (m: ChamadoMensagem): ThreadMessage => {
+    const senderRole: ThreadMessage['senderRole'] =
+      m.autorPapel === 'SINDICO'
+        ? 'sindico'
+        : m.autorPapel === 'PORTARIA'
+        ? 'portaria'
+        : 'morador';
+    const senderLabel =
+      m.autorPapel === 'SINDICO'
+        ? m.autorNome || 'Administração'
+        : m.autorPapel === 'PORTARIA'
+        ? m.autorNome || 'Portaria'
+        : 'Você';
+    return {
+      id: m.id,
+      senderRole,
+      senderLabel,
+      text: m.texto,
+      timeLabel: formatTimeLabel(m.enviadaEm),
+    };
+  };
+
+  const handleAbrirConversa = async (chamado: Chamado) => {
+    setChamadoAtivo(chamado);
+    const msgInicial: ThreadMessage = {
+      id: `init-${chamado.id}`,
+      senderRole: 'morador',
+      senderLabel: 'Você',
+      text: chamado.descricao,
+      timeLabel: formatTimeLabel(chamado.dataAbertura),
+    };
+    setMensagens([msgInicial]);
+    setLoadingMensagens(true);
+    try {
+      const res = await api.get(`/api/v1/chamados/${chamado.id}/mensagens`);
+      const lista: ChamadoMensagem[] = Array.isArray(res.data) ? res.data : [];
+      const mapeadas = lista.map(mapMensagemToThread);
+      setMensagens([msgInicial, ...mapeadas]);
+    } catch {
+      // mantém a mensagem de abertura caso falhe
+    } finally {
+      setLoadingMensagens(false);
+    }
+  };
+
+  const handleEnviarMensagem = async (texto: string) => {
+    if (!chamadoAtivo) return;
+    const trimmed = texto.trim();
+    if (!trimmed) return;
+
+    if (contemAmeacas(trimmed)) {
+      showToast('Entrada inválida: caracteres ou comandos não permitidos.');
+      return;
+    }
+
+    const textoLimpo = sanitizarEntrada(trimmed);
+    try {
+      const res = await api.post(`/api/v1/chamados/${chamadoAtivo.id}/mensagens`, {
+        texto: textoLimpo,
+      });
+      if (res.data) {
+        setMensagens((prev) => [...prev, mapMensagemToThread(res.data)]);
+      } else {
+        setMensagens((prev) => [
+          ...prev,
+          {
+            id: String(Date.now()),
+            senderRole: 'morador',
+            senderLabel: 'Você',
+            text: textoLimpo,
+            timeLabel: 'agora',
+          },
+        ]);
+      }
+      showToast('Mensagem enviada');
+    } catch {
+      showToast('Erro ao enviar mensagem.');
+    }
   };
 
   const fetchChamados = async () => {
@@ -355,19 +460,62 @@ export function MoradorOuvidoria() {
                   </div>
                 )}
 
-                <div className="flex justify-between items-center font-mono text-[10.5px] font-bold text-faint tracking-wider">
-                  <span className="uppercase">{chamado.categoria}</span>
-                  <span>
-                    {new Date(chamado.dataAbertura)
-                      .toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-                      .replace('.', '')}
-                  </span>
+                <div className="flex justify-between items-center pt-2.5 border-t border-line">
+                  <div className="flex items-center gap-2 font-mono text-[10.5px] font-bold text-faint tracking-wider">
+                    <span className="uppercase">{chamado.categoria}</span>
+                    <span>·</span>
+                    <span>
+                      {new Date(chamado.dataAbertura)
+                        .toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+                        .replace('.', '')}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleAbrirConversa(chamado)}
+                    className="inline-flex items-center gap-1.5 text-[12px] font-bold text-brand bg-transparent border-0 p-0 cursor-pointer hover:underline"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    <span>Conversa</span>
+                  </button>
                 </div>
               </ListCard>
             ))}
           </div>
         )}
       </main>
+
+      <BottomSheet
+        open={chamadoAtivo !== null}
+        onClose={() => setChamadoAtivo(null)}
+        title={chamadoAtivo?.assunto || 'Conversa do chamado'}
+        subtitle={
+          chamadoAtivo
+            ? `${chamadoAtivo.categoria} · ${chamadoAtivo.status.replace('_', ' ')}`
+            : undefined
+        }
+      >
+        {chamadoAtivo && (
+          <div className="mt-2">
+            {loadingMensagens ? (
+              <div className="flex justify-center py-6">
+                <Loader2 className="w-5 h-5 animate-spin text-brand" />
+              </div>
+            ) : (
+              <Thread
+                messages={mensagens}
+                onSend={chamadoAtivo.status === 'RESOLVIDO' ? undefined : handleEnviarMensagem}
+                placeholder="Escrever mensagem…"
+                disabledNote={
+                  chamadoAtivo.status === 'RESOLVIDO'
+                    ? 'Este chamado já foi resolvido pela administração.'
+                    : undefined
+                }
+              />
+            )}
+          </div>
+        )}
+      </BottomSheet>
 
       <BottomSheet
         open={fotoModal !== null}

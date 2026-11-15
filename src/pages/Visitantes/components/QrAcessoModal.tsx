@@ -164,14 +164,14 @@ export function QrAcessoModal({ isOpen, onClose, onApproved }: QrAcessoModalProp
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="QR de acesso">
       <div className="flex flex-col gap-4">
-        <div className="grid grid-cols-2 gap-1.5 p-1 bg-ds-bg border border-ds-border rounded-[12px]">
+        <div className="grid grid-cols-2 gap-1.5 p-1 bg-canvas border border-line rounded-[12px]">
           <button
             type="button"
             onClick={() => setTab('validar')}
             className={`py-2 px-3 rounded-[9px] text-[12px] font-bold transition-colors cursor-pointer ${
               tab === 'validar'
-                ? 'bg-ds-card text-ds-primary border border-ds-border shadow-xs'
-                : 'text-ds-dim hover:text-ds-text'
+                ? 'bg-surface text-brand border border-line shadow-xs'
+                : 'text-dim hover:text-ink'
             }`}
           >
             Validar convite
@@ -181,8 +181,8 @@ export function QrAcessoModal({ isOpen, onClose, onApproved }: QrAcessoModalProp
             onClick={() => setTab('autocheckin')}
             className={`py-2 px-3 rounded-[9px] text-[12px] font-bold transition-colors cursor-pointer ${
               tab === 'autocheckin'
-                ? 'bg-ds-card text-ds-primary border border-ds-border shadow-xs'
-                : 'text-ds-dim hover:text-ds-text'
+                ? 'bg-surface text-brand border border-line shadow-xs'
+                : 'text-dim hover:text-ink'
             }`}
           >
             QR Auto Check-in
@@ -192,7 +192,7 @@ export function QrAcessoModal({ isOpen, onClose, onApproved }: QrAcessoModalProp
         {tab === 'validar' ? (
           <div className="flex flex-col gap-3.5">
             {cameraActive ? (
-              <div className="relative rounded-[14px] overflow-hidden border border-ds-border bg-black aspect-video">
+              <div className="relative rounded-[14px] overflow-hidden border border-line bg-black aspect-video">
                 <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
                 <button
                   type="button"
@@ -206,59 +206,59 @@ export function QrAcessoModal({ isOpen, onClose, onApproved }: QrAcessoModalProp
               <button
                 type="button"
                 onClick={iniciarCamera}
-                className="w-full py-3 px-4 rounded-[12px] border border-dashed border-ds-border bg-ds-bg hover:border-ds-primary text-ds-text flex items-center justify-center gap-2 text-[12.5px] font-bold transition-colors cursor-pointer"
+                className="w-full py-3 px-4 rounded-[12px] border border-dashed border-line bg-canvas hover:border-brand text-ink flex items-center justify-center gap-2 text-[12.5px] font-bold transition-colors cursor-pointer"
               >
-                <Camera className="w-4 h-4 text-ds-primary" />
+                <Camera className="w-4 h-4 text-brand" />
                 Abrir câmera para ler QR
               </button>
             )}
 
             <form onSubmit={handleSubmit} className="flex gap-2">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 text-ds-faint absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Search className="w-4 h-4 text-faint absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
                   value={codigo}
                   onChange={(e) => setCodigo(e.target.value)}
                   placeholder="Código ou UUID do convite..."
-                  className="w-full pl-9 pr-3 py-2.5 bg-ds-bg border border-ds-border text-ds-text rounded-[11px] font-mono text-[12px] placeholder:font-sans placeholder:text-ds-faint focus:outline-none focus:border-ds-primary"
+                  className="w-full pl-9 pr-3 py-2.5 bg-canvas border border-line text-ink rounded-[11px] font-mono text-[12px] placeholder:font-sans placeholder:text-faint focus:outline-none focus:border-brand"
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading || !codigo.trim()}
-                className="px-4 py-2.5 rounded-[11px] bg-ds-primary text-ds-primary-ink text-[12.5px] font-bold hover:brightness-110 disabled:opacity-50 cursor-pointer"
+                className="px-4 py-2.5 rounded-[11px] bg-brand text-brand-ink text-[12.5px] font-bold hover:bg-brand-hover disabled:opacity-50 cursor-pointer"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Validar'}
               </button>
             </form>
 
             {erro && (
-              <div className="p-3 rounded-[11px] bg-ds-danger-dim text-ds-danger text-[12px] font-semibold flex items-center gap-2">
+              <div className="p-3 rounded-[11px] bg-bad-soft text-bad text-[12px] font-semibold flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{erro}</span>
               </div>
             )}
 
             {sucesso && (
-              <div className="p-3 rounded-[11px] bg-ds-success-dim text-ds-success text-[12px] font-semibold flex items-center gap-2">
+              <div className="p-3 rounded-[11px] bg-ok-soft text-ok text-[12px] font-semibold flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span>{sucesso}</span>
               </div>
             )}
 
             {encontrado && (
-              <div className="p-3.5 rounded-[14px] border border-ds-border bg-ds-bg flex flex-col gap-3">
+              <div className="p-3.5 rounded-[14px] border border-line bg-canvas flex flex-col gap-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-[13.5px] font-bold text-ds-text m-0">
+                    <p className="text-[13.5px] font-bold text-ink m-0">
                       {encontrado.nome} {encontrado.sobrenome !== 'Convidado' ? encontrado.sobrenome : ''}
                     </p>
-                    <p className="text-[11px] text-ds-dim m-0 mt-0.5">
+                    <p className="text-[11px] text-dim m-0 mt-0.5">
                       Bloco {encontrado.blocoDestino} · Apto {encontrado.unidadeDestino}
                     </p>
                   </div>
-                  <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full bg-ds-primary-dim text-ds-primary uppercase">
+                  <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-soft text-brand uppercase">
                     {formatTipoVisitante(encontrado.tipo)}
                   </span>
                 </div>
@@ -268,7 +268,7 @@ export function QrAcessoModal({ isOpen, onClose, onApproved }: QrAcessoModalProp
                     type="button"
                     disabled={loading}
                     onClick={() => liberarEntrada(encontrado.id)}
-                    className="w-full py-2.5 px-4 rounded-[11px] bg-ds-success text-white text-[12.5px] font-bold hover:brightness-110 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 px-4 rounded-[11px] bg-ok text-white text-[12.5px] font-bold hover:brightness-110 transition-all cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <CheckCircle2 className="w-4 h-4" />
                     Permitir entrada
@@ -276,7 +276,7 @@ export function QrAcessoModal({ isOpen, onClose, onApproved }: QrAcessoModalProp
                 )}
 
                 {encontrado.status === 'NO_CONDOMINIO' && (
-                  <div className="text-[11.5px] font-semibold text-ds-success">
+                  <div className="text-[11.5px] font-semibold text-ok">
                     Visitante já registrado no condomínio.
                   </div>
                 )}
@@ -285,16 +285,16 @@ export function QrAcessoModal({ isOpen, onClose, onApproved }: QrAcessoModalProp
           </div>
         ) : (
           <div className="flex flex-col items-center text-center gap-3 py-2">
-            <div className="w-10 h-10 rounded-[11px] bg-ds-primary-dim text-ds-primary grid place-items-center">
+            <div className="w-10 h-10 rounded-[11px] bg-brand-soft text-brand grid place-items-center">
               <QrCode className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[13.5px] font-bold text-ds-text m-0">Auto Check-in na Portaria</p>
-              <p className="text-[11.5px] text-ds-dim m-0 mt-1">
+              <p className="text-[13.5px] font-bold text-ink m-0">Auto Check-in na Portaria</p>
+              <p className="text-[11.5px] text-dim m-0 mt-1">
                 Peça para o visitante escanear este QR Code com o celular para solicitar entrada.
               </p>
             </div>
-            <div className="bg-white p-3.5 rounded-[16px] border border-ds-border">
+            <div className="bg-white p-3.5 rounded-[16px] border border-line">
               <QRCodeCanvas
                 value={`${window.location.origin}/auto-checkin`}
                 size={196}
@@ -302,7 +302,7 @@ export function QrAcessoModal({ isOpen, onClose, onApproved }: QrAcessoModalProp
                 includeMargin={true}
               />
             </div>
-            <p className="font-mono text-[10.5px] text-ds-primary bg-ds-primary-dim px-3 py-1.5 rounded-[9px] m-0">
+            <p className="font-mono text-[10.5px] text-brand bg-brand-soft px-3 py-1.5 rounded-[9px] m-0">
               {window.location.origin}/auto-checkin
             </p>
           </div>
@@ -311,3 +311,4 @@ export function QrAcessoModal({ isOpen, onClose, onApproved }: QrAcessoModalProp
     </Modal>
   );
 }
+

@@ -11,9 +11,12 @@ import {
   ShoppingBag,
   Megaphone,
   CheckCircle2,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
+import { useTheme } from '../../../contexts/ThemeContext';
 import { Avatar, Badge, IconButton, IconChip, ListCard } from '../../../components/ui';
 
 interface BoletoResumo {
@@ -34,10 +37,12 @@ interface AvisoItem {
 
 export function MoradorHome() {
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const [usuarioNome, setUsuarioNome] = useState('');
   const [unidadeLabel, setUnidadeLabel] = useState('Ambiente do Morador');
   const [proximoBoleto, setProximoBoleto] = useState<BoletoResumo | null>(null);
   const [avisosRecentes, setAvisosRecentes] = useState<AvisoItem[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const nomeSalvo = localStorage.getItem('@HabitOS:nome') || 'Morador';
@@ -52,7 +57,7 @@ export function MoradorHome() {
         const apto = res.data?.apartamento;
         const bloco = res.data?.bloco;
         if (apto && bloco) {
-          setUnidadeLabel(`Apto ${apto} • Bloco ${bloco}`);
+          setUnidadeLabel(`Bloco ${bloco} · Apto ${apto}`);
         } else if (apto) {
           setUnidadeLabel(`Unidade ${apto}`);
         }
@@ -77,7 +82,22 @@ export function MoradorHome() {
       .get('/api/v1/avisos')
       .then((res) => {
         if (Array.isArray(res.data)) {
-          setAvisosRecentes(res.data.slice(0, 2));
+          const recentes: AvisoItem[] = res.data.slice(0, 2);
+          setAvisosRecentes(recentes);
+          recentes.forEach((a) => {
+            if (a.id) {
+              api.post(`/api/v1/avisos/${a.id}/visualizar`).catch(() => {});
+            }
+          });
+        }
+      })
+      .catch(() => {});
+
+    api
+      .get('/api/v1/notificacoes/nao-lidas/count')
+      .then((res) => {
+        if (typeof res.data === 'number') {
+          setUnreadCount(res.data);
         }
       })
       .catch(() => {});
@@ -114,16 +134,24 @@ export function MoradorHome() {
             <p className="font-mono text-dim text-[11px] m-0 mt-0.5 truncate">{unidadeLabel}</p>
           </div>
         </div>
-        <IconButton
-          label="Notificações"
-          onClick={() => navigate('/app/notificacoes')}
-          className="relative"
-        >
-          <Bell className="w-4 h-4" />
-          {avisosRecentes.length > 0 && (
-            <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-bad rounded-full" />
-          )}
-        </IconButton>
+        <div className="flex items-center gap-2 shrink-0">
+          <IconButton
+            label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
+            onClick={toggleTheme}
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </IconButton>
+          <IconButton
+            label="Notificações"
+            onClick={() => navigate('/app/notificacoes')}
+            className="relative"
+          >
+            <Bell className="w-4 h-4" />
+            {unreadCount > 0 && (
+              <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-bad rounded-full" />
+            )}
+          </IconButton>
+        </div>
       </header>
 
       {/* Card Boleto em Aberto */}

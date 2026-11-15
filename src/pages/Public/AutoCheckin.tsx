@@ -49,102 +49,116 @@ export function AutoCheckin() {
 
   if (status === 'success') {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-6 text-center">
-        <CheckCircle2 className="w-20 h-20 text-green-500 mb-6" />
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">Check-in Realizado!</h1>
-        <p className="text-gray-600 dark:text-gray-400">Aguarde um momento enquanto a portaria entra em contato com o morador para liberar seu acesso.</p>
+      <div className="min-h-screen bg-canvas flex flex-col items-center justify-center p-6 text-center text-ink">
+        <CheckCircle2 className="w-20 h-20 text-ok mb-6" />
+        <h1 className="text-2xl font-extrabold text-ink mb-2">Check-in realizado!</h1>
+        <p className="text-dim text-[14px] max-w-sm">
+          Aguarde um momento enquanto a portaria entra em contato com o morador para liberar seu acesso.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
-      <div className="bg-[#1e1b4b] p-6 text-center rounded-b-3xl shadow-lg">
-        <h1 className="text-white text-2xl font-bold">Auto Check-in</h1>
-        <p className="text-blue-200 mt-2 text-sm">Preencha seus dados para entrar.</p>
+    <div className="min-h-screen bg-canvas flex flex-col text-ink">
+      <div className="bg-brand p-6 text-center rounded-b-[24px]">
+        <h1 className="text-brand-ink text-2xl font-extrabold">Auto Check-in</h1>
+        <p className="text-brand-ink/85 mt-1 text-sm">Preencha seus dados para entrar.</p>
       </div>
 
-      <div className="flex-1 p-6 flex items-center justify-center -mt-8">
-        <form onSubmit={handleSubmit} className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 space-y-4">
-          
-          <div className="grid grid-cols-2 gap-4">
+      <div className="flex-1 p-6 flex items-center justify-center -mt-6">
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-md bg-surface border border-line rounded-[18px] p-6 space-y-4"
+        >
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
+              <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-dim mb-1.5">
+                Nome
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
+                  <User className="h-4 w-4 text-faint" />
                 </div>
                 <input
                   type="text"
                   required
-                  className="pl-10 w-full rounded-xl border-gray-200 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-gray-900 border focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all p-3"
+                  className="pl-9 w-full h-[46px] rounded-[12px] border border-line bg-canvas text-ink text-[14px] focus:border-brand focus:outline-none transition-colors px-3"
                   placeholder="Seu nome"
                   value={formData.nome}
-                  onChange={(e) => setFormData({...formData, nome: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sobrenome</label>
+              <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-dim mb-1.5">
+                Sobrenome
+              </label>
               <input
                 type="text"
                 required
-                className="w-full rounded-xl border-gray-200 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-gray-900 border focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all p-3"
+                className="w-full h-[46px] rounded-[12px] border border-line bg-canvas text-ink text-[14px] focus:border-brand focus:outline-none transition-colors px-3"
                 placeholder="Sobrenome"
                 value={formData.sobrenome}
-                onChange={(e) => setFormData({...formData, sobrenome: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, sobrenome: e.target.value })}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bloco</label>
+              <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-dim mb-1.5">
+                Bloco
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Building className="h-5 w-5 text-gray-400" />
+                  <Building className="h-4 w-4 text-faint" />
                 </div>
                 <input
                   type="text"
                   required
-                  className="pl-10 w-full rounded-xl border-gray-200 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-gray-900 border focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all p-3"
-                  placeholder="Ex: A"
+                  className="pl-9 w-full h-[46px] rounded-[12px] border border-line bg-canvas text-ink font-mono text-[14px] focus:border-brand focus:outline-none transition-colors px-3"
+                  placeholder="Ex: 03"
                   value={formData.blocoDestino}
-                  onChange={(e) => setFormData({...formData, blocoDestino: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, blocoDestino: e.target.value })}
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Apartamento</label>
+              <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-dim mb-1.5">
+                Apartamento
+              </label>
               <input
                 type="text"
                 required
-                className="w-full rounded-xl border-gray-200 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-gray-900 border focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all p-3"
+                className="w-full h-[46px] rounded-[12px] border border-line bg-canvas text-ink font-mono text-[14px] focus:border-brand focus:outline-none transition-colors px-3"
                 placeholder="Ex: 101"
                 value={formData.unidadeDestino}
-                onChange={(e) => setFormData({...formData, unidadeDestino: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, unidadeDestino: e.target.value })}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Placa do Veículo (Opcional)</label>
+            <label className="block text-[11px] font-bold uppercase tracking-[0.06em] text-dim mb-1.5">
+              Placa do veículo (Opcional)
+            </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Car className="h-5 w-5 text-gray-400" />
+                <Car className="h-4 w-4 text-faint" />
               </div>
               <input
                 type="text"
-                className="pl-10 w-full rounded-xl border-gray-200 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-gray-900 border focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all p-3 uppercase"
-                placeholder="ABC-1234"
+                className="pl-9 w-full h-[46px] rounded-[12px] border border-line bg-canvas text-ink font-mono text-[14px] focus:border-brand focus:outline-none transition-colors px-3 uppercase"
+                placeholder="ABC-1D23"
                 value={formData.placaVeiculo}
-                onChange={(e) => setFormData({...formData, placaVeiculo: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, placaVeiculo: e.target.value })}
               />
             </div>
           </div>
 
           {status === 'error' && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-sm text-center">
+            <div className="p-3 bg-bad-soft text-bad rounded-[12px] text-[12.5px] font-semibold text-center">
               {errorMessage}
             </div>
           )}
@@ -152,9 +166,9 @@ export function AutoCheckin() {
           <button
             type="submit"
             disabled={status === 'loading'}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-colors mt-4 disabled:opacity-50"
+            className="w-full h-[48px] bg-brand hover:bg-brand-hover text-brand-ink font-bold text-[14px] rounded-[12px] transition-colors mt-4 disabled:bg-disabled disabled:text-disabled-ink cursor-pointer"
           >
-            {status === 'loading' ? 'Enviando...' : 'Pedir Liberação na Portaria'}
+            {status === 'loading' ? 'Enviando...' : 'Pedir liberação na portaria'}
           </button>
         </form>
       </div>

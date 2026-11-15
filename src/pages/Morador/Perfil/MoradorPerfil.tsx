@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from '../../../services/api';
+import { QRCodeSVG } from 'qrcode.react';
 import {
   UserCircle2,
   Car,
@@ -19,6 +20,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import {
   Avatar,
   Badge,
+  BottomSheet,
   Button,
   GroupedList,
   IconChip,
@@ -34,6 +36,7 @@ export function MoradorPerfil() {
   const [apto, setApto] = useState('');
   const [bloco, setBloco] = useState('');
   const [foto, setFoto] = useState('');
+  const [qrOpen, setQrOpen] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -64,6 +67,8 @@ export function MoradorPerfil() {
     navigate('/login');
   };
 
+  const unidadeCode = `BLOCO-${bloco || 'UNICO'} • APTO-${apto || 'S/N'}`;
+
   return (
     <div className="bg-canvas min-h-full flex flex-col pb-6 text-ink">
       <PageHead eyebrow="Conta" title="Perfil" />
@@ -77,14 +82,14 @@ export function MoradorPerfil() {
             <Badge tone="brand">Morador</Badge>
           </div>
           <div className="font-mono text-[11px] font-semibold text-dim uppercase tracking-[0.05em] mt-2">
-            BLOCO-{bloco || 'UNICO'} • APTO-{apto || 'S/N'}
+            {unidadeCode}
           </div>
         </div>
 
         {/* Cartão Meu QR de Acesso */}
         <button
           type="button"
-          onClick={() => navigate('/app/qr')}
+          onClick={() => setQrOpen(true)}
           className="w-full text-left bg-brand-soft border border-brand/25 rounded-[14px] p-3.5 flex items-center justify-between gap-3 cursor-pointer hover:brightness-98 active:translate-y-[1px] transition-all focus-visible:outline-2 focus-visible:outline-brand"
         >
           <div className="flex items-center gap-3 min-w-0">
@@ -233,11 +238,37 @@ export function MoradorPerfil() {
         </section>
 
         {/* Sair */}
-        <Button variant="ghost-danger" fullWidth onClick={handleLogout}>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="w-full py-3 flex items-center justify-center gap-2 text-bad font-bold text-[13.5px] bg-transparent border-0 cursor-pointer hover:opacity-80 transition-opacity"
+        >
           <LogOut className="w-[18px] h-[18px]" />
           <span>Sair do aplicativo</span>
-        </Button>
+        </button>
       </div>
+
+      <BottomSheet
+        open={qrOpen}
+        onClose={() => setQrOpen(false)}
+        title="Meu QR de acesso"
+        subtitle="Apresente este código na portaria para identificação rápida da sua unidade."
+      >
+        <div className="flex flex-col items-center">
+          <div className="bg-white p-4 border border-line rounded-[16px] mb-3">
+            <QRCodeSVG
+              value={`MORADOR:${bloco || 'UNICO'}-${apto || 'S/N'}:${nome}`}
+              size={200}
+            />
+          </div>
+          <p className="font-mono text-[11.5px] font-bold text-dim uppercase tracking-[0.05em] mb-5">
+            {unidadeCode}
+          </p>
+          <Button variant="secondary" fullWidth onClick={() => setQrOpen(false)}>
+            Fechar
+          </Button>
+        </div>
+      </BottomSheet>
     </div>
   );
 }

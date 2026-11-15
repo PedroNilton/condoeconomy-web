@@ -55,29 +55,10 @@ function RotaCarregando() {
     <div
       role="status"
       aria-live="polite"
-      style={{
-        minHeight: '60vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '0.75rem',
-        color: 'var(--text-muted, #64748b)',
-        fontSize: '0.9rem',
-      }}
+      className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-[13.5px] text-dim"
     >
-      <div
-        style={{
-          width: '28px',
-          height: '28px',
-          borderRadius: '50%',
-          border: '3px solid rgba(59, 130, 246, 0.2)',
-          borderTopColor: '#3b82f6',
-          animation: 'spin 0.8s linear infinite',
-        }}
-      />
+      <div className="w-7 h-7 rounded-full border-[3px] border-brand-soft border-t-brand animate-spin" />
       <span>Carregando módulo...</span>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

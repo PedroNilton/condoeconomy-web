@@ -23,12 +23,15 @@ interface Reserva {
   horaInicio: string;
   horaFim: string;
   status: string;
+  motivoRejeicao?: string;
 }
 
 interface AreaComum {
   id: string;
   nome: string;
-  capacidade: number;
+  capacidadeMaxima?: number;
+  capacidade?: number;
+  taxaLocacao?: number;
 }
 
 export function MoradorReservas() {
@@ -95,6 +98,10 @@ export function MoradorReservas() {
     e.preventDefault();
     if (!selectedArea || !data || !inicio || !fim) {
       showToast('Preencha espaço, data e horário.');
+      return;
+    }
+    if (fim <= inicio) {
+      showToast('O horário de término deve ser posterior ao horário de início.');
       return;
     }
     setIsSubmitting(true);
@@ -181,7 +188,7 @@ export function MoradorReservas() {
                         {area.nome}
                       </div>
                       <div className="text-[11.5px] text-dim mt-0.5">
-                        Até {area.capacidade} pessoas
+                        Até {area.capacidadeMaxima ?? area.capacidade ?? 20} pessoas
                       </div>
                     </button>
                   );
@@ -350,7 +357,7 @@ export function MoradorReservas() {
         ) : (
           <div className="flex flex-col gap-3">
             {minhasReservas.map((res) => (
-              <ListCard key={res.id}>
+              <ListCard key={res.id} tone={res.status === 'REJEITADA' ? 'bad' : 'default'}>
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <IconChip tone="neutral" size="lg">
@@ -368,6 +375,11 @@ export function MoradorReservas() {
                   </div>
                   <div className="shrink-0">{getStatusBadge(res.status)}</div>
                 </div>
+                {res.status === 'REJEITADA' && res.motivoRejeicao && (
+                  <div className="mt-2.5 pt-2.5 border-t border-line text-[12px] text-bad leading-relaxed">
+                    <span className="font-bold">Motivo da recusa:</span> {res.motivoRejeicao}
+                  </div>
+                )}
               </ListCard>
             ))}
           </div>

@@ -68,7 +68,6 @@ export function DashboardLayout() {
     {
       to: '/portaria/reservas',
       label: 'Reservas',
-      badge: counts.reservasAdmin,
       icon: <CalendarDays className="w-5 h-5" />,
     },
     {
@@ -94,7 +93,7 @@ export function DashboardLayout() {
         onLogout={handleLogout}
       />
 
-      <main className="flex-1 pt-[4px] px-[18px] pb-[110px] flex flex-col gap-[22px]">
+      <main className="flex-1 pt-[4px] px-[18px] pb-[110px] flex flex-col gap-[22px] [&_.page-head]:px-0">
         <Outlet />
       </main>
 

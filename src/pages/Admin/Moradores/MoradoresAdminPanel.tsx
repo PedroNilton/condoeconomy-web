@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Users,
   UserPlus,
@@ -16,10 +17,11 @@ import {
   Download,
   FileSpreadsheet,
   AlertTriangle,
-  ShieldCheck
+  ShieldCheck,
 } from 'lucide-react';
 import api from '../../../services/api';
 import { sanitizarEntrada, contemAmeacas, EMAIL_SECURITY_REGEX } from '../../../utils/security';
+import { PageHead } from '../../../components/ui';
 
 interface UsuarioAdmin {
   id: string;
@@ -50,13 +52,14 @@ interface CondominioItem {
 }
 
 export function MoradoresAdminPanel() {
+  const navigate = useNavigate();
   const [usuarios, setUsuarios] = useState<UsuarioAdmin[]>([]);
   const [resumo, setResumo] = useState<ResumoUsuarios>({
     total: 0,
     ativos: 0,
     bloqueados: 0,
     moradores: 0,
-    portaria: 0
+    portaria: 0,
   });
   const [filtroPapel, setFiltroPapel] = useState<string>('');
   const [busca, setBusca] = useState<string>('');
@@ -96,7 +99,14 @@ export function MoradoresAdminPanel() {
     totalProcessados: number;
     sucessoCount: number;
     falhaCount: number;
-    importados: Array<{ id: string; nome: string; email: string; apartamento: string; bloco: string | null; telefone: string | null }>;
+    importados: Array<{
+      id: string;
+      nome: string;
+      email: string;
+      apartamento: string;
+      bloco: string | null;
+      telefone: string | null;
+    }>;
     erros: Array<{ linha: number; email: string; motivo: string }>;
   } | null>(null);
   const [erroImportacao, setErroImportacao] = useState('');
@@ -104,7 +114,9 @@ export function MoradoresAdminPanel() {
   const handleBaixarModeloCsv = async () => {
     try {
       const res = await api.get('/api/v1/admin/usuarios/modelo-csv', { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv;charset=utf-8;' }));
+      const url = window.URL.createObjectURL(
+        new Blob([res.data], { type: 'text/csv;charset=utf-8;' }),
+      );
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', 'modelo_importacao_moradores.csv');
@@ -113,7 +125,7 @@ export function MoradoresAdminPanel() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch {
-      alert('Não foi possível baixar o modelo CSV.');
+      setErroImportacao('Não foi possível baixar o modelo CSV.');
     }
   };
 
@@ -132,7 +144,7 @@ export function MoradoresAdminPanel() {
       formData.append('arquivo', arquivoCsv);
 
       const res = await api.post('/api/v1/admin/usuarios/importar-csv', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
 
       setResultadoImportacao(res.data);
@@ -171,7 +183,9 @@ export function MoradoresAdminPanel() {
         setResumo(res.data.resumo);
       }
     } catch (err: any) {
-      setErroLista(err.response?.data?.message || 'Não foi possível carregar os cadastros do condomínio.');
+      setErroLista(
+        err.response?.data?.message || 'Não foi possível carregar os cadastros do condomínio.',
+      );
     } finally {
       setLoading(false);
     }
@@ -183,7 +197,9 @@ export function MoradoresAdminPanel() {
       const res = await api.get('/api/v1/condominios');
       setCondominios(Array.isArray(res.data) ? res.data : []);
     } catch (err: any) {
-      setErroLista(err.response?.data?.message || 'Não foi possível carregar os condomínios cadastrados.');
+      setErroLista(
+        err.response?.data?.message || 'Não foi possível carregar os condomínios cadastrados.',
+      );
     } finally {
       setLoadingCondos(false);
     }
@@ -206,18 +222,18 @@ export function MoradoresAdminPanel() {
     setAcaoId(usuario.id);
     try {
       await api.put(`/api/v1/admin/usuarios/${usuario.id}/status`, {
-        ativo: !usuario.ativo
+        ativo: !usuario.ativo,
       });
       setUsuarios((prev) =>
-        prev.map((u) => (u.id === usuario.id ? { ...u, ativo: !u.ativo } : u))
+        prev.map((u) => (u.id === usuario.id ? { ...u, ativo: !u.ativo } : u)),
       );
       setResumo((prev) => ({
         ...prev,
         ativos: usuario.ativo ? prev.ativos - 1 : prev.ativos + 1,
-        bloqueados: usuario.ativo ? prev.bloqueados + 1 : prev.bloqueados - 1
+        bloqueados: usuario.ativo ? prev.bloqueados + 1 : prev.bloqueados - 1,
       }));
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Falha ao atualizar o status do usuário.');
+      setErroLista(err.response?.data?.message || 'Falha ao atualizar o status do usuário.');
     } finally {
       setAcaoId(null);
     }
@@ -273,7 +289,7 @@ export function MoradoresAdminPanel() {
         papel: novoPapel,
         telefone: telefoneLimpo || null,
         apartamento: aptoLimpo || null,
-        bloco: blocoLimpo || null
+        bloco: blocoLimpo || null,
       });
       setIsModalOpen(false);
       setNovoNome('');
@@ -309,7 +325,9 @@ export function MoradoresAdminPanel() {
     }
 
     if (!tenantLimpo || !/^[a-zA-Z0-9_]{1,63}$/.test(tenantLimpo)) {
-      setErroCondoForm('Tenant ID deve conter apenas letras, números e underlines (máx 63 caracteres).');
+      setErroCondoForm(
+        'Tenant ID deve conter apenas letras, números e underlines (máx 63 caracteres).',
+      );
       return;
     }
 
@@ -318,7 +336,7 @@ export function MoradoresAdminPanel() {
       await api.post('/api/v1/condominios', {
         nome: nomeLimpo,
         cnpj: cnpjLimpo,
-        tenantId: tenantLimpo
+        tenantId: tenantLimpo,
       });
       setIsCondoModalOpen(false);
       setCondoNome('');
@@ -335,28 +353,37 @@ export function MoradoresAdminPanel() {
   const formatarPapel = (papel: string) => {
     switch (papel) {
       case 'ROLE_MORADOR':
-        return { label: 'Morador', cor: 'bg-ds-primary/15 text-ds-primary border-ds-primary/25' };
+        return { label: 'Morador', cor: 'bg-brand-soft text-brand border-brand/25' };
       case 'ROLE_PORTEIRO':
-        return { label: 'Portaria', cor: 'bg-amber-500/15 text-amber-500 border-amber-500/25' };
+        return { label: 'Portaria', cor: 'bg-warn-soft text-warn border-warn/25' };
       case 'ROLE_SINDICO':
-        return { label: 'Síndico', cor: 'bg-emerald-500/15 text-emerald-500 border-emerald-500/25' };
+        return { label: 'Síndico', cor: 'bg-ok-soft text-ok border-ok/25' };
       default:
-        return { label: papel.replace('ROLE_', ''), cor: 'bg-ds-bg text-ds-dim border-ds-border' };
+        return { label: papel.replace('ROLE_', ''), cor: 'bg-canvas text-dim border-line' };
     }
   };
 
   return (
     <div className="space-y-4 py-2">
+      <div className="-mx-[18px] -mt-[10px]">
+        <PageHead
+          eyebrow="Administração"
+          title="Moradores & Equipe"
+          subtitle="Cadastros e revogação instantânea de acesso"
+          onBack={() => navigate('/admin')}
+        />
+      </div>
+
       {/* Abas para Super Admin */}
       {isSuperAdmin && (
-        <div className="flex bg-ds-card p-1 rounded-2xl border border-ds-border">
+        <div className="flex bg-surface p-1 rounded-2xl border border-line">
           <button
             type="button"
             onClick={() => setAbaPrincipal('usuarios')}
-            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
               abaPrincipal === 'usuarios'
-                ? 'bg-ds-primary text-ds-primary-ink shadow-sm'
-                : 'text-ds-dim hover:text-ds-text'
+                ? 'bg-brand text-brand-ink shadow-sm'
+                : 'text-dim hover:text-ink'
             }`}
           >
             Moradores & Equipe
@@ -364,10 +391,10 @@ export function MoradoresAdminPanel() {
           <button
             type="button"
             onClick={() => setAbaPrincipal('condominios')}
-            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer ${
               abaPrincipal === 'condominios'
-                ? 'bg-ds-primary text-ds-primary-ink shadow-sm'
-                : 'text-ds-dim hover:text-ds-text'
+                ? 'bg-brand text-brand-ink shadow-sm'
+                : 'text-dim hover:text-ink'
             }`}
           >
             Condomínios (Tenants)
@@ -377,18 +404,15 @@ export function MoradoresAdminPanel() {
 
       {abaPrincipal === 'usuarios' ? (
         <>
-          {/* Cabeçalho Usuários */}
-          <div className="bg-ds-card border border-ds-border rounded-2xl p-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-ds-primary/10 text-ds-primary flex items-center justify-center shrink-0">
-                <Users className="w-5 h-5" />
+          {/* Ações Rápidas Usuários */}
+          <div className="bg-surface border border-line rounded-2xl p-3.5 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-brand-soft text-brand flex items-center justify-center shrink-0">
+                <Users className="w-4 h-4" />
               </div>
-              <div className="min-w-0">
-                <h1 className="text-base font-extrabold text-ds-text m-0 truncate">Moradores & Equipe</h1>
-                <p className="text-xs text-ds-dim m-0 truncate">Cadastros e revogação instantânea de acesso</p>
-              </div>
+              <span className="text-xs font-bold text-ink truncate">Gerenciar acessos</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
                 onClick={() => {
@@ -397,9 +421,9 @@ export function MoradoresAdminPanel() {
                   setErroImportacao('');
                   setIsImportModalOpen(true);
                 }}
-                className="px-3 py-2 rounded-xl bg-ds-bg border border-ds-border text-ds-text text-xs font-bold flex items-center gap-1.5 hover:bg-ds-card transition-all shrink-0 cursor-pointer shadow-sm"
+                className="px-3 py-2 rounded-xl bg-canvas border border-line text-ink text-xs font-bold flex items-center gap-1.5 hover:bg-surface transition-all shrink-0 cursor-pointer"
               >
-                <Upload className="w-3.5 h-3.5 text-ds-primary" />
+                <Upload className="w-3.5 h-3.5 text-brand" />
                 <span>Importar CSV</span>
               </button>
               <button
@@ -408,7 +432,7 @@ export function MoradoresAdminPanel() {
                   setErroForm('');
                   setIsModalOpen(true);
                 }}
-                className="px-3 py-2 rounded-xl bg-ds-primary text-ds-primary-ink text-xs font-bold flex items-center gap-1.5 hover:brightness-110 transition-all shrink-0 cursor-pointer shadow-sm"
+                className="px-3 py-2 rounded-xl bg-brand text-brand-ink text-xs font-bold flex items-center gap-1.5 hover:bg-brand-hover transition-all shrink-0 cursor-pointer"
               >
                 <UserPlus className="w-3.5 h-3.5" />
                 <span>Novo</span>
@@ -418,31 +442,31 @@ export function MoradoresAdminPanel() {
 
           {/* KPIs */}
           <div className="grid grid-cols-3 gap-2.5">
-            <div className="bg-ds-card border border-ds-border rounded-xl p-3 text-center">
-              <p className="text-[11px] font-semibold text-ds-dim m-0">Ativos</p>
-              <p className="text-lg font-extrabold text-emerald-500 m-0 mt-0.5">{resumo.ativos}</p>
+            <div className="bg-surface border border-line rounded-xl p-3 text-center">
+              <p className="text-[11px] font-semibold text-dim m-0">Ativos</p>
+              <p className="font-mono text-lg font-extrabold text-ok m-0 mt-0.5">{resumo.ativos}</p>
             </div>
-            <div className="bg-ds-card border border-ds-border rounded-xl p-3 text-center">
-              <p className="text-[11px] font-semibold text-ds-dim m-0">Moradores</p>
-              <p className="text-lg font-extrabold text-ds-text m-0 mt-0.5">{resumo.moradores}</p>
+            <div className="bg-surface border border-line rounded-xl p-3 text-center">
+              <p className="text-[11px] font-semibold text-dim m-0">Moradores</p>
+              <p className="font-mono text-lg font-extrabold text-ink m-0 mt-0.5">{resumo.moradores}</p>
             </div>
-            <div className="bg-ds-card border border-ds-border rounded-xl p-3 text-center">
-              <p className="text-[11px] font-semibold text-ds-dim m-0">Portaria</p>
-              <p className="text-lg font-extrabold text-amber-500 m-0 mt-0.5">{resumo.portaria}</p>
+            <div className="bg-surface border border-line rounded-xl p-3 text-center">
+              <p className="text-[11px] font-semibold text-dim m-0">Portaria</p>
+              <p className="font-mono text-lg font-extrabold text-warn m-0 mt-0.5">{resumo.portaria}</p>
             </div>
           </div>
 
           {/* Busca e Filtros */}
           <form onSubmit={handleBuscar} className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 text-ds-dim absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-faint absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
                 placeholder="Buscar nome, e-mail ou apto..."
                 maxLength={80}
-                className="w-full pl-9 pr-3 py-2 rounded-xl bg-ds-card border border-ds-border text-xs text-ds-text placeholder:text-ds-dim focus:outline-none focus:ring-2 focus:ring-ds-primary"
+                className="w-full pl-9 pr-3 py-2 rounded-xl bg-surface border border-line text-xs text-ink placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-brand"
               />
             </div>
             <select
@@ -451,7 +475,7 @@ export function MoradoresAdminPanel() {
                 setFiltroPapel(e.target.value);
                 carregarUsuarios(e.target.value, busca);
               }}
-              className="px-3 py-2 rounded-xl bg-ds-card border border-ds-border text-xs text-ds-text font-semibold focus:outline-none focus:ring-2 focus:ring-ds-primary"
+              className="px-3 py-2 rounded-xl bg-surface border border-line text-xs text-ink font-semibold focus:outline-none focus:ring-2 focus:ring-brand"
             >
               <option value="">Todos os Papéis</option>
               <option value="ROLE_MORADOR">Moradores</option>
@@ -462,7 +486,7 @@ export function MoradoresAdminPanel() {
 
           {/* Erro */}
           {erroLista && (
-            <div className="p-3 bg-ds-danger-dim border border-ds-danger/25 rounded-xl flex items-center gap-2 text-xs text-ds-danger">
+            <div className="p-3 bg-bad-soft border border-bad/25 rounded-xl flex items-center gap-2 text-xs text-bad">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{erroLista}</span>
             </div>
@@ -470,15 +494,17 @@ export function MoradoresAdminPanel() {
 
           {/* Lista de Usuários */}
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-2 text-ds-dim">
-              <Loader2 className="w-6 h-6 animate-spin text-ds-primary" />
+            <div className="flex flex-col items-center justify-center py-12 gap-2 text-dim">
+              <Loader2 className="w-6 h-6 animate-spin text-brand" />
               <span className="text-xs">Carregando cadastros...</span>
             </div>
           ) : usuarios.length === 0 ? (
-            <div className="bg-ds-card border border-ds-border rounded-2xl p-8 text-center">
-              <Users className="w-8 h-8 text-ds-dim mx-auto mb-2 opacity-50" />
-              <p className="text-sm font-bold text-ds-text m-0">Nenhum cadastro encontrado</p>
-              <p className="text-xs text-ds-dim mt-1 m-0">Cadastre moradores e funcionários da portaria.</p>
+            <div className="bg-surface border border-line rounded-2xl p-8 text-center">
+              <Users className="w-8 h-8 text-faint mx-auto mb-2" />
+              <p className="text-sm font-bold text-ink m-0">Nenhum cadastro encontrado</p>
+              <p className="text-xs text-dim mt-1 m-0">
+                Cadastre moradores e funcionários da portaria.
+              </p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -487,25 +513,27 @@ export function MoradoresAdminPanel() {
                 return (
                   <div
                     key={u.id}
-                    className={`bg-ds-card border rounded-2xl p-3.5 transition-all ${
-                      u.ativo ? 'border-ds-border' : 'border-ds-danger/30 opacity-75'
+                    className={`bg-surface border rounded-2xl p-3.5 transition-all ${
+                      u.ativo ? 'border-line' : 'border-bad/30 opacity-75'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-bold text-ds-text truncate">{u.nome}</span>
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${badge.cor}`}>
+                          <span className="text-sm font-bold text-ink truncate">{u.nome}</span>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${badge.cor}`}
+                          >
                             {badge.label}
                           </span>
                           {!u.ativo && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-ds-danger-dim text-ds-danger border border-ds-danger/25">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-bad-soft text-bad border border-bad/25">
                               Bloqueado
                             </span>
                           )}
                         </div>
 
-                        <div className="mt-1.5 space-y-1 text-[11.5px] text-ds-dim">
+                        <div className="mt-1.5 space-y-1 text-[11.5px] text-dim">
                           <div className="flex items-center gap-1.5 truncate">
                             <Mail className="w-3.5 h-3.5 shrink-0" />
                             <span className="truncate">{u.email}</span>
@@ -528,32 +556,34 @@ export function MoradoresAdminPanel() {
                         </div>
                       </div>
 
-                      {u.papel !== 'ROLE_SINDICO' && u.papel !== 'ROLE_ADMIN' && u.papel !== 'ROLE_SUPER_ADMIN' && (
-                        <button
-                          type="button"
-                          disabled={acaoId === u.id}
-                          onClick={() => handleAlternarStatus(u)}
-                          className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border flex items-center gap-1 shrink-0 transition-all cursor-pointer disabled:opacity-50 ${
-                            u.ativo
-                              ? 'bg-ds-bg text-ds-danger border-ds-danger/30 hover:bg-ds-danger-dim'
-                              : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/20'
-                          }`}
-                        >
-                          {acaoId === u.id ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          ) : u.ativo ? (
-                            <>
-                              <Ban className="w-3.5 h-3.5" />
-                              <span>Bloquear</span>
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Ativar</span>
-                            </>
-                          )}
-                        </button>
-                      )}
+                      {u.papel !== 'ROLE_SINDICO' &&
+                        u.papel !== 'ROLE_ADMIN' &&
+                        u.papel !== 'ROLE_SUPER_ADMIN' && (
+                          <button
+                            type="button"
+                            disabled={acaoId === u.id}
+                            onClick={() => handleAlternarStatus(u)}
+                            className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border flex items-center gap-1 shrink-0 transition-all cursor-pointer disabled:opacity-50 ${
+                              u.ativo
+                                ? 'bg-canvas text-bad border-bad/30 hover:bg-bad-soft'
+                                : 'bg-ok-soft text-ok border-ok/30 hover:opacity-90'
+                            }`}
+                          >
+                            {acaoId === u.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : u.ativo ? (
+                              <>
+                                <Ban className="w-3.5 h-3.5" />
+                                <span>Bloquear</span>
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Ativar</span>
+                              </>
+                            )}
+                          </button>
+                        )}
                     </div>
                   </div>
                 );
@@ -564,14 +594,18 @@ export function MoradoresAdminPanel() {
       ) : (
         /* Aba de Condomínios (Tenants) */
         <>
-          <div className="bg-ds-card border border-ds-border rounded-2xl p-4 flex items-center justify-between gap-3">
+          <div className="bg-surface border border-line rounded-2xl p-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-brand-soft text-brand flex items-center justify-center shrink-0">
                 <Building2 className="w-5 h-5" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-base font-extrabold text-ds-text m-0 truncate">Condomínios (Multi-Tenant)</h1>
-                <p className="text-xs text-ds-dim m-0 truncate">Gestão de condomínios integrados à plataforma</p>
+                <h2 className="text-base font-extrabold text-ink m-0 truncate">
+                  Condomínios (Multi-Tenant)
+                </h2>
+                <p className="text-xs text-dim m-0 truncate">
+                  Gestão de condomínios integrados à plataforma
+                </p>
               </div>
             </div>
             <button
@@ -580,7 +614,7 @@ export function MoradoresAdminPanel() {
                 setErroCondoForm('');
                 setIsCondoModalOpen(true);
               }}
-              className="px-3 py-2 rounded-xl bg-purple-600 text-white text-xs font-bold flex items-center gap-1.5 hover:brightness-110 transition-all shrink-0 cursor-pointer"
+              className="px-3 py-2 rounded-xl bg-brand text-brand-ink text-xs font-bold flex items-center gap-1.5 hover:bg-brand-hover transition-all shrink-0 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Novo Condomínio</span>
@@ -588,29 +622,37 @@ export function MoradoresAdminPanel() {
           </div>
 
           {loadingCondos ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-2 text-ds-dim">
-              <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+            <div className="flex flex-col items-center justify-center py-12 gap-2 text-dim">
+              <Loader2 className="w-6 h-6 animate-spin text-brand" />
               <span className="text-xs">Carregando condomínios...</span>
             </div>
           ) : condominios.length === 0 ? (
-            <div className="bg-ds-card border border-ds-border rounded-2xl p-8 text-center">
-              <Building2 className="w-8 h-8 text-ds-dim mx-auto mb-2 opacity-50" />
-              <p className="text-sm font-bold text-ds-text m-0">Nenhum condomínio cadastrado</p>
-              <p className="text-xs text-ds-dim mt-1 m-0">Provisione o primeiro condomínio na plataforma.</p>
+            <div className="bg-surface border border-line rounded-2xl p-8 text-center">
+              <Building2 className="w-8 h-8 text-faint mx-auto mb-2" />
+              <p className="text-sm font-bold text-ink m-0">Nenhum condomínio cadastrado</p>
+              <p className="text-xs text-dim mt-1 m-0">
+                Provisione o primeiro condomínio na plataforma.
+              </p>
             </div>
           ) : (
             <div className="space-y-2">
               {condominios.map((c) => (
-                <div key={c.id} className="bg-ds-card border border-ds-border rounded-2xl p-4">
+                <div key={c.id} className="bg-surface border border-line rounded-2xl p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-bold text-ds-text m-0">{c.nome}</h3>
-                      <p className="text-xs text-ds-dim m-0 mt-0.5">CNPJ: {c.cnpj}</p>
-                      <p className="text-[11px] font-mono text-purple-400 m-0 mt-1">Tenant ID: {c.tenantId}</p>
+                      <h3 className="text-sm font-bold text-ink m-0">{c.nome}</h3>
+                      <p className="text-xs text-dim m-0 mt-0.5">CNPJ: {c.cnpj}</p>
+                      <p className="text-[11px] font-mono text-brand m-0 mt-1">
+                        Tenant ID: {c.tenantId}
+                      </p>
                     </div>
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
-                      c.ativo ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' : 'bg-rose-500/10 text-rose-500 border-rose-500/30'
-                    }`}>
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                        c.ativo
+                          ? 'bg-ok-soft text-ok border-ok/30'
+                          : 'bg-bad-soft text-bad border-bad/30'
+                      }`}
+                    >
                       {c.ativo ? 'Ativo' : 'Inativo'}
                     </span>
                   </div>
@@ -624,23 +666,25 @@ export function MoradoresAdminPanel() {
       {/* Modal: Cadastrar Morador / Porteiro */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-ds-card border border-ds-border rounded-2xl w-full max-w-md p-5 space-y-4">
+          <div className="bg-surface border border-line rounded-2xl w-full max-w-md p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-bold text-ds-text m-0">Novo Cadastro</h2>
-                <p className="text-xs text-ds-dim m-0 mt-0.5">Adicionar morador ou membro da equipe</p>
+                <h2 className="text-base font-bold text-ink m-0">Novo Cadastro</h2>
+                <p className="text-xs text-dim m-0 mt-0.5">
+                  Adicionar morador ou membro da equipe
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-ds-bg text-ds-dim hover:text-ds-text flex items-center justify-center border border-ds-border cursor-pointer"
+                className="w-8 h-8 rounded-full bg-canvas text-dim hover:text-ink flex items-center justify-center border border-line cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {erroForm && (
-              <div className="p-3 bg-ds-danger-dim border border-ds-danger/25 rounded-xl flex items-center gap-2 text-xs text-ds-danger">
+              <div className="p-3 bg-bad-soft border border-bad/25 rounded-xl flex items-center gap-2 text-xs text-bad">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{erroForm}</span>
               </div>
@@ -648,15 +692,15 @@ export function MoradoresAdminPanel() {
 
             <form onSubmit={handleCadastrarUsuario} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold mb-1 text-ds-text">Tipo de Acesso</label>
+                <label className="block text-xs font-semibold mb-1 text-ink">Tipo de Acesso</label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setNovoPapel('ROLE_MORADOR')}
                     className={`py-2 rounded-xl text-xs font-bold border cursor-pointer transition-all ${
                       novoPapel === 'ROLE_MORADOR'
-                        ? 'bg-ds-primary text-ds-primary-ink border-ds-primary'
-                        : 'bg-ds-bg text-ds-dim border-ds-border'
+                        ? 'bg-brand text-brand-ink border-brand'
+                        : 'bg-canvas text-dim border-line'
                     }`}
                   >
                     Morador
@@ -666,8 +710,8 @@ export function MoradoresAdminPanel() {
                     onClick={() => setNovoPapel('ROLE_PORTEIRO')}
                     className={`py-2 rounded-xl text-xs font-bold border cursor-pointer transition-all ${
                       novoPapel === 'ROLE_PORTEIRO'
-                        ? 'bg-amber-500 text-black border-amber-500'
-                        : 'bg-ds-bg text-ds-dim border-ds-border'
+                        ? 'bg-warn-soft text-warn border-warn'
+                        : 'bg-canvas text-dim border-line'
                     }`}
                   >
                     Portaria / Recepção
@@ -676,7 +720,7 @@ export function MoradoresAdminPanel() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1 text-ds-text">Nome Completo</label>
+                <label className="block text-xs font-semibold mb-1 text-ink">Nome Completo</label>
                 <input
                   type="text"
                   value={novoNome}
@@ -684,12 +728,12 @@ export function MoradoresAdminPanel() {
                   placeholder="Ex: Carlos Eduardo Silva"
                   maxLength={100}
                   required
-                  className="w-full px-3 py-2 rounded-xl bg-ds-bg border border-ds-border text-sm text-ds-text focus:outline-none focus:ring-2 focus:ring-ds-primary"
+                  className="w-full px-3 py-2 rounded-xl bg-canvas border border-line text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1 text-ds-text">E-mail</label>
+                <label className="block text-xs font-semibold mb-1 text-ink">E-mail</label>
                 <input
                   type="email"
                   value={novoEmail}
@@ -697,12 +741,12 @@ export function MoradoresAdminPanel() {
                   placeholder="carlos@exemplo.com"
                   maxLength={120}
                   required
-                  className="w-full px-3 py-2 rounded-xl bg-ds-bg border border-ds-border text-sm text-ds-text focus:outline-none focus:ring-2 focus:ring-ds-primary"
+                  className="w-full px-3 py-2 rounded-xl bg-canvas border border-line text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1 text-ds-text">Senha Inicial</label>
+                <label className="block text-xs font-semibold mb-1 text-ink">Senha Inicial</label>
                 <input
                   type="password"
                   value={novaSenha}
@@ -710,14 +754,16 @@ export function MoradoresAdminPanel() {
                   placeholder="Mínimo 6 caracteres"
                   maxLength={50}
                   required
-                  className="w-full px-3 py-2 rounded-xl bg-ds-bg border border-ds-border text-sm text-ds-text focus:outline-none focus:ring-2 focus:ring-ds-primary"
+                  className="w-full px-3 py-2 rounded-xl bg-canvas border border-line text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand"
                 />
               </div>
 
               {novoPapel === 'ROLE_MORADOR' && (
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-xs font-semibold mb-1 text-ds-text">Unidade / Apto</label>
+                    <label className="block text-xs font-semibold mb-1 text-ink">
+                      Unidade / Apto
+                    </label>
                     <input
                       type="text"
                       value={novoApartamento}
@@ -725,32 +771,36 @@ export function MoradoresAdminPanel() {
                       placeholder="Ex: 302"
                       maxLength={20}
                       required
-                      className="w-full px-3 py-2 rounded-xl bg-ds-bg border border-ds-border text-sm text-ds-text focus:outline-none focus:ring-2 focus:ring-ds-primary"
+                      className="w-full px-3 py-2 rounded-xl bg-canvas border border-line text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold mb-1 text-ds-text">Bloco / Torre</label>
+                    <label className="block text-xs font-semibold mb-1 text-ink">
+                      Bloco / Torre
+                    </label>
                     <input
                       type="text"
                       value={novoBloco}
                       onChange={(e) => setNovoBloco(e.target.value)}
                       placeholder="Ex: A"
                       maxLength={20}
-                      className="w-full px-3 py-2 rounded-xl bg-ds-bg border border-ds-border text-sm text-ds-text focus:outline-none focus:ring-2 focus:ring-ds-primary"
+                      className="w-full px-3 py-2 rounded-xl bg-canvas border border-line text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand"
                     />
                   </div>
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-semibold mb-1 text-ds-text">Telefone / WhatsApp (opcional)</label>
+                <label className="block text-xs font-semibold mb-1 text-ink">
+                  Telefone / WhatsApp (opcional)
+                </label>
                 <input
                   type="tel"
                   value={novoTelefone}
                   onChange={(e) => setNovoTelefone(e.target.value)}
                   placeholder="(11) 99999-9999"
                   maxLength={30}
-                  className="w-full px-3 py-2 rounded-xl bg-ds-bg border border-ds-border text-sm text-ds-text focus:outline-none focus:ring-2 focus:ring-ds-primary"
+                  className="w-full px-3 py-2 rounded-xl bg-canvas border border-line text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand"
                 />
               </div>
 
@@ -758,14 +808,14 @@ export function MoradoresAdminPanel() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-ds-border text-xs font-bold text-ds-dim hover:text-ds-text cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl border border-line text-xs font-bold text-dim hover:text-ink cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={salvando}
-                  className="flex-1 py-2.5 rounded-xl bg-ds-primary text-ds-primary-ink text-xs font-bold flex items-center justify-center gap-1.5 hover:brightness-110 disabled:opacity-60 cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl bg-brand text-brand-ink text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-brand-hover disabled:opacity-60 cursor-pointer"
                 >
                   {salvando ? (
                     <>
@@ -785,23 +835,25 @@ export function MoradoresAdminPanel() {
       {/* Modal: Provisionar Condomínio (Super Admin) */}
       {isCondoModalOpen && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-ds-card border border-ds-border rounded-2xl w-full max-w-md p-5 space-y-4">
+          <div className="bg-surface border border-line rounded-2xl w-full max-w-md p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-bold text-ds-text m-0">Novo Condomínio</h2>
-                <p className="text-xs text-ds-dim m-0 mt-0.5">Provisionar novo tenant na plataforma</p>
+                <h2 className="text-base font-bold text-ink m-0">Novo Condomínio</h2>
+                <p className="text-xs text-dim m-0 mt-0.5">
+                  Provisionar novo tenant na plataforma
+                </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCondoModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-ds-bg text-ds-dim hover:text-ds-text flex items-center justify-center border border-ds-border cursor-pointer"
+                className="w-8 h-8 rounded-full bg-canvas text-dim hover:text-ink flex items-center justify-center border border-line cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {erroCondoForm && (
-              <div className="p-3 bg-ds-danger-dim border border-ds-danger/25 rounded-xl flex items-center gap-2 text-xs text-ds-danger">
+              <div className="p-3 bg-bad-soft border border-bad/25 rounded-xl flex items-center gap-2 text-xs text-bad">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{erroCondoForm}</span>
               </div>
@@ -809,7 +861,9 @@ export function MoradoresAdminPanel() {
 
             <form onSubmit={handleCadastrarCondominio} className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold mb-1 text-ds-text">Nome do Condomínio</label>
+                <label className="block text-xs font-semibold mb-1 text-ink">
+                  Nome do Condomínio
+                </label>
                 <input
                   type="text"
                   value={condoNome}
@@ -817,12 +871,12 @@ export function MoradoresAdminPanel() {
                   placeholder="Ex: Condomínio Residencial Parque Solar"
                   maxLength={100}
                   required
-                  className="w-full px-3 py-2 rounded-xl bg-ds-bg border border-ds-border text-sm text-ds-text focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 rounded-xl bg-canvas border border-line text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1 text-ds-text">CNPJ</label>
+                <label className="block text-xs font-semibold mb-1 text-ink">CNPJ</label>
                 <input
                   type="text"
                   value={condoCnpj}
@@ -830,12 +884,14 @@ export function MoradoresAdminPanel() {
                   placeholder="00.000.000/0001-00"
                   maxLength={20}
                   required
-                  className="w-full px-3 py-2 rounded-xl bg-ds-bg border border-ds-border text-sm text-ds-text focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-3 py-2 rounded-xl bg-canvas border border-line text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold mb-1 text-ds-text">Tenant ID (Identificador)</label>
+                <label className="block text-xs font-semibold mb-1 text-ink">
+                  Tenant ID (Identificador)
+                </label>
                 <input
                   type="text"
                   value={condoTenantId}
@@ -843,23 +899,25 @@ export function MoradoresAdminPanel() {
                   placeholder="ex: parque_solar"
                   maxLength={63}
                   required
-                  className="w-full px-3 py-2 rounded-xl bg-ds-bg border border-ds-border text-sm text-ds-text focus:outline-none focus:ring-2 focus:ring-purple-500 font-mono"
+                  className="w-full px-3 py-2 rounded-xl bg-canvas border border-line text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand font-mono"
                 />
-                <p className="text-[11px] text-ds-dim mt-1">Apenas letras, números e underline. Sem espaços ou acentos.</p>
+                <p className="text-[11px] text-dim mt-1">
+                  Apenas letras, números e underline. Sem espaços ou acentos.
+                </p>
               </div>
 
               <div className="flex gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsCondoModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-ds-border text-xs font-bold text-ds-dim hover:text-ds-text cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl border border-line text-xs font-bold text-dim hover:text-ink cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={salvandoCondo}
-                  className="flex-1 py-2.5 rounded-xl bg-purple-600 text-white text-xs font-bold flex items-center justify-center gap-1.5 hover:brightness-110 disabled:opacity-60 cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl bg-brand text-brand-ink text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-brand-hover disabled:opacity-60 cursor-pointer"
                 >
                   {salvandoCondo ? (
                     <>
@@ -879,16 +937,18 @@ export function MoradoresAdminPanel() {
       {/* Modal de Importação em Lote via CSV */}
       {isImportModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-ds-card border border-ds-border rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-surface border border-line rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Header Modal */}
-            <div className="p-5 border-b border-ds-border flex items-center justify-between shrink-0 bg-ds-bg/40">
+            <div className="p-5 border-b border-line flex items-center justify-between shrink-0 bg-canvas">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-ds-primary/10 border border-ds-primary/20 flex items-center justify-center text-ds-primary">
+                <div className="w-10 h-10 rounded-xl bg-brand-soft border border-brand/20 flex items-center justify-center text-brand">
                   <FileSpreadsheet className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-extrabold text-ds-text m-0">Importação em Lote de Moradores</h3>
-                  <p className="text-xs text-ds-dim font-medium m-0">
+                  <h3 className="text-base font-extrabold text-ink m-0">
+                    Importação em Lote de Moradores
+                  </h3>
+                  <p className="text-xs text-dim font-medium m-0">
                     Cadastre múltiplos apartamentos e moradores enviando uma planilha CSV
                   </p>
                 </div>
@@ -896,7 +956,7 @@ export function MoradoresAdminPanel() {
               <button
                 type="button"
                 onClick={() => setIsImportModalOpen(false)}
-                className="w-8 h-8 rounded-lg border border-ds-border flex items-center justify-center text-ds-dim hover:text-ds-text hover:bg-ds-bg transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-lg border border-line flex items-center justify-center text-dim hover:text-ink hover:bg-surface transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -905,29 +965,34 @@ export function MoradoresAdminPanel() {
             {/* Conteúdo com scroll */}
             <div className="p-6 overflow-y-auto space-y-5 flex-1">
               {/* Card de Instruções e Download do Modelo */}
-              <div className="bg-ds-bg p-4 rounded-xl border border-ds-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="bg-canvas p-4 rounded-xl border border-line flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-bold text-ds-text m-0">Modelo Padrão de Planilha</p>
-                  <p className="text-[11.5px] text-ds-dim mt-0.5 m-0">
-                    Colunas aceitas: <span className="font-mono text-ds-text font-semibold">Nome, Email, Apartamento, Bloco, Telefone, SenhaProvisoria</span>
+                  <p className="text-xs font-bold text-ink m-0">Modelo Padrão de Planilha</p>
+                  <p className="text-[11.5px] text-dim mt-0.5 m-0">
+                    Colunas aceitas:{' '}
+                    <span className="font-mono text-ink font-semibold">
+                      Nome, Email, Apartamento, Bloco, Telefone, SenhaProvisoria
+                    </span>
                   </p>
-                  <div className="flex items-center gap-1.5 text-[11px] text-emerald-500 font-medium mt-1">
+                  <div className="flex items-center gap-1.5 text-[11px] text-ok font-medium mt-1">
                     <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Higienização e sanitização contra injeção de fórmulas CSV (CWE-1236) ativas.</span>
+                    <span>
+                      Higienização e sanitização contra injeção de fórmulas CSV (CWE-1236) ativas.
+                    </span>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={handleBaixarModeloCsv}
-                  className="px-3 py-1.5 rounded-lg bg-ds-card border border-ds-border text-xs font-bold text-ds-text hover:bg-ds-card/80 transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm"
+                  className="px-3 py-1.5 rounded-lg bg-surface border border-line text-xs font-bold text-ink hover:bg-canvas transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
                 >
-                  <Download className="w-3.5 h-3.5 text-ds-primary" />
+                  <Download className="w-3.5 h-3.5 text-brand" />
                   <span>Baixar Modelo CSV</span>
                 </button>
               </div>
 
               {erroImportacao && (
-                <div className="p-3 bg-ds-danger-dim border border-ds-danger/20 rounded-xl flex items-center gap-2 text-xs text-ds-danger">
+                <div className="p-3 bg-bad-soft border border-bad/20 rounded-xl flex items-center gap-2 text-xs text-bad">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{erroImportacao}</span>
                 </div>
@@ -936,7 +1001,7 @@ export function MoradoresAdminPanel() {
               {/* Área de Seleção do Arquivo */}
               {!resultadoImportacao && (
                 <form onSubmit={handleImportarCsv} className="space-y-4">
-                  <div className="border-2 border-dashed border-ds-border hover:border-ds-primary/60 rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-colors bg-ds-bg/30">
+                  <div className="border-2 border-dashed border-line hover:border-brand rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-colors bg-canvas">
                     <input
                       type="file"
                       accept=".csv,text/csv"
@@ -952,20 +1017,25 @@ export function MoradoresAdminPanel() {
                       htmlFor="input-csv-moradores"
                       className="cursor-pointer flex flex-col items-center gap-2 w-full"
                     >
-                      <div className="w-12 h-12 rounded-2xl bg-ds-primary/10 flex items-center justify-center text-ds-primary">
+                      <div className="w-12 h-12 rounded-2xl bg-brand-soft flex items-center justify-center text-brand">
                         <Upload className="w-6 h-6" />
                       </div>
                       {arquivoCsv ? (
                         <div>
-                          <p className="text-sm font-bold text-ds-text m-0">{arquivoCsv.name}</p>
-                          <p className="text-xs text-ds-dim mt-0.5 m-0 font-mono">
-                            {(arquivoCsv.size / 1024).toFixed(1)} KB • Arquivo CSV pronto para processamento
+                          <p className="text-sm font-bold text-ink m-0">{arquivoCsv.name}</p>
+                          <p className="text-xs text-dim mt-0.5 m-0 font-mono">
+                            {(arquivoCsv.size / 1024).toFixed(1)} KB • Arquivo CSV pronto para
+                            processamento
                           </p>
                         </div>
                       ) : (
                         <div>
-                          <p className="text-sm font-bold text-ds-text m-0">Clique para selecionar seu arquivo CSV</p>
-                          <p className="text-xs text-ds-dim mt-0.5 m-0">ou arraste e solte o arquivo aqui</p>
+                          <p className="text-sm font-bold text-ink m-0">
+                            Clique para selecionar seu arquivo CSV
+                          </p>
+                          <p className="text-xs text-dim mt-0.5 m-0">
+                            ou arraste e solte o arquivo aqui
+                          </p>
                         </div>
                       )}
                     </label>
@@ -975,14 +1045,14 @@ export function MoradoresAdminPanel() {
                     <button
                       type="button"
                       onClick={() => setIsImportModalOpen(false)}
-                      className="px-4 py-2.5 rounded-xl border border-ds-border text-xs font-bold text-ds-text hover:bg-ds-bg transition-colors cursor-pointer"
+                      className="px-4 py-2.5 rounded-xl border border-line text-xs font-bold text-ink hover:bg-canvas transition-colors cursor-pointer"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
                       disabled={!arquivoCsv || importando}
-                      className="px-5 py-2.5 rounded-xl bg-ds-primary text-ds-primary-ink text-xs font-bold flex items-center gap-1.5 hover:brightness-110 disabled:opacity-50 transition-all cursor-pointer shadow-sm"
+                      className="px-5 py-2.5 rounded-xl bg-brand text-brand-ink text-xs font-bold flex items-center gap-1.5 hover:bg-brand-hover disabled:opacity-50 transition-all cursor-pointer"
                     >
                       {importando ? (
                         <>
@@ -1005,36 +1075,52 @@ export function MoradoresAdminPanel() {
                 <div className="space-y-4 animate-in fade-in duration-200">
                   {/* Cards de Resumo */}
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="bg-ds-bg p-3.5 rounded-xl border border-ds-border text-center">
-                      <p className="text-[10.5px] font-bold text-ds-dim uppercase tracking-wider m-0">Linhas Lidas</p>
-                      <p className="text-lg font-bold text-ds-text mt-1 m-0">{resultadoImportacao.totalProcessados}</p>
+                    <div className="bg-canvas p-3.5 rounded-xl border border-line text-center">
+                      <p className="text-[10.5px] font-bold text-dim uppercase tracking-wider m-0">
+                        Linhas Lidas
+                      </p>
+                      <p className="text-lg font-bold text-ink mt-1 m-0">
+                        {resultadoImportacao.totalProcessados}
+                      </p>
                     </div>
-                    <div className="bg-emerald-500/10 p-3.5 rounded-xl border border-emerald-500/20 text-center">
-                      <p className="text-[10.5px] font-bold text-emerald-500 uppercase tracking-wider m-0">Cadastrados</p>
-                      <p className="text-lg font-bold text-emerald-500 mt-1 m-0">{resultadoImportacao.sucessoCount}</p>
+                    <div className="bg-ok-soft p-3.5 rounded-xl border border-ok/20 text-center">
+                      <p className="text-[10.5px] font-bold text-ok uppercase tracking-wider m-0">
+                        Cadastrados
+                      </p>
+                      <p className="text-lg font-bold text-ok mt-1 m-0">
+                        {resultadoImportacao.sucessoCount}
+                      </p>
                     </div>
-                    <div className="bg-amber-500/10 p-3.5 rounded-xl border border-amber-500/20 text-center">
-                      <p className="text-[10.5px] font-bold text-amber-500 uppercase tracking-wider m-0">Não Importados</p>
-                      <p className="text-lg font-bold text-amber-500 mt-1 m-0">{resultadoImportacao.falhaCount}</p>
+                    <div className="bg-warn-soft p-3.5 rounded-xl border border-warn/20 text-center">
+                      <p className="text-[10.5px] font-bold text-warn uppercase tracking-wider m-0">
+                        Não Importados
+                      </p>
+                      <p className="text-lg font-bold text-warn mt-1 m-0">
+                        {resultadoImportacao.falhaCount}
+                      </p>
                     </div>
                   </div>
 
                   {/* Lista de Sucessos */}
                   {resultadoImportacao.importados.length > 0 && (
-                    <div className="border border-ds-border rounded-xl bg-ds-bg overflow-hidden">
-                      <div className="p-3 bg-emerald-500/10 border-b border-emerald-500/20 flex items-center justify-between">
-                        <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider flex items-center gap-1.5">
-                          <CheckCircle2 className="w-4 h-4" /> Novos Moradores Criados ({resultadoImportacao.importados.length})
+                    <div className="border border-line rounded-xl bg-canvas overflow-hidden">
+                      <div className="p-3 bg-ok-soft border-b border-ok/20 flex items-center justify-between">
+                        <span className="text-xs font-bold text-ok uppercase tracking-wider flex items-center gap-1.5">
+                          <CheckCircle2 className="w-4 h-4" /> Novos Moradores Criados (
+                          {resultadoImportacao.importados.length})
                         </span>
                       </div>
-                      <div className="max-h-48 overflow-y-auto divide-y divide-ds-border">
+                      <div className="max-h-48 overflow-y-auto divide-y divide-line">
                         {resultadoImportacao.importados.map((m) => (
-                          <div key={m.id} className="p-2.5 flex items-center justify-between text-xs hover:bg-ds-card transition-colors">
+                          <div
+                            key={m.id}
+                            className="p-2.5 flex items-center justify-between text-xs hover:bg-surface transition-colors"
+                          >
                             <div>
-                              <p className="font-semibold text-ds-text m-0">{m.nome}</p>
-                              <p className="text-[11px] text-ds-dim m-0">{m.email}</p>
+                              <p className="font-semibold text-ink m-0">{m.nome}</p>
+                              <p className="text-[11px] text-dim m-0">{m.email}</p>
                             </div>
-                            <span className="font-mono font-bold text-ds-primary bg-ds-primary/10 px-2 py-0.5 rounded text-[11px]">
+                            <span className="font-mono font-bold text-brand bg-brand-soft px-2 py-0.5 rounded text-[11px]">
                               Apto {m.apartamento} {m.bloco ? `(${m.bloco})` : ''}
                             </span>
                           </div>
@@ -1045,18 +1131,24 @@ export function MoradoresAdminPanel() {
 
                   {/* Lista de Linhas com Erro/Aviso */}
                   {resultadoImportacao.erros.length > 0 && (
-                    <div className="border border-ds-border rounded-xl bg-ds-bg overflow-hidden">
-                      <div className="p-3 bg-amber-500/10 border-b border-amber-500/20 flex items-center justify-between">
-                        <span className="text-xs font-bold text-amber-500 uppercase tracking-wider flex items-center gap-1.5">
-                          <AlertTriangle className="w-4 h-4" /> Linhas Ignoradas com Aviso ({resultadoImportacao.erros.length})
+                    <div className="border border-line rounded-xl bg-canvas overflow-hidden">
+                      <div className="p-3 bg-warn-soft border-b border-warn/20 flex items-center justify-between">
+                        <span className="text-xs font-bold text-warn uppercase tracking-wider flex items-center gap-1.5">
+                          <AlertTriangle className="w-4 h-4" /> Linhas Ignoradas com Aviso (
+                          {resultadoImportacao.erros.length})
                         </span>
                       </div>
-                      <div className="max-h-48 overflow-y-auto divide-y divide-ds-border">
+                      <div className="max-h-48 overflow-y-auto divide-y divide-line">
                         {resultadoImportacao.erros.map((err, i) => (
-                          <div key={i} className="p-2.5 flex items-center justify-between text-xs hover:bg-ds-card transition-colors">
+                          <div
+                            key={i}
+                            className="p-2.5 flex items-center justify-between text-xs hover:bg-surface transition-colors"
+                          >
                             <div>
-                              <p className="font-semibold text-ds-text m-0">Linha {err.linha} • {err.email}</p>
-                              <p className="text-[11px] text-amber-500 mt-0.5 m-0">{err.motivo}</p>
+                              <p className="font-semibold text-ink m-0">
+                                Linha {err.linha} • {err.email}
+                              </p>
+                              <p className="text-[11px] text-warn mt-0.5 m-0">{err.motivo}</p>
                             </div>
                           </div>
                         ))}
@@ -1072,7 +1164,7 @@ export function MoradoresAdminPanel() {
                         setResultadoImportacao(null);
                         setIsImportModalOpen(false);
                       }}
-                      className="px-5 py-2.5 rounded-xl bg-ds-primary text-ds-primary-ink text-xs font-bold hover:brightness-110 transition-all cursor-pointer shadow-sm"
+                      className="px-5 py-2.5 rounded-xl bg-brand text-brand-ink text-xs font-bold hover:bg-brand-hover transition-all cursor-pointer"
                     >
                       Concluir e Fechar
                     </button>
@@ -1086,3 +1178,4 @@ export function MoradoresAdminPanel() {
     </div>
   );
 }
+

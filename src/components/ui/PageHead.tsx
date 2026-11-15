@@ -23,7 +23,7 @@ export function PageHead({
   children,
 }: PageHeadProps) {
   return (
-    <div className="pt-[10px] px-[18px] pb-0">
+    <div className="page-head pt-[10px] px-[18px] pb-0">
       {onBack && (
         <button
           type="button"

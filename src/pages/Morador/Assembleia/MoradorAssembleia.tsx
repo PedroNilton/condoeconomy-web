@@ -1,9 +1,30 @@
-import { useEffect, useState } from 'react';
-import { CheckCircle2, ChevronRight, Vote, AlertCircle, BarChart3, Lock, ArrowRight } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import {
+  CheckCircle2,
+  ChevronRight,
+  Vote,
+  AlertCircle,
+  BarChart3,
+  Lock,
+  ArrowRight,
+  Loader2,
+} from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
+import { useWebSocket } from '../../../hooks/useWebSocket';
+import {
+  Badge,
+  BottomSheet,
+  Button,
+  EmptyState,
+  ListCard,
+  PageHead,
+  ProgressBar,
+  SegmentedTabs,
+  Toast,
+} from '../../../components/ui';
 
 interface Opcao {
   id: string;
@@ -49,31 +70,38 @@ export function MoradorAssembleia() {
   const [votoLoad, setVotoLoad] = useState<string | null>(null);
   const [votacaoSelecionada, setVotacaoSelecionada] = useState<Votacao | null>(null);
 
-  // Modal / Visualização de Resultados
   const [resultadoModal, setResultadoModal] = useState<VotacaoResultado | null>(null);
   const [carregandoResultado, setCarregandoResultado] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchVotacoes();
-  }, [activeTab]);
+  const showToast = useCallback((msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 2600);
+  }, []);
 
-  const fetchVotacoes = async () => {
+  const fetchVotacoes = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
       if (activeTab === 'ABERTAS') {
         const response = await api.get('/api/v1/votacoes/ativas');
-        setVotacoes(response.data);
+        setVotacoes(Array.isArray(response.data) ? response.data : []);
       } else {
         const response = await api.get('/api/v1/votacoes/encerradas');
-        setEncerradas(response.data);
+        setEncerradas(Array.isArray(response.data) ? response.data : []);
       }
-    } catch (err) {
+    } catch {
       setError('Não foi possível carregar as votações.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
+
+  useEffect(() => {
+    fetchVotacoes();
+  }, [fetchVotacoes]);
+
+  useWebSocket('/topic/votacoes', fetchVotacoes);
 
   const handleVotar = async (opcaoId: string) => {
     if (!votacaoSelecionada) return;
@@ -81,12 +109,15 @@ export function MoradorAssembleia() {
     try {
       await api.post(`/api/v1/votacoes/${votacaoSelecionada.id}/votar`, { opcaoId });
 
-      setVotacoes(votacoes.map(v => 
-        v.id === votacaoSelecionada.id ? { ...v, usuarioJaVotou: true } : v
-      ));
+      setVotacoes((prev) =>
+        prev.map((v) =>
+          v.id === votacaoSelecionada.id ? { ...v, usuarioJaVotou: true } : v,
+        ),
+      );
       setVotacaoSelecionada(null);
+      showToast('Voto registrado com sucesso!');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Erro ao registrar voto');
+      showToast(err.response?.data?.message || 'Erro ao registrar voto');
     } finally {
       setVotoLoad(null);
     }
@@ -97,231 +128,243 @@ export function MoradorAssembleia() {
     try {
       const res = await api.get(`/api/v1/votacoes/${id}/resultado`);
       setResultadoModal(res.data);
-    } catch (err) {
-      alert('Erro ao carregar o resultado da assembleia.');
+    } catch {
+      showToast('Erro ao carregar o resultado da assembleia.');
     } finally {
       setCarregandoResultado(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-full bg-slate-900 text-slate-100 overflow-y-auto">
-      <header className="px-6 py-6 bg-indigo-900/40 border-b border-white/5 backdrop-blur-md sticky top-0 z-10">
-        <div className="flex flex-col gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-white mb-1">Assembleia Virtual</h1>
-            <p className="text-indigo-200 text-sm">Participe das decisões do condomínio</p>
-          </div>
-
-          {/* Abas */}
-          <div className="flex bg-slate-800/80 p-1 rounded-xl w-fit">
-            <button
-              onClick={() => setActiveTab('ABERTAS')}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-                activeTab === 'ABERTAS'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Em Andamento
-            </button>
-            <button
-              onClick={() => setActiveTab('ENCERRADAS')}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-                activeTab === 'ENCERRADAS'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Encerradas / Resultados
-            </button>
-          </div>
+    <div className="flex flex-col min-h-full bg-canvas text-ink pb-24">
+      <PageHead
+        eyebrow="Decisões"
+        title="Assembleia Virtual"
+        subtitle="Participe das decisões do condomínio."
+      >
+        <div className="pb-3">
+          <SegmentedTabs
+            value={activeTab}
+            onChange={(v) => setActiveTab(v)}
+            items={[
+              { id: 'ABERTAS', label: 'Em Andamento' },
+              { id: 'ENCERRADAS', label: 'Encerradas / Resultados' },
+            ]}
+          />
         </div>
-      </header>
+      </PageHead>
 
-      <main className="flex-1 p-6 space-y-6 pb-24">
+      <main className="flex-1 px-[18px] space-y-3">
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-center gap-3 text-red-400">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <p className="text-sm">{error}</p>
+          <div className="bg-bad-soft border border-bad/20 rounded-[14px] p-3.5 flex items-center gap-2.5 text-bad">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <p className="text-[12.5px] font-semibold m-0">{error}</p>
           </div>
         )}
 
         {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-400"></div>
+          <div className="flex justify-center py-16">
+            <Loader2 className="w-7 h-7 animate-spin text-brand" />
           </div>
         ) : activeTab === 'ABERTAS' ? (
-          /* Pautas Abertas */
           votacoes.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="bg-slate-800/50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/5">
-                <CheckCircle2 className="w-8 h-8 text-indigo-400" />
-              </div>
-              <h3 className="text-lg font-medium text-white mb-2">Tudo tranquilo!</h3>
-              <p className="text-slate-400 text-sm">Não há nenhuma assembleia ou votação aberta no momento.</p>
-            </div>
+            <EmptyState
+              icon={<CheckCircle2 className="w-6 h-6" />}
+              title="Tudo tranquilo!"
+              description="Não há nenhuma assembleia ou votação aberta no momento."
+              tone="ok"
+            />
           ) : (
-            votacoes.map(votacao => {
+            votacoes.map((votacao) => {
               const inadimplente = votacao.usuarioAdimplente === false;
 
               return (
-                <div key={votacao.id} className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur-xl">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-medium mb-3">
-                        <Vote className="w-3.5 h-3.5" />
-                        Votação Aberta
-                      </span>
-                      <h3 className="text-lg font-semibold text-white mb-1">{votacao.titulo}</h3>
-                      {votacao.descricao && <p className="text-slate-400 text-sm mb-3">{votacao.descricao}</p>}
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <span>Encerra em: {format(parseISO(votacao.dataEncerramento), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
-                      </div>
-                    </div>
+                <ListCard
+                  key={votacao.id}
+                  tone={inadimplente ? 'warn' : 'default'}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2.5">
+                    <Badge tone="brand">
+                      <Vote className="w-3 h-3" />
+                      <span>Votação Aberta</span>
+                    </Badge>
+                    <span className="font-mono text-[10.5px] text-faint font-semibold">
+                      Até{' '}
+                      {format(parseISO(votacao.dataEncerramento), "dd/MM/yyyy 'às' HH:mm", {
+                        locale: ptBR,
+                      })}
+                    </span>
                   </div>
+
+                  <h3 className="text-[15px] font-extrabold text-ink mb-1 m-0">
+                    {votacao.titulo}
+                  </h3>
+                  {votacao.descricao && (
+                    <p className="text-[12.5px] text-dim leading-relaxed mb-3 m-0">
+                      {votacao.descricao}
+                    </p>
+                  )}
 
                   {/* Alerta de Inadimplência Legal (Art. 1.335, III CC) */}
                   {inadimplente ? (
-                    <div className="mt-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-amber-300">
-                      <div className="flex items-start gap-3">
-                        <Lock className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                    <div className="mt-3 bg-warn-soft border border-warn/25 rounded-[12px] p-3.5 flex flex-col gap-3 text-warn">
+                      <div className="flex items-start gap-2.5">
+                        <Lock className="w-4 h-4 shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-xs font-bold">Voto suspenso por pendência financeira</p>
-                          <p className="text-[11px] text-amber-200/80 mt-0.5">
+                          <p className="text-[12.5px] font-bold m-0">
+                            Voto suspenso por pendência financeira
+                          </p>
+                          <p className="text-[11.5px] text-dim mt-0.5 m-0 leading-relaxed">
                             Conforme o Art. 1.335, III do Código Civil, apenas condôminos quites podem votar em assembleia.
                           </p>
                         </div>
                       </div>
-                      <button
+                      <Button
+                        variant="secondary"
+                        size="mini"
                         onClick={() => navigate('/app/boletos')}
-                        className="px-3 py-1.5 bg-amber-500 text-slate-900 rounded-xl text-xs font-bold hover:brightness-110 flex items-center gap-1 self-start sm:self-auto"
+                        className="self-start !bg-warn !border-warn !text-white"
                       >
-                        Ver Boletos <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
+                        <span>Ver Boletos</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
                   ) : votacao.usuarioJaVotou ? (
-                    <div className="mt-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center justify-center gap-2 text-emerald-400">
-                      <CheckCircle2 className="w-5 h-5" />
-                      <span className="text-sm font-medium">Seu voto foi registrado com sucesso</span>
+                    <div className="mt-3 bg-ok-soft border border-ok/20 rounded-[12px] p-3 flex items-center justify-center gap-2 text-ok">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      <span className="text-[12.5px] font-bold">
+                        Seu voto foi registrado com sucesso
+                      </span>
                     </div>
                   ) : votacaoSelecionada?.id === votacao.id ? (
-                    <div className="mt-4 space-y-3 animate-fade-in-up">
-                      <h4 className="text-sm font-medium text-slate-300 mb-2">Escolha sua opção de voto:</h4>
-                      {votacao.opcoes.map(opcao => (
+                    <div className="mt-3 space-y-2 pt-3 border-t border-line">
+                      <h4 className="text-[12px] font-bold uppercase tracking-[0.04em] text-dim mb-2 m-0">
+                        Escolha sua opção de voto:
+                      </h4>
+                      {votacao.opcoes.map((opcao) => (
                         <button
                           key={opcao.id}
+                          type="button"
                           onClick={() => handleVotar(opcao.id)}
                           disabled={votoLoad !== null}
-                          className="w-full flex items-center justify-between p-4 rounded-2xl bg-slate-800/50 hover:bg-indigo-600 border border-white/5 hover:border-indigo-500 transition-colors group disabled:opacity-50"
+                          className="w-full flex items-center justify-between p-3.5 rounded-[12px] bg-canvas hover:bg-brand-soft border border-line hover:border-brand transition-colors group disabled:opacity-50 cursor-pointer text-left"
                         >
-                          <span className="font-medium text-white group-hover:text-white transition-colors">{opcao.titulo}</span>
+                          <span className="text-[13.5px] font-bold text-ink group-hover:text-brand transition-colors">
+                            {opcao.titulo}
+                          </span>
                           {votoLoad === opcao.id ? (
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <Loader2 className="w-4 h-4 animate-spin text-brand" />
                           ) : (
-                            <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-white transition-colors" />
+                            <ChevronRight className="w-4 h-4 text-faint group-hover:text-brand transition-colors" />
                           )}
                         </button>
                       ))}
-                      <button 
+                      <Button
+                        variant="secondary"
+                        size="card"
+                        fullWidth
                         onClick={() => setVotacaoSelecionada(null)}
-                        className="w-full mt-2 py-3 text-sm text-slate-400 hover:text-white transition-colors"
                       >
                         Cancelar
-                      </button>
+                      </Button>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => setVotacaoSelecionada(votacao)}
-                      className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-2xl transition-colors flex items-center justify-center gap-2"
-                    >
-                      Votar agora
-                    </button>
+                    <div className="mt-3">
+                      <Button
+                        variant="primary"
+                        size="card"
+                        fullWidth
+                        onClick={() => setVotacaoSelecionada(votacao)}
+                      >
+                        Votar agora
+                      </Button>
+                    </div>
                   )}
-                </div>
+                </ListCard>
               );
             })
           )
+        ) : encerradas.length === 0 ? (
+          <EmptyState
+            icon={<BarChart3 className="w-6 h-6" />}
+            title="Nenhuma ata encerrada"
+            description="As assembleias finalizadas ficarão disponíveis aqui para consulta."
+          />
         ) : (
-          /* Pautas Encerradas / Histórico de Decisões */
-          encerradas.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="bg-slate-800/50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/5">
-                <BarChart3 className="w-8 h-8 text-indigo-400" />
+          encerradas.map((votacao) => (
+            <ListCard key={votacao.id}>
+              <div className="flex justify-between items-start gap-2 mb-2">
+                <Badge tone="neutral">ENCERRADA</Badge>
+                <span className="font-mono text-[10.5px] text-faint font-semibold">
+                  Encerrada em{' '}
+                  {format(parseISO(votacao.dataEncerramento), 'dd/MM/yyyy', { locale: ptBR })}
+                </span>
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">Nenhuma ata encerrada</h3>
-              <p className="text-slate-400 text-sm">As assembleias finalizadas ficarão disponíveis aqui para consulta.</p>
-            </div>
-          ) : (
-            encerradas.map(votacao => (
-              <div key={votacao.id} className="bg-white/5 border border-white/10 rounded-3xl p-5 backdrop-blur-xl">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-700 text-slate-300 text-xs font-medium mb-2">
-                      ENCERRADA
-                    </span>
-                    <h3 className="text-lg font-semibold text-white">{votacao.titulo}</h3>
-                    {votacao.descricao && <p className="text-slate-400 text-xs mt-1">{votacao.descricao}</p>}
-                  </div>
-                </div>
 
-                <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/10">
-                  <span className="text-xs text-slate-400">
-                    Encerrada em {format(parseISO(votacao.dataEncerramento), "dd/MM/yyyy", { locale: ptBR })}
-                  </span>
-                  <button
-                    onClick={() => handleVerResultado(votacao.id)}
-                    className="px-4 py-2 bg-indigo-600/30 border border-indigo-500/40 hover:bg-indigo-600/50 text-indigo-200 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors"
-                  >
-                    <BarChart3 className="w-3.5 h-3.5" /> Ver Resultado da Votação
-                  </button>
-                </div>
+              <h3 className="text-[15px] font-extrabold text-ink m-0">{votacao.titulo}</h3>
+              {votacao.descricao && (
+                <p className="text-[12.5px] text-dim mt-1 mb-0 leading-relaxed">
+                  {votacao.descricao}
+                </p>
+              )}
+
+              <div className="mt-3 pt-3 border-t border-line flex justify-end">
+                <Button
+                  variant="secondary"
+                  size="mini"
+                  disabled={carregandoResultado}
+                  onClick={() => handleVerResultado(votacao.id)}
+                >
+                  <BarChart3 className="w-3.5 h-3.5 text-brand" />
+                  <span>Ver Resultado da Votação</span>
+                </Button>
               </div>
-            ))
-          )
+            </ListCard>
+          ))
         )}
       </main>
 
-      {/* Modal de Resultados da Assembleia */}
-      {resultadoModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-800 border border-white/10 rounded-3xl w-full max-w-md p-6 overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-indigo-400">Resultado Oficial</span>
-                <h3 className="text-lg font-bold text-white mt-1">{resultadoModal.titulo}</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Total de votos computados: {resultadoModal.totalVotos}</p>
-              </div>
-            </div>
-
-            <div className="space-y-4 my-6">
-              {resultadoModal.opcoes.map(opcao => (
+      <BottomSheet
+        open={resultadoModal !== null}
+        onClose={() => setResultadoModal(null)}
+        title={resultadoModal?.titulo || 'Resultado Oficial'}
+        subtitle={
+          resultadoModal
+            ? `Resultado Oficial · Total de votos computados: ${resultadoModal.totalVotos}`
+            : undefined
+        }
+      >
+        {resultadoModal && (
+          <div className="space-y-4">
+            <div className="space-y-3">
+              {resultadoModal.opcoes.map((opcao) => (
                 <div key={opcao.opcaoId} className="space-y-1.5">
-                  <div className="flex justify-between text-xs">
-                    <span className="font-bold text-white">{opcao.titulo}</span>
-                    <span className="text-indigo-300 font-mono">{opcao.votos} votos ({opcao.percentual.toFixed(1)}%)</span>
+                  <div className="flex justify-between items-center text-[12.5px]">
+                    <span className="font-bold text-ink">{opcao.titulo}</span>
+                    <span className="font-mono text-[11.5px] font-semibold text-brand">
+                      {opcao.votos} votos ({opcao.percentual.toFixed(1)}%)
+                    </span>
                   </div>
-                  <div className="w-full bg-slate-700 rounded-full h-2.5 overflow-hidden">
-                    <div
-                      className="bg-indigo-500 h-full rounded-full transition-all duration-700"
-                      style={{ width: `${opcao.percentual}%` }}
-                    />
-                  </div>
+                  <ProgressBar percent={opcao.percentual} tone="brand" />
                 </div>
               ))}
             </div>
 
-            <div className="flex justify-end pt-2">
-              <button
+            <div className="pt-2">
+              <Button
+                variant="secondary"
+                size="card"
+                fullWidth
                 onClick={() => setResultadoModal(null)}
-                className="px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-xl transition-colors"
               >
                 Fechar
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </BottomSheet>
+
+      <Toast message={toastMsg} />
     </div>
   );
 }

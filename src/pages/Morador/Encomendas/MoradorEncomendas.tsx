@@ -1,6 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Package, Search, Filter, Box } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Package, Box, Loader2 } from 'lucide-react';
 import api from '../../../services/api';
+import {
+  Badge,
+  EmptyState,
+  FilterChips,
+  IconChip,
+  ListCard,
+  PageHead,
+  SearchInput,
+  type BadgeTone,
+} from '../../../components/ui';
 
 interface Encomenda {
   id: string;
@@ -13,6 +23,12 @@ interface Encomenda {
   dataRetirada?: string;
 }
 
+const STATUS_FILTERS = [
+  { id: '', label: 'Todos os Status' },
+  { id: 'AGUARDANDO_RETIRADA', label: 'Aguardando Retirada' },
+  { id: 'RETIRADA', label: 'Retirada' },
+];
+
 export function MoradorEncomendas() {
   const [encomendas, setEncomendas] = useState<Encomenda[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +39,7 @@ export function MoradorEncomendas() {
     try {
       setLoading(true);
       const response = await api.get('/api/v1/encomendas/minhas');
-      setEncomendas(response.data);
+      setEncomendas(Array.isArray(response.data) ? response.data : []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -35,11 +51,10 @@ export function MoradorEncomendas() {
     fetchEncomendas();
   }, []);
 
-  const getStatusStyle = (status: string) => {
-    if (status === 'AGUARDANDO_RETIRADA') return 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-400';
-    if (status === 'RETIRADA') return 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400';
-    if (status === 'ENTREGUE') return 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400';
-    return 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-100';
+  const getStatusTone = (status: string): BadgeTone => {
+    if (status === 'AGUARDANDO_RETIRADA') return 'warn';
+    if (status === 'RETIRADA' || status === 'ENTREGUE') return 'ok';
+    return 'neutral';
   };
 
   const formatStatus = (status: string) => {
@@ -49,110 +64,110 @@ export function MoradorEncomendas() {
     return status;
   };
 
-  const filteredEncomendas = encomendas.filter(enc => {
-    const matchesSearch = enc.codigoRastreio.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredEncomendas = encomendas.filter((enc) => {
+    const matchesSearch = (enc.codigoRastreio || '')
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter ? enc.status === statusFilter : true;
     return matchesSearch && matchesStatus;
   });
 
   return (
-    <div className="space-y-6 p-4 pb-24">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h3 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2">
-            <Package className="w-6 h-6 text-blue-900 dark:text-blue-400" />
-            Minhas Encomendas
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Acompanhe as suas encomendas na portaria.</p>
-        </div>
-      </div>
-
-      <div className="flex flex-col md:flex-row gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-        <div className="flex-1 relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-            <Search size={18} />
-          </div>
-          <input
-            type="text"
-            className="pl-10 w-full rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 transition-shadow"
-            placeholder="Buscar por código de rastreio..."
+    <div className="flex flex-col min-h-full bg-canvas text-ink pb-24">
+      <PageHead
+        eyebrow="Portaria"
+        title="Minhas encomendas"
+        subtitle="Acompanhe as suas encomendas na portaria."
+      >
+        <div className="space-y-3 pb-3">
+          <SearchInput
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={setSearchTerm}
+            placeholder="Buscar por código de rastreio..."
+          />
+          <FilterChips
+            items={STATUS_FILTERS}
+            value={statusFilter}
+            onChange={setStatusFilter}
           />
         </div>
-        
-        <div className="flex items-center gap-2">
-          <Filter size={18} className="text-gray-400" />
-          <select
-            className="rounded-lg border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="">Todos os Status</option>
-            <option value="AGUARDANDO_RETIRADA">Aguardando Retirada</option>
-            <option value="RETIRADA">Retirada</option>
-          </select>
-        </div>
-      </div>
+      </PageHead>
 
-      {loading ? (
-        <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      ) : filteredEncomendas.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-          <Box className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" />
-          <p className="text-gray-500 dark:text-gray-400 text-lg">Nenhuma encomenda encontrada.</p>
-        </div>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredEncomendas.map((encomenda) => (
-            <div 
-              key={encomenda.id}
-              className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${getStatusStyle(encomenda.status)}`}>
-                  {formatStatus(encomenda.status)}
-                </span>
-              </div>
-              
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">CÓDIGO DE RASTREIO</p>
-                  <p className="text-gray-800 dark:text-gray-200 font-bold truncate">{encomenda.codigoRastreio}</p>
-                </div>
-                
-                <div className="flex justify-between">
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">TRANSPORTADORA</p>
-                    <p className="text-sm text-gray-800 dark:text-gray-200">{encomenda.transportadora}</p>
+      <main className="flex-1 px-[18px] space-y-3">
+        {loading ? (
+          <div className="flex justify-center items-center py-16">
+            <Loader2 className="w-7 h-7 animate-spin text-brand" />
+          </div>
+        ) : filteredEncomendas.length === 0 ? (
+          <EmptyState
+            icon={<Box className="w-6 h-6" />}
+            title="Nenhuma encomenda encontrada"
+            description="Não há encomendas registradas para os filtros selecionados."
+          />
+        ) : (
+          <div className="space-y-3">
+            {filteredEncomendas.map((encomenda) => {
+              const isPending = encomenda.status === 'AGUARDANDO_RETIRADA';
+              return (
+                <ListCard
+                  key={encomenda.id}
+                  tone={isPending ? 'warn' : 'default'}
+                >
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <IconChip tone={isPending ? 'warn' : 'ok'} size="md">
+                        <Package className="w-5 h-5" />
+                      </IconChip>
+                      <div className="min-w-0">
+                        <p className="text-[10.5px] font-bold text-faint uppercase tracking-[0.04em] m-0">
+                          Código de rastreio
+                        </p>
+                        <p className="font-mono text-[14px] font-extrabold text-ink truncate m-0">
+                          {encomenda.codigoRastreio}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge tone={getStatusTone(encomenda.status)}>
+                      {formatStatus(encomenda.status)}
+                    </Badge>
                   </div>
-                </div>
-                
-                <div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">DATA DE RECEBIMENTO</p>
-                  <p className="text-sm text-gray-800 dark:text-gray-200">
-                    {new Date(encomenda.dataRecebimento).toLocaleString('pt-BR')}
-                  </p>
-                </div>
-                
-                {encomenda.dataRetirada && (
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">DATA DE RETIRADA</p>
-                    <p className="text-sm text-gray-800 dark:text-gray-200">
-                      {new Date(encomenda.dataRetirada).toLocaleString('pt-BR')}
-                    </p>
+
+                  <div className="grid grid-cols-2 gap-3 pt-2.5 border-t border-line text-[12px]">
+                    <div>
+                      <p className="text-[10.5px] font-bold text-faint uppercase tracking-[0.04em] m-0">
+                        Transportadora
+                      </p>
+                      <p className="text-ink font-semibold mt-0.5 m-0 truncate">
+                        {encomenda.transportadora || 'Portaria'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[10.5px] font-bold text-faint uppercase tracking-[0.04em] m-0">
+                        Recebimento
+                      </p>
+                      <p className="font-mono text-dim text-[11.5px] mt-0.5 m-0">
+                        {new Date(encomenda.dataRecebimento).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+
+                    {encomenda.dataRetirada && (
+                      <div className="col-span-2">
+                        <p className="text-[10.5px] font-bold text-faint uppercase tracking-[0.04em] m-0">
+                          Data de retirada
+                        </p>
+                        <p className="font-mono text-ok font-semibold text-[11.5px] mt-0.5 m-0">
+                          {new Date(encomenda.dataRetirada).toLocaleString('pt-BR')}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+                </ListCard>
+              );
+            })}
+          </div>
+        )}
+      </main>
     </div>
   );
 }
-
-
-

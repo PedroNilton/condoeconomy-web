@@ -91,6 +91,16 @@ export function NotificacoesList() {
       .toUpperCase();
   };
 
+  const isFromToday = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    return (
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate()
+    );
+  };
+
   return (
     <div className="bg-canvas min-h-full flex flex-col text-ink pb-8">
       <PageHead
@@ -103,7 +113,7 @@ export function NotificacoesList() {
               onClick={markAllAsRead}
               className="text-[12.5px] font-bold text-brand hover:underline cursor-pointer bg-transparent border-0 p-0"
             >
-              Marcar lidas
+              Marcar todas como lidas
             </button>
           ) : undefined
         }
@@ -124,6 +134,7 @@ export function NotificacoesList() {
           <div className="flex flex-col gap-2.5">
             {notificacoes.map((n) => {
               const { icon: Icon, isEmergency } = getIconData(n.titulo, n.categoria);
+              const showDot = !n.lida || isFromToday(n.dataCriacao);
               return (
                 <button
                   type="button"
@@ -141,7 +152,7 @@ export function NotificacoesList() {
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-[13.5px] text-ink flex items-center gap-2">
                       <span className="truncate">{n.titulo}</span>
-                      {!n.lida && <span className="w-2 h-2 rounded-full bg-brand shrink-0" />}
+                      {showDot && <span className="w-2 h-2 rounded-full bg-brand shrink-0" />}
                     </div>
                     <div className="text-[12px] text-dim mt-0.5 leading-relaxed">{n.mensagem}</div>
                     <div className="font-mono text-[10.5px] text-faint mt-1.5 font-semibold tracking-wider">
