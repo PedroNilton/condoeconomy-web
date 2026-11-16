@@ -111,28 +111,28 @@ export function MoradorBoletos() {
         <meta charset="utf-8" />
         <title>Boleto Condominial - ${mes}</title>
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; color: #1e293b; max-width: 680px; margin: 0 auto; }
-          .header { border-bottom: 2px solid #0284c7; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
-          .logo { font-size: 20px; font-weight: 800; color: #0284c7; }
+          body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; color: #111318; max-width: 680px; margin: 0 auto; }
+          .header { border-bottom: 2px solid #1E40AF; padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+          .logo { font-size: 20px; font-weight: 800; color: #1E40AF; }
           .title { font-size: 16px; font-weight: 700; margin: 0; }
-          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
+          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; background: #F4F5F7; padding: 20px; border-radius: 12px; border: 1px solid #E5E7EB; }
           .field { margin-bottom: 8px; }
-          .label { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: bold; }
+          .label { font-size: 11px; text-transform: uppercase; color: #5B616E; font-weight: bold; }
           .val { font-size: 15px; font-weight: bold; margin-top: 2px; }
-          .linha { font-family: monospace; font-size: 13px; background: #ffffff; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; word-break: break-all; margin: 20px 0; }
-          .footer { text-align: center; font-size: 12px; color: #94a3b8; margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 16px; }
+          .linha { font-family: monospace; font-size: 13px; background: #ffffff; padding: 12px; border: 1px solid #D1D5DB; border-radius: 8px; word-break: break-all; margin: 20px 0; }
+          .footer { text-align: center; font-size: 12px; color: #8C929E; margin-top: 40px; border-top: 1px solid #E5E7EB; padding-top: 16px; }
           @media print { body { padding: 0; } button { display: none; } }
         </style>
       </head>
       <body>
         <div class="header">
-          <div class="logo">CondoEconomy</div>
+          <div class="logo">HabitOS · CondoEconomy</div>
           <div class="title">Boleto / Comprovante Digital</div>
         </div>
         <div class="grid">
           <div class="field"><div class="label">Competência</div><div class="val">${mes} - Taxa Condominial</div></div>
           <div class="field"><div class="label">Vencimento</div><div class="val">${dataVencFmt}</div></div>
-          <div class="field"><div class="label">Valor Nominal</div><div class="val" style="color: #0284c7;">${valorFmt}</div></div>
+          <div class="field"><div class="label">Valor Nominal</div><div class="val" style="color: #1E40AF;">${valorFmt}</div></div>
           <div class="field"><div class="label">Situação</div><div class="val">${boleto.status}</div></div>
         </div>
         <div class="label">Linha Digitável / Código de Pagamento</div>

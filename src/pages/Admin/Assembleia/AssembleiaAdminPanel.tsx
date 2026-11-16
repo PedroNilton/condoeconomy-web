@@ -301,8 +301,8 @@ export function AssembleiaAdminPanel() {
           <title>Ata de Votação - ${p.title}</title>
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #16181D; background: #fff; }
-            .header { border-bottom: 2px solid #4338CA; padding-bottom: 14px; margin-bottom: 24px; }
-            .logo { font-size: 22px; font-weight: 800; color: #4338CA; }
+            .header { border-bottom: 2px solid #1E40AF; padding-bottom: 14px; margin-bottom: 24px; }
+            .logo { font-size: 22px; font-weight: 800; color: #1E40AF; }
             .sub { color: #75767E; font-size: 13px; margin-top: 4px; }
             .card { border: 1px solid #E4E4E8; border-radius: 12px; padding: 18px; margin-bottom: 20px; }
             h2 { margin: 0 0 8px; font-size: 18px; }
@@ -312,8 +312,8 @@ export function AssembleiaAdminPanel() {
             .opts-table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13.5px; }
             .opts-table th, .opts-table td { padding: 10px; border-bottom: 1px solid #E4E4E8; text-align: left; }
             .opts-table th { background: #FAFAFA; color: #75767E; font-size: 12px; text-transform: uppercase; }
-            .lead-row { background: #EEF0FF; font-weight: bold; }
-            .btn { display: inline-block; padding: 10px 18px; background: #4338CA; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; margin-bottom: 20px; }
+            .lead-row { background: #EFF4FF; font-weight: bold; }
+            .btn { display: inline-block; padding: 10px 18px; background: #1E40AF; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; margin-bottom: 20px; }
             @media print { .btn { display: none; } }
           </style>
         </head>
