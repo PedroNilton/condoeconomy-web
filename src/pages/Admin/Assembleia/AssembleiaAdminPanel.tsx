@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { BarChart3, Plus, X } from 'lucide-react';
 import api from '../../../services/api';
 import { sanitizarEntrada, contemAmeacas } from '../../../utils/security';
+import { escapeHtml } from '../../../utils/escapeHtml';
 import {
   Badge,
   BottomSheet,
@@ -293,12 +294,15 @@ export function AssembleiaAdminPanel() {
 
     const win = window.open('', '_blank');
     if (win) {
+      const safeTitle = escapeHtml(p.title);
+      const safeDesc = escapeHtml(p.desc);
+      const safeLeadName = escapeHtml(leadName);
       win.document.write(`
         <!DOCTYPE html>
         <html lang="pt-BR">
         <head>
           <meta charset="UTF-8">
-          <title>Ata de Votação - ${p.title}</title>
+          <title>Ata de Votação - ${safeTitle}</title>
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #16181D; background: #fff; }
             .header { border-bottom: 2px solid #1E40AF; padding-bottom: 14px; margin-bottom: 24px; }
@@ -324,14 +328,14 @@ export function AssembleiaAdminPanel() {
             <div class="sub">Relatório Oficial de Assembleia Virtual</div>
           </div>
           <div class="card">
-            <h2>${p.title}</h2>
-            <p>${p.desc}</p>
+            <h2>${safeTitle}</h2>
+            <p>${safeDesc}</p>
             <div class="info-row"><span>Status da Assembleia:</span><b>ENCERRADA</b></div>
-            <div class="info-row"><span>Data de Encerramento:</span><b>${fmtDT(p.end)}</b></div>
+            <div class="info-row"><span>Data de Encerramento:</span><b>${escapeHtml(fmtDT(p.end))}</b></div>
             <div class="info-row"><span>Participação Total:</span><b>${c} de ${TOTAL_UNIDADES} unidades (${Math.round((c / TOTAL_UNIDADES) * 100)}%)</b></div>
             <div class="info-row"><span>Quórum Mínimo Requerido:</span><b>${p.q}% (${need} unidades)</b></div>
             <div class="info-row"><span>Resultado do Quórum:</span><b>${ok ? 'Quórum Atingido' : 'Quórum Não Atingido'}</b></div>
-            <div class="info-row"><span>Opção Mais Votada:</span><b>${leadName}</b></div>
+            <div class="info-row"><span>Opção Mais Votada:</span><b>${safeLeadName}</b></div>
           </div>
           <h3>Apuração dos Votos</h3>
           <table class="opts-table">
@@ -350,7 +354,7 @@ export function AssembleiaAdminPanel() {
                   const isLead = i === leadIdx;
                   return `
                   <tr class="${isLead ? 'lead-row' : ''}">
-                    <td>${opt} ${isLead ? '★ (Mais votada)' : ''}</td>
+                    <td>${escapeHtml(opt)} ${isLead ? '★ (Mais votada)' : ''}</td>
                     <td><b>${votesCount}</b></td>
                     <td><b>${pct}%</b></td>
                   </tr>

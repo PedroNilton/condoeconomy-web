@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Loader2, Copy, CheckCircle2, Download, Receipt } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../services/api';
+import { escapeHtml } from '../../../utils/escapeHtml';
 import {
   Badge,
   Button,
@@ -97,12 +98,14 @@ export function MoradorBoletos() {
     e.stopPropagation();
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
-    const mes = getMonthName(boleto.dataVencimento);
-    const valorFmt = formatCurrency(boleto.valor);
-    const dataVencFmt = new Date(boleto.dataVencimento).toLocaleDateString('pt-BR');
-    const linha =
+    const mes = escapeHtml(getMonthName(boleto.dataVencimento));
+    const valorFmt = escapeHtml(formatCurrency(boleto.valor));
+    const dataVencFmt = escapeHtml(new Date(boleto.dataVencimento).toLocaleDateString('pt-BR'));
+    const statusSafe = escapeHtml(boleto.status);
+    const linha = escapeHtml(
       boleto.linhaDigitavel ||
-      '34191.09008 63571.277308 71444.640008 3 955300000' + String(boleto.valor).replace('.', '');
+        '34191.09008 63571.277308 71444.640008 3 955300000' + String(boleto.valor).replace('.', '')
+    );
 
     printWindow.document.write(`
       <!DOCTYPE html>
@@ -133,7 +136,7 @@ export function MoradorBoletos() {
           <div class="field"><div class="label">Competência</div><div class="val">${mes} - Taxa Condominial</div></div>
           <div class="field"><div class="label">Vencimento</div><div class="val">${dataVencFmt}</div></div>
           <div class="field"><div class="label">Valor Nominal</div><div class="val" style="color: #1E40AF;">${valorFmt}</div></div>
-          <div class="field"><div class="label">Situação</div><div class="val">${boleto.status}</div></div>
+          <div class="field"><div class="label">Situação</div><div class="val">${statusSafe}</div></div>
         </div>
         <div class="label">Linha Digitável / Código de Pagamento</div>
         <div class="linha">${linha}</div>

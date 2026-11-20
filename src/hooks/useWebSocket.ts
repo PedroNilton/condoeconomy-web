@@ -10,8 +10,11 @@ export function useWebSocket(topic: string, onMessageReceived: () => void) {
   }, [onMessageReceived]);
 
   useEffect(() => {
+    const token = localStorage.getItem('@HabitOS:token');
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const client = new Client({
-      brokerURL: `ws://${window.location.hostname}:8080/ws`,
+      brokerURL: `${wsProtocol}://${window.location.hostname}:8080/ws`,
+      connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
