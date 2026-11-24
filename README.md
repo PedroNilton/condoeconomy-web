@@ -91,6 +91,7 @@ A interface implementa integralmente a especificação [CONDOECONOMY_DESIGN_SPEC
 - **Prevenção de DOM XSS em Relatórios Impressos ([src/utils/escapeHtml.ts](src/utils/escapeHtml.ts)):** Escape estrito de entidades HTML em janelas de impressão de boletos e atas de assembleia.
 - **WebSocket Autenticado ([src/hooks/useWebSocket.ts](src/hooks/useWebSocket.ts)):** Envio de `Authorization: Bearer <token>` no handshake STOMP `CONNECT` e seleção automática `ws://` / `wss://`.
 - **Revogação Criptográfica no Logout:** O logout aciona `POST /api/v1/auth/logout`, incrementando o `tokenVersion` no servidor e limpando credenciais locais.
+- **Política de Segurança:** Consulte [SECURITY.md](SECURITY.md) para diretrizes de divulgação responsável, cabeçalhos HTTP e checklist de produção.
 
 ---
 
