@@ -7,24 +7,29 @@
 // Regex estrito para formato de e-mail seguro (sem caracteres perigosos como < > ; ' " \0)
 export const EMAIL_SECURITY_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-// Padrões de scripts maliciosos e injeções
+// Padrões de scripts maliciosos e injeções (sem flag /g para evitar estado mutável em RegExp.test)
 const XSS_PATTERNS = [
-  /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-  /javascript:/gi,
-  /vbscript:/gi,
-  /onload\s*=/gi,
-  /onerror\s*=/gi,
-  /onclick\s*=/gi,
-  /<iframe/gi,
-  /<object/gi,
-  /<embed/gi,
-  /<svg[^>]*onload/gi
+  /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/i,
+  /<script/i,
+  /javascript:/i,
+  /vbscript:/i,
+  /data:text\/html/i,
+  /onload\s*=/i,
+  /onerror\s*=/i,
+  /onclick\s*=/i,
+  /onmouseover\s*=/i,
+  /onfocus\s*=/i,
+  /srcdoc\s*=/i,
+  /<iframe/i,
+  /<object/i,
+  /<embed/i,
+  /<svg[^>]*onload/i
 ];
 
 const SQLI_PATTERNS = [
-  /(--|#|\/\*|\*\/)/g,
-  /(\b(union(\s+all)?|select|drop|truncate|delete|insert|update|alter|exec)\b)/gi,
-  /('|\b(or|and)\b\s+['"\d\w]+\s*=\s*['"\d\w]+)/gi
+  /(--|#|\/\*|\*\/)/,
+  /(\b(union(\s+all)?|select|drop|truncate|delete|insert|update|alter|exec)\b)/i,
+  /('|\b(or|and)\b\s+['"\d\w]+\s*=\s*['"\d\w]+)/i
 ];
 
 // Caracteres de controle ASCII perigosos (0-31 e 127) e bytes nulos

@@ -98,6 +98,7 @@ export function MoradorBoletos() {
     e.stopPropagation();
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
+    printWindow.opener = null;
     const mes = escapeHtml(getMonthName(boleto.dataVencimento));
     const valorFmt = escapeHtml(formatCurrency(boleto.valor));
     const dataVencFmt = escapeHtml(new Date(boleto.dataVencimento).toLocaleDateString('pt-BR'));

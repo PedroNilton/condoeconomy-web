@@ -294,6 +294,7 @@ export function AssembleiaAdminPanel() {
 
     const win = window.open('', '_blank');
     if (win) {
+      win.opener = null;
       const safeTitle = escapeHtml(p.title);
       const safeDesc = escapeHtml(p.desc);
       const safeLeadName = escapeHtml(leadName);
